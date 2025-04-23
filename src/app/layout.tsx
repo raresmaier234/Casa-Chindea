@@ -13,8 +13,8 @@ import AppFooter from "@/components/navbar";
 import { SessionProvider } from "next-auth/react";
 
 export const metadata = {
-  title: "Magazin Mobila",
-  description: "Magazin cu mobila.",
+  title: "Casa chindea",
+  description: "Lacu rosu."
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
