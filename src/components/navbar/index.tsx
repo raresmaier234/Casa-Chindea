@@ -7,7 +7,7 @@ const AppFooter: FC<AppFooterProps> = ({ ...restProps }) => {
   return (
     <AppShellFooter {...restProps}>
       <Flex align="center" justify="center" h="100%">
-        <div>Copyright @ Mobila</div>
+        <div>Copyright @ Casa chindea</div>
       </Flex>
     </AppShellFooter>
   );

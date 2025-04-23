@@ -1,7 +1,7 @@
 import { Title, Stack } from "@mantine/core";
 import { getPaginatedProducts } from "@/service/products";
 import React from "react";
-import ProductList from "@/components/products/list";
+import PhotosList from "@/components/carousel/list";
 
 export default async function Home() {
   const data = await getPaginatedProducts(0, 10);
@@ -9,7 +9,7 @@ export default async function Home() {
   return (
     <Stack>
       <Title>Home Page</Title>
-      <ProductList products={data.items} />
+      <PhotosList photos={[""]} />
     </Stack>
   );
 }

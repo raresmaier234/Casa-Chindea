@@ -10,7 +10,7 @@ import {
   MenuLabel,
   MenuTarget,
 } from "@mantine/core";
-import { IconShoppingCartFilled, IconUser } from "@tabler/icons-react";
+import { IconUser, IconAlbum } from "@tabler/icons-react";
 import Link from "next/link";
 
 import { getServerSession } from "next-auth";
@@ -34,7 +34,7 @@ const AppHeaderActions = async () => {
         </Button>
       )}
       <ActionIcon variant="subtle" size="lg">
-        <IconShoppingCartFilled size="60%" />
+        <IconAlbum size="60%" />
       </ActionIcon>
       {session && (
         <Menu shadow="md" width={200} position="bottom-end">
@@ -51,10 +51,10 @@ const AppHeaderActions = async () => {
             </MenuItem>
 
             <MenuItem
-              leftSection={<IconShoppingCartFilled size={14} />}
+              leftSection={<IconAlbum size={14} />}
               color={"blue"}
             >
-              Orders
+              Album
             </MenuItem>
 
             <MenuDivider />
