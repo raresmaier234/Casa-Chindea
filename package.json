@@ -1,0 +1,49 @@
+{
+  "name": "magazin-mobila",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "backend": "./pocketbase/pocketbase serve",
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint"
+  },
+  "dependencies": {
+    "@mantine/charts": "^7.16.2",
+    "@mantine/core": "^7.16.2",
+    "@mantine/dates": "^7.16.2",
+    "@mantine/dropzone": "^7.16.2",
+    "@mantine/form": "^7.16.2",
+    "@mantine/hooks": "^7.16.2",
+    "@mantine/modals": "^7.16.2",
+    "@mantine/notifications": "^7.16.2",
+    "@mantine/tiptap": "^7.16.2",
+    "@tabler/icons-react": "^3.29.0",
+    "@tiptap/extension-link": "^2.11.5",
+    "@tiptap/pm": "^2.11.5",
+    "@tiptap/react": "^2.11.5",
+    "@tiptap/starter-kit": "^2.11.5",
+    "dayjs": "^1.11.13",
+    "joi": "^17.13.3",
+    "next": "15.1.6",
+    "next-auth": "^4.24.11",
+    "pocketbase": "^0.25.1",
+    "prettier": "^3.4.2",
+    "react": "^19.0.0",
+    "react-dom": "^19.0.0",
+    "recharts": "^2.15.1"
+  },
+  "devDependencies": {
+    "@eslint/eslintrc": "^3",
+    "@types/node": "^20",
+    "@types/react": "^19",
+    "@types/react-dom": "^19",
+    "eslint": "^9",
+    "eslint-config-next": "15.1.6",
+    "postcss": "^8.5.1",
+    "postcss-preset-mantine": "^1.17.0",
+    "postcss-simple-vars": "^7.0.1",
+    "typescript": "^5"
+  }
+}
