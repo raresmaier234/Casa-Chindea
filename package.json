@@ -10,6 +10,7 @@
     "lint": "next lint"
   },
   "dependencies": {
+    "@mantine/carousel": "^7.17.4",
     "@mantine/charts": "^7.16.2",
     "@mantine/core": "^7.16.2",
     "@mantine/dates": "^7.16.2",
@@ -25,6 +26,7 @@
     "@tiptap/react": "^2.11.5",
     "@tiptap/starter-kit": "^2.11.5",
     "dayjs": "^1.11.13",
+    "embla-carousel-react": "^7.1.0",
     "joi": "^17.13.3",
     "next": "15.1.6",
     "next-auth": "^4.24.11",
