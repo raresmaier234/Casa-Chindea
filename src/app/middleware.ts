@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getToken } from "next-auth/jwt";
 
-const protectedRoutes = ["/private"];
+const protectedRoutes = ["/home"];
 
 export async function middleware(req: NextRequest) {
   const url = new URL(req.url);
@@ -22,5 +22,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/private/:path*"],
+  matcher: ["/home/:path*"],
 };

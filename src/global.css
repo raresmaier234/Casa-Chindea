@@ -1,0 +1,15 @@
+.swiper-button-prev,
+.swiper-button-next {
+    color: white;
+}
+
+.swiper-button-prev:hover,
+.swiper-button-next:hover {
+    color: lightgrey; /* <-- change to light grey on hover */
+}
+
+.swiper-button-prev::after,
+.swiper-button-next::after {
+    font-size: 1.5rem;
+    color: inherit; /* inherit from the button's color */
+}

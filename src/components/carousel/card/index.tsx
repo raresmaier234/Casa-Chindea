@@ -3,41 +3,34 @@ import {
   Card,
   CardProps,
   CardSection,
-  Title,
-  Text,
-  Button,
 } from "@mantine/core";
 import Image from "next/image";
 
-export type ProductCardProps = CardProps & {
+export type PhotosCardProps = CardProps & {
   imageSrc: string;
   title: string;
-  shortDescription: string;
 };
 
-const ProductCard: FC<ProductCardProps> = ({
+const PhotosCard: FC<PhotosCardProps> = ({
   imageSrc,
   title,
-  shortDescription,
   ...restProps
 }) => {
+
   return (
-    <Card {...restProps} shadow="sm" padding="lg" radius="md" withBorder>
-      <CardSection>
+    <Card {...restProps} shadow="sm" padding="lg" radius="md" h="100%" mah={"700px"} mih={"550px"} withBorder>
+      <CardSection className="relative h-64">
         <Image
-          src={imageSrc}
-          fill
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          alt={`image-${title}`}
+            src={imageSrc}
+            fill
+            className="object-cover"
+            alt={`image-${title}`}
+            sizes="(max-width: 100%) 100vw, (max-width: 1200px) 50vw"
+            priority
         />
       </CardSection>
-
-      <Title order={3}>{title}</Title>
-      <Text>{shortDescription}</Text>
-
-      <Button>Add to cart</Button>
     </Card>
   );
 };
 
-export default ProductCard;
+export default PhotosCard;

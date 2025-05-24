@@ -12492,7 +12492,7 @@ namespace core {
  }
  interface Record {
   /**
-   * NewFileToken generates and returns a new record private file access token.
+   * NewFileToken generates and returns a new record home file access token.
    */
   newFileToken(): string
  }
@@ -12931,11 +12931,11 @@ namespace forms {
   teamId: string
   /**
    * KeyId is a 10-character key identifier generated for the "Sign in with Apple"
-   * private key associated with your developer account.
+   * home key associated with your developer account.
    */
   keyId: string
   /**
-   * PrivateKey is the private key associated to your app.
+   * PrivateKey is the home key associated to your app.
    * Usually wrapped within -----BEGIN PRIVATE KEY----- X -----END PRIVATE KEY-----.
    */
   privateKey: string
@@ -17717,7 +17717,7 @@ namespace http {
    * new service goroutine for each. The service goroutines perform TLS
    * setup and then read requests, calling srv.Handler to reply to them.
    * 
-   * Files containing a certificate and matching private key for the
+   * Files containing a certificate and matching home key for the
    * server must be provided if neither the [Server]'s
    * TLSConfig.Certificates, TLSConfig.GetCertificate nor
    * config.GetConfigForClient are populated.
@@ -17745,7 +17745,7 @@ namespace http {
    * then calls [ServeTLS] to handle requests on incoming TLS connections.
    * Accepted connections are configured to enable TCP keep-alives.
    * 
-   * Filenames containing a certificate and matching private key for the
+   * Filenames containing a certificate and matching home key for the
    * server must be provided if neither the [Server]'s TLSConfig.Certificates
    * nor TLSConfig.GetCertificate are populated. If the certificate is
    * signed by a certificate authority, the certFile should be the
