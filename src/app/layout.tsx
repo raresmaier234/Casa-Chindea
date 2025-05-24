@@ -32,14 +32,16 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         <MantineProvider theme={theme}>
           <AppShell
-            header={{ height: 60 }}
+            header={{ height: 100 }}
             footer={{
               height: 60,
             }}
             padding="md"
           >
             <AppHeader />
-            {children}
+            <div style={{ padding: "1rem" }}>
+              {children}
+            </div>
             <AppFooter />
           </AppShell>
         </MantineProvider>

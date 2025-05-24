@@ -1,7 +1,19 @@
-import { Title } from "@mantine/core";
+import LogoImage from '@/app/assets/images/logo.png';
+import Image from 'next/image';
 
-const Logo = () => {
-  return <Title>Casa chindea</Title>;
+type LogoProps = {
+  maxHeight?: number;
+};
+
+const Logo = ({ maxHeight = 200 }: LogoProps) => {
+  return (
+      <Image
+          src={LogoImage}
+          alt="Casa chindea logo"
+          style={{ height: maxHeight, width: 'auto', display: 'block' }}
+          priority
+      />
+  );
 };
 
 export default Logo;
