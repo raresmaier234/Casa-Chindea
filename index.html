@@ -33,18 +33,18 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8">
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="home">Acasă</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="about">Despre</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="rooms">Camere</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="gallery">Galerie</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="booking">Rezervări</a>
-                    <a href="#" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200"
-                        data-page="contact">Contact</a>
+                    <a href="js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="js/pages/about.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="js/pages/rooms.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Camere</a>
+                    <a href="js/pages/gallery.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="js/pages/booking.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="js/pages/contact.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
                 </div>
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
@@ -56,24 +56,24 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary" data-page="home">Acasă</a>
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary"
-                    data-page="about">Despre</a>
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary"
-                    data-page="rooms">Camere</a>
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary"
-                    data-page="gallery">Galerie</a>
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary"
-                    data-page="booking">Rezervări</a>
-                <a href="#" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary"
-                    data-page="contact">Contact</a>
+                <a href="js/pages/home.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="js/pages/about.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="js/pages/rooms.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Camere</a>
+                <a href="js/pages/gallery.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="js/pages/booking.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="js/pages/contact.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
             </div>
         </div>
     </nav>
 
     <!-- Main Content -->
     <main id="main-content" class="pt-16">
-        <!-- Content will be loaded here -->
+        <!-- Poți pune conținutul home aici sau lăsa gol -->
     </main>
 
     <!-- Footer -->
@@ -114,7 +114,52 @@
     </footer>
 
     <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
-    <script type="module" src="js/main.js"></script>
+    <script>
+        // Navigare SPA-like între paginile HTML statice
+        const routes = {
+            home: 'js/pages/home.html',
+            about: 'js/pages/about.html',
+            rooms: 'js/pages/rooms.html',
+            gallery: 'js/pages/gallery.html',
+            booking: 'js/pages/booking.html',
+            contact: 'js/pages/contact.html'
+        };
+        function loadPage(page) {
+            const main = document.getElementById('main-content');
+            fetch(routes[page] || routes.home)
+                .then(r => r.text())
+                .then(html => { main.innerHTML = html; window.scrollTo(0, 0); })
+                .catch(() => { main.innerHTML = '<div class="p-8 text-center text-red-600">Pagina nu a fost găsită.</div>'; });
+            // Update nav active
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.classList.remove('text-primary', 'font-bold');
+                if (link.dataset.page === page) link.classList.add('text-primary', 'font-bold');
+            });
+            // Închide meniul mobil
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenu) mobileMenu.classList.add('hidden');
+        }
+        document.addEventListener('DOMContentLoaded', function () {
+            // Navigare din meniu
+            document.querySelectorAll('.nav-link').forEach(link => {
+                link.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    loadPage(this.dataset.page);
+                });
+            });
+            // Meniu mobil
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', function () {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+            // Încarcă home la start
+            loadPage('home');
+        });
+        window.loadPage = loadPage;
+    </script>
 </body>
 
 </html>

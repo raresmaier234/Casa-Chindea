@@ -10,5 +10,14 @@
   },
   "devDependencies": {
     "vite": "^5.4.2"
+  },
+  "dependencies": {
+    "cors": "^2.8.5",
+    "dotenv": "^16.5.0",
+    "express": "^5.1.0",
+    "express-rate-limit": "^7.5.1",
+    "node-fetch": "^2.7.0",
+    "nodemailer": "^7.0.3",
+    "pocketbase": "^0.26.1"
   }
 }
