@@ -51,5 +51,3 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
     }
     return data;
 }
-
-export default app;
