@@ -64,3 +64,5 @@ app.post(`/api/contact`, async (req, res) => {
         res.status(500).json({ error: 'Eroare la trimitere: ' + err.message });
     }
 });
+
+export default app;

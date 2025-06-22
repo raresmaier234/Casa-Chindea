@@ -49,3 +49,5 @@ app.post('/api/photos', upload.single('file'), async (req, res) => {
         res.status(500).json({ error: 'Eroare la upload.' });
     }
 });
+
+export default app;
