@@ -11,7 +11,6 @@ import PocketBase from 'pocketbase';
 
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const apiUrl = process.env.VITE_API_URL;
 
 const app = express();
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
@@ -22,7 +21,7 @@ app.use(express.json());
 app.use(express.static(join(__dirname, "js")));
 
 // Endpoint to serve the configuration file
-app.get(`${apiUrl}/auth_config.json`, (req, res) => {
+app.get(`/auth_config.json`, (req, res) => {
     res.sendFile(join(__dirname, "auth_config.json"));
 });
 
@@ -37,10 +36,10 @@ const limiter = rateLimit({
     max: 5,
     message: 'Prea multe cereri. Încearcă din nou mai târziu.'
 });
-app.use(`${apiUrl}/contact`, limiter);
+app.use(`/contact`, limiter);
 
 // Contact endpoint
-app.post(`${apiUrl}/contact`, async (req, res) => {
+app.post(`/contact`, async (req, res) => {
     const { name, email, subject, message, recaptchaToken } = req.body;
     if (!name || !email || !subject || !message || !recaptchaToken) {
         return res.status(400).json({ error: 'Toate câmpurile sunt obligatorii, inclusiv reCAPTCHA.' });
@@ -141,7 +140,7 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
 // sendWhatsAppMessage('407xxxxxxxx', 'Test rezervare Casa Chindea!').then(console.log).catch(console.error);
 
 // Booking endpoint
-app.post(`${apiUrl}/api/booking`, async (req, res) => {
+app.post(`/api/booking`, async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
