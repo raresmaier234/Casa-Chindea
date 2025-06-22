@@ -23,13 +23,13 @@ app.use(express.static(join(__dirname, "js")));
 app.get('/api/photos', async (req, res) => {
     try {
         const photos = await pb.collection('photos').getList(1, 10, { sort: '-created' });
-        // Construiește URL-urile imaginilor
         const items = photos.items.map(photo => ({
             ...photo,
             imageUrl: pb.files.getUrl(photo, photo.image)
         }));
         res.json({ items });
     } catch (err) {
+        console.error('❌ Eroare la încărcarea pozelor:', err);
         res.status(500).json({ error: 'Eroare la încărcarea pozelor.' });
     }
 });
@@ -52,6 +52,8 @@ const limiter = rateLimit({
 });
 app.use(`/contact`, limiter);
 
+app.get('/api/test', (req, res) => res.json({ message: 'Backend is working' }));
+
 // Contact endpoint
 app.post(`/contact`, async (req, res) => {
     const { name, email, subject, message, recaptchaToken } = req.body;
@@ -59,6 +61,7 @@ app.post(`/contact`, async (req, res) => {
         return res.status(400).json({ error: 'Toate câmpurile sunt obligatorii, inclusiv reCAPTCHA.' });
     }
     try {
+        console.log('GET /api/photos called');
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
         const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
