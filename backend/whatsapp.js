@@ -7,29 +7,35 @@ dotenv.config();
 /**
  * Trimite un mesaj WhatsApp folosind Meta API
  * @param {string} toPhone - numărul destinatarului (format international, ex: '407xxxxxxxx')
- * @param {string} message - textul mesajului
+ * @param {object} bookingData - obiect cu datele rezervării
  * @returns {Promise<object>} răspunsul de la Meta API
  */
-export async function sendWhatsAppMessage(toPhone, message) {
-    // Folosește versiunea corectă din curl-ul tău (v22.0)
+export async function sendWhatsAppMessage(toPhone, bookingData) {
     const url = `https://graph.facebook.com/v22.0/${process.env.WHATSAPP_PHONE_ID}/messages`;
-    // Dacă vrei să trimiți un mesaj text simplu:
     const payload = {
         messaging_product: 'whatsapp',
         to: toPhone,
-        type: 'text',
-        text: { body: message }
+        type: 'template',
+        template: {
+            name: 'booking_casa_chindea',
+            language: { code: 'en' },
+            components: [
+                {
+                    type: 'body',
+                    parameters: [
+                        { type: 'text', text: bookingData.name },
+                        { type: 'text', text: bookingData.phone },
+                        { type: 'text', text: String(bookingData.guests) },
+                        { type: 'text', text: bookingData.checkin },
+                        { type: 'text', text: bookingData.checkout },
+                        { type: 'text', text: bookingData.roomType },
+                        { type: 'text', text: bookingData.message || '-' }
+                    ]
+                }
+            ]
+        }
     };
-    // Dacă vrei să trimiți un template (exemplu):
-    // const payload = {
-    //     messaging_product: 'whatsapp',
-    //     to: toPhone,
-    //     type: 'template',
-    //     template: {
-    //         name: 'hello_world',
-    //         language: { code: 'en_US' }
-    //     }
-    // };
+    console.log('WhatsApp API payload:', JSON.stringify(payload, null, 2));
     const res = await fetch(url, {
         method: 'POST',
         headers: {
@@ -40,10 +46,8 @@ export async function sendWhatsAppMessage(toPhone, message) {
     });
     const data = await res.json();
     if (!res.ok) {
+        console.error('WhatsApp API error:', data);
         throw new Error(data.error?.message || 'Eroare la trimitere WhatsApp');
     }
     return data;
 }
-
-// Exemplu de utilizare (decomentează pentru test):
-// sendWhatsAppMessage('407xxxxxxxx', 'Test rezervare Casa Chindea!').then(console.log).catch(console.error);

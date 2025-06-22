@@ -15,18 +15,17 @@ app.use(cors());
 app.use(express.json());
 
 const limiter = rateLimit({
-    windowMs: 60 * 1000, // 1 minut
-    max: 5, // max 5 cereri per minut de la același IP
+    windowMs: 60 * 1000,
+    max: 5,
     message: 'Prea multe cereri. Încearcă din nou mai târziu.'
 });
 
 app.use('/api/contact', limiter);
-app.post('/api/contact', async (req, res) => {
+app.post(`/api/contact`, async (req, res) => {
     const { name, email, subject, message, recaptchaToken } = req.body;
     if (!name || !email || !subject || !message || !recaptchaToken) {
         return res.status(400).json({ error: 'Toate câmpurile sunt obligatorii, inclusiv reCAPTCHA.' });
     }
-    // Verificare reCAPTCHA Google
     try {
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
         const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
@@ -51,9 +50,9 @@ app.post('/api/contact', async (req, res) => {
             }
         });
         await transporter.sendMail({
-            from: process.env.SMTP_USER, // adresa ta validată la ElasticEmail
+            from: process.env.SMTP_USER,
             to: process.env.CONTACT_TO,
-            replyTo: email, // adresa introdusă de utilizator
+            replyTo: email,
             subject: `${subject} (de la ${name})`,
             html: `
         <h3>Mesaj de la ${name}</h3>
@@ -67,41 +66,3 @@ app.post('/api/contact', async (req, res) => {
         res.status(500).json({ error: 'Eroare la trimitere: ' + err.message });
     }
 });
-
-// Endpoint pentru rezervare
-app.post('/api/booking', async (req, res) => {
-    const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
-    if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
-        return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
-    }
-    // Debug: loghează datele primite
-    console.log('Booking received:', { name, email, phone, guests, checkin, checkout, roomType, message });
-    const text = `Rezervare nouă Casa Chindea:\nNume: ${name}\nTelefon: ${phone}\nEmail: ${email}\nPersoane: ${guests}\nCheck-in: ${checkin}\nCheck-out: ${checkout}\nCameră: ${roomType}\nMesaj: ${message || '-'}`;
-    try {
-        // Salvează în PocketBase (colecția booking, câmpurile trebuie să corespundă cu schema PB!)
-        const pbResult = await pb.collection('booking').create({
-            name,
-            email,
-            phone,
-            guests,
-            checkin,
-            checkout,
-            roomType,
-            message
-        });
-        console.log('PocketBase result:', pbResult);
-        // Trimite mesaj WhatsApp
-        if (!process.env.CONTACT_PHONE) {
-            throw new Error('CONTACT_PHONE nu este setat în .env!');
-        }
-        const waResult = await sendWhatsAppMessage(process.env.CONTACT_PHONE, text);
-        console.log('WhatsApp result:', waResult);
-        res.json({ success: true });
-    } catch (err) {
-        console.error('Eroare:', err);
-        res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
-    }
-});
-
-const PORT = process.env.PORT || 3001;
-app.listen(PORT, () => console.log('Contact server running on port', PORT));
