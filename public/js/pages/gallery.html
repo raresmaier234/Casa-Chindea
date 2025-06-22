@@ -95,17 +95,7 @@
             <div id="full-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Photos will be loaded here -->
             </div>
-            <div class="mt-16 bg-gray-50 rounded-2xl p-8">
-                <h3 class="text-2xl font-bold text-gray-900 mb-6">Adaugă Poze Noi</h3>
-                <div class="flex flex-col space-y-4">
-                    <input type="file" id="photo-upload" accept="image/*" multiple
-                        class="border border-gray-300 rounded-lg p-3">
-                    <button onclick="uploadPhotos()"
-                        class="bg-primary hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors">
-                        Încarcă Pozele
-                    </button>
-                </div>
-            </div>
+            <!-- Formularul de upload a fost eliminat pentru utilizatorii publici -->
         </div>
     </section>
     <script>
@@ -141,40 +131,8 @@
                 gallery.innerHTML = `<div class='col-span-full text-center py-12 text-red-400'>Eroare la încărcarea pozelor: ${error.message}<br><pre>${error.stack}</pre></div>`;
             }
         }
-        async function uploadPhotos() {
-            const fileInput = document.getElementById('photo-upload');
-            const files = fileInput.files;
-            if (files.length === 0) {
-                alert('Te rog selectează cel puțin o poză.');
-                return;
-            }
-            try {
-                for (let file of files) {
-                    const formData = new FormData();
-                    formData.append('image', file);
-                    formData.append('title', file.name);
-                    const response = await fetch('/api/photos', {
-                        method: 'POST',
-                        body: formData
-                    });
-                    if (!response.ok) {
-                        throw new Error(`Failed to upload ${file.name}: ${response.statusText}`);
-                    }
-                }
-                alert('Pozele au fost încărcate cu succes!');
-                fileInput.value = '';
-                loadGalleryPhotos();
-            } catch (error) {
-                console.error('Error uploading photos:', error);
-                alert('Eroare la încărcarea pozelor. Te rog încearcă din nou.');
-            }
-        }
         document.addEventListener('DOMContentLoaded', () => {
             loadGalleryPhotos();
-            document.querySelector('button[onclick="uploadPhotos()"]')?.addEventListener('click', e => {
-                e.preventDefault();
-                uploadPhotos();
-            });
         });
     </script>
 
