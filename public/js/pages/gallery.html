@@ -112,10 +112,11 @@
         async function loadGalleryPhotos() {
             try {
                 const response = await fetch('/api/photos');
-                const photos = await response.json();
+                const data = await response.json();
+                const photos = data.items || [];
                 const gallery = document.getElementById('full-gallery');
-                if (photos.items.length > 0) {
-                    gallery.innerHTML = photos.items.map(photo => `
+                if (photos.length > 0) {
+                    gallery.innerHTML = photos.map(photo => `
                         <div class="relative overflow-hidden rounded-lg shadow-lg group cursor-pointer">
                             <img src="${pb.files.getUrl(photo, photo.image)}" 
                                  alt="Casa Chindea" 
