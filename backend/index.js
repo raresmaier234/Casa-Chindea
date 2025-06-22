@@ -11,7 +11,7 @@ import PocketBase from 'pocketbase';
 
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
-const apiUrl = import.meta.env.VITE_API_URL;
+const apiUrl = process.env.VITE_API_URL;
 
 const app = express();
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
