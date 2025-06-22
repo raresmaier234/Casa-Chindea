@@ -5,8 +5,6 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import fetch from 'node-fetch';
-import { sendWhatsAppMessage } from './whatsapp.js';
-import pb from '../js/pb.js';
 
 dotenv.config();
 
