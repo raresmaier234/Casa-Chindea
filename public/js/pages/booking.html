@@ -211,7 +211,7 @@
             const roomType = document.getElementById('room-type').value;
             const message = document.getElementById('message').value;
 
-            fetch('http://localhost:3001/api/booking', {
+            fetch('/api/booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, phone, guests, checkin, checkout, roomType, message })
