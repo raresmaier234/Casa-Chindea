@@ -10,6 +10,7 @@ import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
+const apiUrl = import.meta.env.VITE_API_URL;
 
 const app = express();
 app.use(cors());
