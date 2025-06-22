@@ -111,7 +111,8 @@
     <script>
         async function loadGalleryPhotos() {
             try {
-                const photos = await pb.collection('photos').getList(1, 50);
+                const response = await fetch('/api/photos');
+                const photos = await response.json();
                 const gallery = document.getElementById('full-gallery');
                 if (photos.items.length > 0) {
                     gallery.innerHTML = photos.items.map(photo => `
