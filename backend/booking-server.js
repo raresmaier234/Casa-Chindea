@@ -11,7 +11,7 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-app.post('/api/booking', async (req, res) => {
+app.post('/booking', async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
