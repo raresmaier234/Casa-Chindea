@@ -8,6 +8,8 @@ import fetch from 'node-fetch';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import PocketBase from 'pocketbase';
+import multer from 'multer';
+
 
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -182,6 +184,26 @@ app.post(`/api/booking`, async (req, res) => {
     } catch (err) {
         console.error('Eroare:', err);
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
+    }
+});
+
+const upload = multer({ storage: multer.memoryStorage() });
+
+// Endpoint pentru upload poze în PocketBase
+app.post('/api/photos', upload.single('file'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'Niciun fișier trimis.' });
+        }
+        // Creează un nou record în colecția "photos" cu fișierul primit
+        const record = await pb.collection('photos').create({
+            image: new Blob([req.file.buffer], { type: req.file.mimetype }),
+            // poți adăuga și alte câmpuri aici dacă ai nevoie
+        });
+        res.json({ success: true, id: record.id });
+    } catch (err) {
+        console.error('❌ Eroare la upload:', err);
+        res.status(500).json({ error: 'Eroare la upload.' });
     }
 });
 
