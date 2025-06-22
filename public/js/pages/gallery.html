@@ -95,6 +95,17 @@
             <div id="full-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Photos will be loaded here -->
             </div>
+            <!-- Lightbox Modal -->
+            <div id="lightbox-modal"
+                class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+                <button id="lightbox-close"
+                    class="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
+                <button id="lightbox-prev"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8592;</button>
+                <img id="lightbox-img" src="" alt="Poza mărită" class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
+                <button id="lightbox-next"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8594;</button>
+            </div>
             <!-- Formularul de upload a fost eliminat pentru utilizatorii publici -->
         </div>
     </section>
@@ -106,8 +117,8 @@
                 const photos = data.items || [];
                 const gallery = document.getElementById('full-gallery');
                 if (photos.length > 0) {
-                    gallery.innerHTML = photos.map(photo => `
-                        <div class="relative overflow-hidden rounded-lg shadow-lg group cursor-pointer">
+                    gallery.innerHTML = photos.map((photo, idx) => `
+                        <div class="relative overflow-hidden rounded-lg shadow-lg group cursor-pointer" data-idx="${idx}">
                             <img src="${photo.imageUrl}" 
                                  alt="Casa Chindea" 
                                  class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110">
@@ -116,6 +127,41 @@
                             </div>
                         </div>
                     `).join('');
+                    // Lightbox logic
+                    let currentIdx = 0;
+                    const modal = document.getElementById('lightbox-modal');
+                    const img = document.getElementById('lightbox-img');
+                    const closeBtn = document.getElementById('lightbox-close');
+                    const prevBtn = document.getElementById('lightbox-prev');
+                    const nextBtn = document.getElementById('lightbox-next');
+                    function showLightbox(idx) {
+                        currentIdx = idx;
+                        img.src = photos[currentIdx].imageUrl;
+                        modal.classList.remove('hidden');
+                    }
+                    gallery.querySelectorAll('.group').forEach((el, idx) => {
+                        el.addEventListener('click', () => showLightbox(idx));
+                    });
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+                    prevBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        currentIdx = (currentIdx - 1 + photos.length) % photos.length;
+                        img.src = photos[currentIdx].imageUrl;
+                    };
+                    nextBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        currentIdx = (currentIdx + 1) % photos.length;
+                        img.src = photos[currentIdx].imageUrl;
+                    };
+                    modal.onclick = (e) => {
+                        if (e.target === modal) modal.classList.add('hidden');
+                    };
+                    document.addEventListener('keydown', function (ev) {
+                        if (modal.classList.contains('hidden')) return;
+                        if (ev.key === 'ArrowLeft') prevBtn.onclick(ev);
+                        if (ev.key === 'ArrowRight') nextBtn.onclick(ev);
+                        if (ev.key === 'Escape') closeBtn.onclick();
+                    });
                 } else {
                     gallery.innerHTML = `
                         <div class="col-span-full text-center py-12">
