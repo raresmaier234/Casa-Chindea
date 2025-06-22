@@ -82,27 +82,6 @@
             btn.addEventListener('click', function () {
                 menu.classList.toggle('hidden');
             });
-
-            // Încarcă 4 poze din PocketBase prin backend
-            async function loadAboutGallery() {
-                try {
-                    const response = await fetch('/api/photos?limit=4');
-                    const data = await response.json();
-                    const photos = data.items || [];
-                    const gallery = document.getElementById('about-gallery');
-                    if (photos.length > 0) {
-                        gallery.innerHTML = photos.map(photo => `
-                            <img src="${photo.imageUrl}" alt="Casa Chindea" class="rounded-lg shadow-lg">
-                        `).join('');
-                    } else {
-                        gallery.innerHTML = `<div class='col-span-full text-center py-12 text-gray-400'>Nu există poze încărcate.</div>`;
-                    }
-                } catch (error) {
-                    const gallery = document.getElementById('about-gallery');
-                    gallery.innerHTML = `<div class='col-span-full text-center py-12 text-red-400'>Eroare la încărcarea pozelor.</div>`;
-                }
-            }
-            loadAboutGallery();
         });
     </script>
     <section class="py-20 bg-white">
@@ -133,8 +112,15 @@
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4" id="about-gallery">
-                    <!-- Pozele din PocketBase vor fi încărcate aici dinamic -->
+                <div class="grid grid-cols-2 gap-4">
+                    <img src="https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=400"
+                        alt="Casa Chindea exterior" class="rounded-lg shadow-lg">
+                    <img src="https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=400"
+                        alt="Peisaj montan" class="rounded-lg shadow-lg mt-8">
+                    <img src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=400"
+                        alt="Interior confortabil" class="rounded-lg shadow-lg -mt-8">
+                    <img src="https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=400"
+                        alt="Terasă cu priveliște" class="rounded-lg shadow-lg">
                 </div>
             </div>
             <!-- Facilities -->
