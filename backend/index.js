@@ -7,7 +7,6 @@ import { fileURLToPath } from "url";
 import bookingRouter from './booking-server.js';
 import contactRouter from './contact-server.js';
 import galleryRouter from './gallery-server.js';
-import whatsappRouter from './whatsapp.js';
 
 
 dotenv.config();
@@ -24,7 +23,6 @@ app.use(express.static(join(__dirname, "js")));
 app.use(bookingRouter);
 app.use(contactRouter);
 app.use(galleryRouter);
-app.use(whatsappRouter);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log('Server running on port', PORT));
