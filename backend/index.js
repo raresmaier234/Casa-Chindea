@@ -25,8 +25,10 @@ app.use(express.static(join(__dirname, "js")));
 app.get('/api/photos', async (req, res) => {
     try {
         // Preia limita din query sau folosește 10 ca default
-        const limit = parseInt(req.query.limit, 10) || 10;
-        const photos = await pb.collection('photos').getList(1, limit, { sort: '-created' });
+        let limit = parseInt(req.query.limit, 10);
+        if (isNaN(limit) || limit < 1) limit = 10;
+        // PocketBase returnează maxim 500 per pagină, dar noi vrem doar limit
+        const photos = await pb.collection('photos').getList(1, limit, { perPage: limit, sort: '-created' });
         const items = photos.items.map(photo => ({
             ...photo,
             imageUrl: pb.getFileUrl(photo, photo.image)
