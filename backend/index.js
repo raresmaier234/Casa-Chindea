@@ -25,23 +25,13 @@ app.get('/api/photos', async (req, res) => {
         const photos = await pb.collection('photos').getList(1, 10, { sort: '-created' });
         const items = photos.items.map(photo => ({
             ...photo,
-            imageUrl: pb.files.getUrl(photo, photo.image)
+            imageUrl: pb.getFileUrl(photo, photo.image)
         }));
         res.json({ items });
     } catch (err) {
         console.error('❌ Eroare la încărcarea pozelor:', err);
         res.status(500).json({ error: 'Eroare la încărcarea pozelor.' });
     }
-});
-
-// Endpoint to serve the configuration file
-app.get(`/auth_config.json`, (req, res) => {
-    res.sendFile(join(__dirname, "auth_config.json"));
-});
-
-// Serve the index page for all other requests (catch-all, must be last)
-app.get(/^\/(?!api).*/, (_, res) => {
-    res.sendFile(join(__dirname, "index.html"));
 });
 
 
