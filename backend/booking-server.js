@@ -3,14 +3,13 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import PocketBase from 'pocketbase';
+import pb from '../js/pb.js';
 import { sendWhatsAppMessage } from './whatsapp.js';
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
-const pb = new PocketBase('http://127.0.0.1:8090');
-
 
 app.post('/api/booking', async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;

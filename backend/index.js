@@ -5,22 +5,24 @@ import dotenv from 'dotenv';
 import nodemailer from 'nodemailer';
 import rateLimit from 'express-rate-limit';
 import fetch from 'node-fetch';
-import PocketBase from 'pocketbase';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import PocketBase from 'pocketbase';
+
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const apiUrl = import.meta.env.VITE_API_URL;
 
 const app = express();
+const pb = new PocketBase(process.env.POCKET_BASE_URL);
+
 app.use(cors());
 app.use(express.json());
-const pb = new PocketBase('http://127.0.0.1:8090');
 
 app.use(express.static(join(__dirname, "js")));
 
 // Endpoint to serve the configuration file
-app.get("/auth_config.json", (req, res) => {
+app.get(`${apiUrl}/auth_config.json`, (req, res) => {
     res.sendFile(join(__dirname, "auth_config.json"));
 });
 
@@ -35,10 +37,10 @@ const limiter = rateLimit({
     max: 5,
     message: 'Prea multe cereri. Încearcă din nou mai târziu.'
 });
-app.use('/api/contact', limiter);
+app.use(`${apiUrl}/contact`, limiter);
 
 // Contact endpoint
-app.post('/api/contact', async (req, res) => {
+app.post(`${apiUrl}/contact`, async (req, res) => {
     const { name, email, subject, message, recaptchaToken } = req.body;
     if (!name || !email || !subject || !message || !recaptchaToken) {
         return res.status(400).json({ error: 'Toate câmpurile sunt obligatorii, inclusiv reCAPTCHA.' });
@@ -139,7 +141,7 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
 // sendWhatsAppMessage('407xxxxxxxx', 'Test rezervare Casa Chindea!').then(console.log).catch(console.error);
 
 // Booking endpoint
-app.post('/api/booking', async (req, res) => {
+app.post(`${apiUrl}/api/booking`, async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
