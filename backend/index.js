@@ -20,6 +20,20 @@ app.use(express.json());
 
 app.use(express.static(join(__dirname, "js")));
 
+app.get('/api/photos', async (req, res) => {
+    try {
+        const photos = await pb.collection('photos').getList(1, 10, { sort: '-created' });
+        // Construiește URL-urile imaginilor
+        const items = photos.items.map(photo => ({
+            ...photo,
+            imageUrl: pb.files.getUrl(photo, photo.image)
+        }));
+        res.json({ items });
+    } catch (err) {
+        res.status(500).json({ error: 'Eroare la încărcarea pozelor.' });
+    }
+});
+
 // Endpoint to serve the configuration file
 app.get(`/auth_config.json`, (req, res) => {
     res.sendFile(join(__dirname, "auth_config.json"));
@@ -177,18 +191,6 @@ app.post(`/api/booking`, async (req, res) => {
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
     }
 });
-app.get('/api/photos', async (req, res) => {
-    try {
-        const photos = await pb.collection('photos').getList(1, 10, { sort: '-created' });
-        // Construiește URL-urile imaginilor
-        const items = photos.items.map(photo => ({
-            ...photo,
-            imageUrl: pb.files.getUrl(photo, photo.image)
-        }));
-        res.json({ items });
-    } catch (err) {
-        res.status(500).json({ error: 'Eroare la încărcarea pozelor.' });
-    }
-});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log('Server running on port', PORT));
