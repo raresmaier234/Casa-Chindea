@@ -24,7 +24,9 @@ app.use(express.static(join(__dirname, "js")));
 
 app.get('/api/photos', async (req, res) => {
     try {
-        const photos = await pb.collection('photos').getList(1, 10, { sort: '-created' });
+        // Preia limita din query sau folosește 10 ca default
+        const limit = parseInt(req.query.limit, 10) || 10;
+        const photos = await pb.collection('photos').getList(1, limit, { sort: '-created' });
         const items = photos.items.map(photo => ({
             ...photo,
             imageUrl: pb.getFileUrl(photo, photo.image)
