@@ -6,7 +6,8 @@ import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import fetch from 'node-fetch';
 import { sendWhatsAppMessage } from './whatsapp.js';
-import PocketBase from 'pocketbase';
+import pb from '../js/pb.js';
+
 dotenv.config();
 
 const app = express();
@@ -67,7 +68,6 @@ app.post('/api/contact', async (req, res) => {
     }
 });
 
-const pb = new PocketBase('http://127.0.0.1:8090');
 // Endpoint pentru rezervare
 app.post('/api/booking', async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;

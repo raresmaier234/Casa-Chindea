@@ -1,4 +1,3 @@
 // PocketBase initialization
-const pb = new PocketBase('http://127.0.0.1:8090');
-
+const pb = new window.PocketBase(window.POCKET_BASE_URL);
 export default pb;
