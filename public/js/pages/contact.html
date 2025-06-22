@@ -281,9 +281,7 @@
             tries.push(now);
             localStorage.setItem('contactTries', JSON.stringify(tries));
 
-            // Folosește doar window.API_URL sau fallback gol
-            const API_URL = window.API_URL || '';
-            fetch(`${API_URL}/api/contact`, {
+            fetch(`/api/contact`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 body: JSON.stringify({ name, email, subject, message, recaptchaToken })
