@@ -89,16 +89,18 @@
         <div id="hero-bg" class="absolute inset-0 w-full h-full">
             <!-- Imaginile vor fi încărcate și glisate automat aici -->
         </div>
-        <div class="absolute inset-0 bg-black opacity-40"></div>
+        <div class="absolute inset-0 bg-black opacity-30"></div>
         <div class="relative z-10 text-center text-white px-4">
-            <h1 class="text-5xl md:text-7xl font-bold mb-6">Casa Chindea</h1>
+            <h1 class="text-5xl md:text-7xl font-semibold mb-6" style="font-weight:600; letter-spacing:-1px;">Casa
+                Chindea</h1>
             <p class="text-xl md:text-2xl mb-8">Refugiul tău în inima naturii</p>
             <button onclick="window.location='/js/pages/booking.html'"
                 class="bg-accent hover:bg-green-400 text-gray-900 font-bold py-4 px-8 rounded-full text-lg transition-all duration-300 transform hover:scale-105">
                 Rezervă Acum
             </button>
         </div>
-        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce z-10">
+        <div class="absolute bottom-10 left-1/2 transform -translate-x-1/2 animate-bounce z-10 cursor-pointer"
+            id="scroll-arrow">
             <i class="fas fa-chevron-down text-white text-2xl"></i>
         </div>
     </section>
@@ -112,7 +114,7 @@
                 if (photos.length > 0) {
                     heroBg.innerHTML = photos.map((photo, idx) => {
                         return `<img src="${photo.imageUrl}"
-                        class="hero-slide absolute inset-0 w-full h-full object-cover blur-lg opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
+                        class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
                         style="z-index:0;" alt="Hero ${idx + 1}">`;
                     }).join('');
                     let current = 0;
@@ -123,11 +125,11 @@
                         current = (current + 1) % slides.length;
                     }, 3500);
                 } else {
-                    heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover blur-lg opacity-100' alt='Hero Default'>`;
+                    heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
                 }
             } catch (e) {
                 console.error('HERO ERROR:', e);
-                document.getElementById('hero-bg').innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover blur-lg opacity-100' alt='Hero Default'>`;
+                document.getElementById('hero-bg').innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
             }
         }
 
@@ -176,7 +178,17 @@
             loadHeroImages().then(() => {
                 loadHomeGallery();
             });
+            // Scroll la galerie când apeși pe săgeată
+            document.getElementById('scroll-arrow').addEventListener('click', function () {
+                document.getElementById('photo-gallery').scrollIntoView({ behavior: 'smooth' });
+            });
         });
+        // Butonul "Vezi Toate Pozele" duce în galerie
+        function loadPage(page) {
+            if (page === 'gallery') {
+                window.location = '/js/pages/gallery.html';
+            }
+        }
     </script>
     <!-- Features Section -->
     <section class="py-20 bg-white">
