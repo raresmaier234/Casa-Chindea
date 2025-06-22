@@ -50,3 +50,5 @@ app.post(`/api/booking`, async (req, res) => {
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
     }
 });
+
+export default app;
