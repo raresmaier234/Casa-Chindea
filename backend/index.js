@@ -6,14 +6,29 @@ import nodemailer from 'nodemailer';
 import rateLimit from 'express-rate-limit';
 import fetch from 'node-fetch';
 import PocketBase from 'pocketbase';
+import { dirname, join } from "path";
+import { fileURLToPath } from "url";
 dotenv.config();
+const __dirname = dirname(fileURLToPath(import.meta.url));
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 const pb = new PocketBase('http://127.0.0.1:8090');
 
-// Rate limit pentru contact
+app.use(express.static(join(__dirname, "js")));
+
+// Endpoint to serve the configuration file
+app.get("/auth_config.json", (req, res) => {
+    res.sendFile(join(__dirname, "auth_config.json"));
+});
+
+// Serve the index page for all other requests (catch-all, must be last)
+app.get(/^\/(?!api).*/, (_, res) => {
+    res.sendFile(join(__dirname, "index.html"));
+});
+
+
 const limiter = rateLimit({
     windowMs: 60 * 1000,
     max: 5,

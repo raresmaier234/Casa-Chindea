@@ -1,0 +1,12 @@
+{
+  "version": 2,
+  "public": true,
+  "rewrites": [
+    { "source": "/", "destination": "/index.html" },
+    { "source": "/js/pages/:match*", "destination": "/js/pages/:match*" },
+    { "source": "/js/components/:match*", "destination": "/js/components/:match*" },
+    { "source": "/favicon.ico", "destination": "/favicon.ico" },
+    { "source": "/vite.svg", "destination": "/vite.svg" },
+    { "source": "/javascript.svg", "destination": "/javascript.svg" }
+  ]
+}

@@ -45,6 +45,8 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
                     <a href="/js/pages/contact.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <a href="/js/pages/login.html"
+                        class="nav-link text-primary font-semibold hover:underline transition-colors duration-200">Login</a>
                 </div>
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
@@ -56,7 +58,8 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1">
-                <a href="js/pages/home.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
                 <a href="/js/pages/rooms.html"
@@ -67,9 +70,21 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
                 <a href="/js/pages/contact.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <a href="/js/pages/login.html"
+                    class="nav-link block px-3 py-2 text-primary font-semibold hover:underline">Login</a>
             </div>
         </div>
     </nav>
+    <script>
+        // Mobile navbar toggle
+        document.addEventListener('DOMContentLoaded', function () {
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            btn.addEventListener('click', function () {
+                menu.classList.toggle('hidden');
+            });
+        });
+    </script>
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
         <div id="hero-bg" class="absolute inset-0 w-full h-full">
             <!-- Imaginile vor fi încărcate și glisate automat aici -->
