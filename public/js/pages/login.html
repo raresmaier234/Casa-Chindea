@@ -47,8 +47,15 @@
         }
 
         .form-floating input {
-            padding-top: 1.625rem;
-            padding-bottom: 0.625rem;
+            padding-top: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+        
+        @media (min-width: 640px) {
+            .form-floating input {
+                padding-top: 1.625rem;
+                padding-bottom: 0.625rem;
+            }
         }
 
         .form-floating label {
@@ -56,12 +63,20 @@
             top: 0;
             left: 0;
             height: 100%;
-            padding: 1rem 0.75rem;
+            padding: 0.75rem;
             pointer-events: none;
             border: 1px solid transparent;
             transform-origin: 0 0;
             transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
             color: #6b7280;
+            font-size: 0.875rem;
+        }
+        
+        @media (min-width: 640px) {
+            .form-floating label {
+                padding: 1rem 0.75rem;
+                font-size: 1rem;
+            }
         }
 
         .form-floating input:focus~label,
@@ -79,7 +94,7 @@
 </head>
 
 <body
-    class="bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 min-h-screen flex flex-col relative overflow-hidden">
+    class="bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 min-h-screen flex flex-col relative">
     <!-- Background Animation -->
     <div class="absolute inset-0 overflow-hidden pointer-events-none">
         <div
@@ -144,78 +159,77 @@
     </nav>
     <script src="/js/components/navigation.js"></script>
     <!-- Login Form -->
-    <main class="flex-1 flex items-center justify-center py-12 relative z-10">
-        <div class="glass-effect shadow-2xl rounded-3xl p-8 max-w-md w-full mx-4 animate-slide-up">
+    <main class="flex-1 flex items-center justify-center py-8 px-4 relative z-10 min-h-0">
+        <div class="glass-effect shadow-2xl rounded-3xl p-6 sm:p-8 max-w-md w-full animate-slide-up">
             <!-- Welcome Header -->
-            <div class="text-center mb-8">
+            <div class="text-center mb-6 sm:mb-8">
                 <div
-                    class="w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4 shadow-lg animate-bounce-gentle">
-                    <i class="fas fa-user text-white text-2xl"></i>
+                    class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg animate-bounce-gentle">
+                    <i class="fas fa-user text-white text-xl sm:text-2xl"></i>
                 </div>
                 <h2
-                    class="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                    class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
                     Bun venit!
                 </h2>
-                <p class="text-gray-600">Conectează-te la contul tău.</p>
+                <p class="text-gray-600 text-sm sm:text-base">Conectează-te la contul tău.</p>
             </div>
 
             <!-- Success/Loading States -->
-            <div id="login-success" class="hidden text-center mb-6">
+            <div id="login-success" class="hidden text-center mb-4 sm:mb-6">
                 <div
-                    class="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4 animate-bounce-gentle">
-                    <i class="fas fa-check text-green-600 text-xl"></i>
+                    class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-bounce-gentle">
+                    <i class="fas fa-check text-green-600 text-lg sm:text-xl"></i>
                 </div>
-                <h3 class="text-lg font-semibold text-green-700 mb-2">Autentificare reușită!</h3>
-                <p class="text-green-600">Te redirectăm către profilul tău...</p>
+                <h3 class="text-base sm:text-lg font-semibold text-green-700 mb-2">Autentificare reușită!</h3>
+                <p class="text-green-600 text-sm sm:text-base">Te redirectăm către profilul tău...</p>
             </div>
 
-            <form id="login-form" class="space-y-6">
+            <form id="login-form" class="space-y-4 sm:space-y-6">
                 <div class="form-floating">
                     <input type="email" id="email" name="email" required placeholder=" "
-                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
                         autocomplete="username">
-                    <label for="email" class="px-4">
+                    <label for="email" class="px-4 text-sm sm:text-base">
                         <i class="fas fa-envelope mr-2 text-primary"></i>Adresa de email
                     </label>
                 </div>
 
                 <div class="form-floating">
                     <input type="password" id="password" name="password" required placeholder=" "
-                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-4 focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
                         autocomplete="current-password">
-                    <label for="password" class="px-4">
+                    <label for="password" class="px-4 text-sm sm:text-base">
                         <i class="fas fa-lock mr-2 text-primary"></i>Parola
                     </label>
                 </div>
 
                 <button type="submit" id="login-btn"
-                    class="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-4 px-6 rounded-xl text-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg">
+                    class="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-3 sm:py-4 px-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg">
                     <i class="fas fa-sign-in-alt"></i>
                     <span>Autentificare</span>
                 </button>
 
                 <div id="login-error"
-                    class="text-red-500 text-center mt-4 p-3 bg-red-50 rounded-lg border border-red-200 hidden animate-fade-in">
+                    class="text-red-500 text-center mt-3 sm:mt-4 p-3 bg-red-50 rounded-lg border border-red-200 hidden animate-fade-in text-sm sm:text-base">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     <span id="error-message"></span>
                 </div>
             </form>
 
-
             <!-- User Info (when authenticated) -->
-            <div id="user-info" class="hidden mt-6 text-center animate-fade-in">
+            <div id="user-info" class="hidden mt-4 sm:mt-6 text-center animate-fade-in">
                 <!-- Will be populated by JavaScript -->
             </div>
 
             <!-- Logout Button (when authenticated) -->
             <button id="logout-btn"
-                class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl text-lg flex items-center justify-center gap-2 hidden w-full mt-4 transition-all duration-300">
+                class="bg-red-500 hover:bg-red-600 text-white font-bold py-3 px-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 hidden w-full mt-4 transition-all duration-300">
                 <i class="fas fa-sign-out-alt"></i> Logout
             </button>
 
             <!-- Register Link -->
-            <div class="mt-8 text-center">
-                <p class="text-gray-600 text-sm">
+            <div class="mt-6 sm:mt-8 text-center">
+                <p class="text-gray-600 text-xs sm:text-sm">
                     Nu ai cont încă?
                     <a href="#" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
                         Înregistrează-te aici
