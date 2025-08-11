@@ -206,6 +206,7 @@
         let unavailableDateRanges = [];
 
         // Fetch unavailable dates from the backend
+        console.log('Fetching availability from /api/availability...');
         fetch('/api/availability')
             .then(res => res.json())
             .then(data => {
@@ -224,6 +225,10 @@
             return unavailableDateRanges.some(range => {
                 const start = new Date(range.start);
                 const end = new Date(range.end);
+                // Set time to avoid timezone issues
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
                 return date >= start && date <= end;
             });
         }
@@ -239,22 +244,30 @@
 
         function setDateRangeInput(start, end) {
             if (start && end) {
-                document.getElementById('date-range').value = `${formatDateDMY(start)} - ${formatDateDMY(end)}`;
+                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
+                const endFormatted = formatDateDMY(end.toISOString ? end.toISOString().split('T')[0] : end);
+                document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
             } else if (start) {
-                document.getElementById('date-range').value = formatDateDMY(start);
+                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
+                document.getElementById('date-range').value = startFormatted;
             } else {
                 document.getElementById('date-range').value = '';
             }
         }
 
         function initCalendar() {
+            console.log('Initializing calendar with unavailable dates:', unavailableDateRanges);
+
             flatpickr("#date-range", {
                 mode: "range",
                 minDate: "today",
                 locale: "ro",
-                dateFormat: "Y-m-d",
+                dateFormat: "d.m.Y",
+                altInput: true,
+                altFormat: "d.m.Y",
                 disable: [isDateUnavailable],
                 onChange: function (selectedDates) {
+                    console.log('Date selection changed:', selectedDates);
                     if (selectedDates.length === 2) {
                         const [start, end] = selectedDates;
                         document.getElementById('checkin').value = start.toISOString().split('T')[0];
@@ -263,14 +276,17 @@
                         updateBookingSummary();
                     } else if (selectedDates.length === 1) {
                         setDateRangeInput(selectedDates[0]);
+                        document.getElementById('checkin').value = selectedDates[0].toISOString().split('T')[0];
+                        document.getElementById('checkout').value = '';
                     } else {
                         setDateRangeInput();
+                        document.getElementById('checkin').value = '';
+                        document.getElementById('checkout').value = '';
                     }
                 },
-                formatDate: function (date, format) {
-                    // Override Flatpickr's display format for the input
-                    return formatDateDMY(date.toISOString().split('T')[0]);
-                },
+                onReady: function () {
+                    console.log('Flatpickr calendar ready');
+                }
             });
         }
 
