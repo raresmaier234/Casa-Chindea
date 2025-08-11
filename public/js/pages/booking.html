@@ -7,6 +7,10 @@
     <title>Rezervare Casa Chindea</title>
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ro.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -123,17 +127,13 @@
                             </select>
                         </div>
                     </div>
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Check-in</label>
-                            <input type="date" id="checkin" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
-                        </div>
-                        <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Data Check-out</label>
-                            <input type="date" id="checkout" required
-                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
-                        </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perioada Cazării</label>
+                        <input type="text" id="date-range" required placeholder="Alege perioada"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <input type="hidden" id="checkin">
+                        <input type="hidden" id="checkout">
+                        <p class="mt-2 text-sm text-gray-500">Datele ocupate sunt dezactivate în calendar</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Tipul Camerei</label>
@@ -203,6 +203,105 @@
         </div>
     </footer>
     <script>
+        let unavailableDateRanges = [];
+
+        // Fetch unavailable dates from the backend
+        fetch('/api/availability')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success) {
+                    unavailableDateRanges = data.unavailableDates;
+                    initCalendar();
+                }
+            })
+            .catch(err => {
+                console.error('Error fetching availability:', err);
+                initCalendar(); // Initialize anyway but without blocked dates
+            });
+
+        function isDateUnavailable(date) {
+            const dateStr = date.toISOString().split('T')[0];
+            return unavailableDateRanges.some(range => {
+                const start = new Date(range.start);
+                const end = new Date(range.end);
+                return date >= start && date <= end;
+            });
+        }
+
+        function formatDateDMY(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        function setDateRangeInput(start, end) {
+            if (start && end) {
+                document.getElementById('date-range').value = `${formatDateDMY(start)} - ${formatDateDMY(end)}`;
+            } else if (start) {
+                document.getElementById('date-range').value = formatDateDMY(start);
+            } else {
+                document.getElementById('date-range').value = '';
+            }
+        }
+
+        function initCalendar() {
+            flatpickr("#date-range", {
+                mode: "range",
+                minDate: "today",
+                locale: "ro",
+                dateFormat: "Y-m-d",
+                disable: [isDateUnavailable],
+                onChange: function (selectedDates) {
+                    if (selectedDates.length === 2) {
+                        const [start, end] = selectedDates;
+                        document.getElementById('checkin').value = start.toISOString().split('T')[0];
+                        document.getElementById('checkout').value = end.toISOString().split('T')[0];
+                        setDateRangeInput(start, end);
+                        updateBookingSummary();
+                    } else if (selectedDates.length === 1) {
+                        setDateRangeInput(selectedDates[0]);
+                    } else {
+                        setDateRangeInput();
+                    }
+                },
+                formatDate: function (date, format) {
+                    // Override Flatpickr's display format for the input
+                    return formatDateDMY(date.toISOString().split('T')[0]);
+                },
+            });
+        }
+
+        function updateBookingSummary() {
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+            const guests = document.getElementById('guests').value;
+            const roomType = document.getElementById('room-type').value;
+
+            if (checkin && checkout && guests && roomType) {
+                const nights = Math.round((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
+                const pricePerNight = roomType === 'standard' ? 150 : 200;
+                const totalPrice = nights * pricePerNight;
+
+                const summary = `
+                    <p><strong>Check-in:</strong> ${formatDateDMY(checkin)}</p>
+                    <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
+                    <p><strong>Număr nopți:</strong> ${nights}</p>
+                    <p><strong>Număr persoane:</strong> ${guests}</p>
+                    <p><strong>Tip cameră:</strong> ${roomType === 'standard' ? 'Standard' : 'Premium'}</p>
+                    <p><strong>Preț pe noapte:</strong> ${pricePerNight} RON</p>
+                    <p class="text-lg font-bold text-primary"><strong>Total:</strong> ${totalPrice} RON</p>
+                `;
+                document.getElementById('booking-summary').innerHTML = summary;
+            }
+        }
+
+        ['guests', 'room-type'].forEach(id => {
+            document.getElementById(id).addEventListener('change', updateBookingSummary);
+        });
+
         document.getElementById('booking-form').addEventListener('submit', function (e) {
             e.preventDefault();
             const name = document.getElementById('full-name').value;
@@ -224,6 +323,7 @@
                     if (data.success) {
                         alert('Rezervarea a fost trimisă cu succes! Vei primi confirmarea pe WhatsApp.');
                         document.getElementById('booking-form').reset();
+                        document.getElementById('booking-summary').innerHTML = '<p>Completează formularul pentru a vedea rezumatul</p>';
                     } else {
                         alert('Eroare la trimitere: ' + (data.error || 'necunoscută'));
                     }
