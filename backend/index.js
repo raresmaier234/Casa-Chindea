@@ -18,7 +18,7 @@ const app = express();
 app.use(cors({
     origin: [
         'http://localhost:3000',
-        'http://localhost:8080', 
+        'http://localhost:8080',
         'https://casa-chindea.vercel.app',
         'https://*.vercel.app'
     ],
@@ -27,11 +27,6 @@ app.use(cors({
 app.use(express.json());
 
 app.use(express.static(join(__dirname, "js")));
-
-// Health check endpoint
-app.get('/api/health', (req, res) => {
-    res.json({ status: 'ok', timestamp: new Date().toISOString() });
-});
 
 app.use(bookingRouter);
 app.use(contactRouter);
