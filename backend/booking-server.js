@@ -38,7 +38,7 @@ app.get('/api/availability', async (req, res) => {
         
         const bookings = await pb.collection('booking').getFullList({
             sort: 'checkin',
-            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`,
+            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`
         });
 
         const unavailableDates = bookings.map(booking => ({

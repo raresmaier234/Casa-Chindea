@@ -213,7 +213,6 @@
             // Fetch unavailable dates from the backend
             fetch('/api/availability')
                 .then(res => {
-                    console.log('API response status:', res.status);
                     if (!res.ok) {
                         throw new Error(`HTTP error! status: ${res.status}`);
                     }
