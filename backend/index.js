@@ -8,6 +8,7 @@ import bookingRouter from './booking-server.js';
 import contactRouter from './contact-server.js';
 import galleryRouter from './gallery-server.js';
 import authRouter from './auth-server.js';
+import adminRouter from './admin-server.js';
 
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -37,6 +38,7 @@ app.use(authRouter);
 app.use(bookingRouter);
 app.use(contactRouter);
 app.use(galleryRouter);
+app.use('/api/admin', adminRouter);
 
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log('Server running on port', PORT));

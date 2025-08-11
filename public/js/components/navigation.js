@@ -57,17 +57,23 @@ class CasaChindeaNav {
 
     removeExistingAuthElements(desktopNav, mobileNav) {
         // Remove from desktop nav
-        const desktopAuthElements = desktopNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"]');
+        const desktopAuthElements = desktopNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"], [href*="admin"]');
         desktopAuthElements.forEach(el => {
-            if (el.textContent.includes('Login') || el.textContent.includes('Logout') || el.textContent.includes('Profil')) {
+            if (el.textContent.includes('Login') || 
+                el.textContent.includes('Logout') || 
+                el.textContent.includes('Profil') ||
+                el.textContent.includes('Admin Dashboard')) {
                 el.remove();
             }
         });
 
         // Remove from mobile nav
-        const mobileAuthElements = mobileNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"]');
+        const mobileAuthElements = mobileNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"], [href*="admin"]');
         mobileAuthElements.forEach(el => {
-            if (el.textContent.includes('Login') || el.textContent.includes('Logout') || el.textContent.includes('Profil')) {
+            if (el.textContent.includes('Login') || 
+                el.textContent.includes('Logout') || 
+                el.textContent.includes('Profil') ||
+                el.textContent.includes('Admin Dashboard')) {
                 el.remove();
             }
         });
@@ -76,6 +82,10 @@ class CasaChindeaNav {
     createAuthenticatedDesktopNav() {
         const element = document.createElement('div');
         element.className = 'relative auth-element';
+        
+        // Check if user is admin
+        const isAdmin = this.currentUser.email && this.currentUser.email.includes('admin');
+        
         element.innerHTML = `
             <button id="profile-dropdown" 
                 class="flex items-center space-x-2 text-primary font-semibold hover:text-secondary transition-colors duration-200">
@@ -83,10 +93,16 @@ class CasaChindeaNav {
                 <span>${this.currentUser.name || 'Profil'}</span>
                 <i class="fas fa-chevron-down text-xs"></i>
             </button>
-            <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+            <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
                 <a href="/js/pages/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-user mr-2"></i>Profilul Meu
                 </a>
+                ${isAdmin ? `
+                    <a href="/js/pages/admin.html" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                        <i class="fas fa-cog mr-2"></i>Admin Dashboard
+                    </a>
+                ` : ''}
+                <hr class="my-1">
                 <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-sign-out-alt mr-2"></i>Logout
                 </button>
@@ -130,11 +146,21 @@ class CasaChindeaNav {
     createAuthenticatedMobileNav() {
         const element = document.createElement('div');
         element.className = 'auth-element border-t border-gray-200 pt-3 mt-3';
+        
+        // Check if user is admin
+        const isAdmin = this.currentUser.email && this.currentUser.email.includes('admin');
+        
         element.innerHTML = `
             <a href="/js/pages/profile.html"
                 class="nav-link block px-3 py-2 text-primary font-semibold hover:bg-gray-50 rounded-md">
                 <i class="fas fa-user mr-2"></i>Profilul Meu
             </a>
+            ${isAdmin ? `
+                <a href="/js/pages/admin.html"
+                    class="nav-link block px-3 py-2 text-red-600 font-semibold hover:bg-red-50 rounded-md">
+                    <i class="fas fa-cog mr-2"></i>Admin Dashboard
+                </a>
+            ` : ''}
             <button id="mobile-logout-btn"
                 class="nav-link block px-3 py-2 text-red-600 font-semibold w-full text-left hover:bg-gray-50 rounded-md">
                 <i class="fas fa-sign-out-alt mr-2"></i>Logout

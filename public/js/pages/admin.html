@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Dashboard - Casa Chindea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-cog mr-2"></i>Admin Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/profile.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Profil</a>
+                    <!-- Auth element will be dynamically added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/profile.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Profil</a>
+                <!-- Auth element will be dynamically added by navigation.js -->
+            </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <!-- Main Content -->
+    <main class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin</h1>
+                        <p class="text-gray-600">Gestionează rezervările și galeria Casa Chindea</p>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-2xl font-bold text-primary" id="stats-total">0</div>
+                        <div class="text-sm text-gray-500">Total rezervări</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white rounded-2xl shadow-lg mb-8">
+                <div class="border-b border-gray-200">
+                    <nav class="flex space-x-8 px-8">
+                        <button id="tab-bookings" 
+                            class="tab-button py-4 px-1 border-b-2 border-primary text-primary font-medium">
+                            <i class="fas fa-calendar-alt mr-2"></i>Rezervări
+                        </button>
+                        <button id="tab-gallery" 
+                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-images mr-2"></i>Galerie
+                        </button>
+                        <button id="tab-calendar" 
+                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-ban mr-2"></i>Blocări Calendar
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Bookings Tab Content -->
+                <div id="content-bookings" class="tab-content p-8">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">Gestionare Rezervări</h2>
+                        <div class="flex space-x-2">
+                            <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-2">
+                                <option value="">Toate</option>
+                                <option value="pending">În așteptare</option>
+                                <option value="confirmed">Confirmate</option>
+                                <option value="cancelled">Anulate</option>
+                            </select>
+                            <button id="refresh-bookings" 
+                                class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="bookings-loading" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-600">Se încarcă rezervările...</p>
+                    </div>
+
+                    <!-- Bookings List -->
+                    <div id="bookings-list" class="hidden space-y-4">
+                        <!-- Bookings will be dynamically inserted here -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="bookings-empty" class="hidden text-center py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există rezervări</h3>
+                        <p class="text-gray-600">Rezervările vor apărea aici când vor fi create.</p>
+                    </div>
+                </div>
+
+                <!-- Gallery Tab Content -->
+                <div id="content-gallery" class="tab-content p-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">Gestionare Galerie</h2>
+                        <button id="add-photo-btn" 
+                            class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Adaugă Poză
+                        </button>
+                    </div>
+
+                    <!-- Photo Upload Form -->
+                    <div id="photo-upload-form" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Selectează Poză</label>
+                                    <input type="file" id="photo-file" accept="image/*" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descriere (opțional)</label>
+                                    <input type="text" id="photo-description" placeholder="Descrierea pozei..."
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button type="submit" 
+                                    class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-upload mr-2"></i>Încarcă
+                                </button>
+                                <button type="button" id="cancel-upload" 
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Gallery Grid -->
+                    <div id="admin-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                        <!-- Photos will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Calendar Blocks Tab Content -->
+                <div id="content-calendar" class="tab-content p-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">Blocări Calendar</h2>
+                        <button id="add-block-btn" 
+                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-ban mr-2"></i>Adaugă Blocare
+                        </button>
+                    </div>
+
+                    <!-- Block Form -->
+                    <div id="block-form" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
+                        <form id="calendar-block-form">
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Început</label>
+                                    <input type="date" id="block-start" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
+                                    <input type="date" id="block-end" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Motiv</label>
+                                    <input type="text" id="block-reason" placeholder="Motiv blocare..."
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex space-x-2">
+                                <button type="submit" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                                    <i class="fas fa-ban mr-2"></i>Blochează
+                                </button>
+                                <button type="button" id="cancel-block" 
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Calendar Blocks List -->
+                    <div id="calendar-blocks" class="space-y-4">
+                        <!-- Blocks will be loaded here -->
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" id="modal-title">Confirmă Acțiunea</h3>
+            <p class="text-gray-600 mb-6" id="modal-message">Ești sigur că vrei să continui?</p>
+            <div class="flex justify-end space-x-2">
+                <button id="modal-cancel" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Anulează
+                </button>
+                <button id="modal-confirm" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    Confirmă
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-4">
+        <!-- Toasts will be dynamically added here -->
+    </div>
+
+    <script>
+        // Check admin authentication
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAdminAuth();
+            initializeTabs();
+            loadBookings();
+            setupEventListeners();
+        });
+
+        function checkAdminAuth() {
+            const token = sessionStorage.getItem('auth_token');
+            const userInfo = sessionStorage.getItem('user_info');
+            
+            if (!token || !userInfo) {
+                showToast('Trebuie să fii autentificat pentru a accesa această pagină', 'error');
+                setTimeout(() => {
+                    window.location.href = '/js/pages/login.html';
+                }, 2000);
+                return false;
+            }
+
+            try {
+                const user = JSON.parse(userInfo);
+                // Check if user is admin (you can implement your own logic here)
+                if (!user.email || !user.email.includes('admin')) {
+                    showToast('Acces restricționat! Doar administratorii pot accesa această pagină.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/js/pages/home.html';
+                    }, 2000);
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                showToast('Sesiune invalidă. Te rog să te autentifici din nou.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/js/pages/login.html';
+                }, 2000);
+                return false;
+            }
+        }
+
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.id.replace('tab-', '');
+                    
+                    // Update button states
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('border-primary', 'text-primary');
+                        btn.classList.add('border-transparent', 'text-gray-500');
+                    });
+                    button.classList.remove('border-transparent', 'text-gray-500');
+                    button.classList.add('border-primary', 'text-primary');
+
+                    // Update content visibility
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+                    // Load content based on tab
+                    if (tabId === 'bookings') loadBookings();
+                    else if (tabId === 'gallery') loadGallery();
+                    else if (tabId === 'calendar') loadCalendarBlocks();
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            // Refresh bookings
+            document.getElementById('refresh-bookings').addEventListener('click', loadBookings);
+            
+            // Filter bookings
+            document.getElementById('filter-status').addEventListener('change', loadBookings);
+
+            // Photo upload
+            document.getElementById('add-photo-btn').addEventListener('click', () => {
+                document.getElementById('photo-upload-form').classList.remove('hidden');
+            });
+
+            document.getElementById('cancel-upload').addEventListener('click', () => {
+                document.getElementById('photo-upload-form').classList.add('hidden');
+                document.getElementById('upload-form').reset();
+            });
+
+            document.getElementById('upload-form').addEventListener('submit', uploadPhoto);
+
+            // Calendar blocks
+            document.getElementById('add-block-btn').addEventListener('click', () => {
+                document.getElementById('block-form').classList.remove('hidden');
+            });
+
+            document.getElementById('cancel-block').addEventListener('click', () => {
+                document.getElementById('block-form').classList.add('hidden');
+                document.getElementById('calendar-block-form').reset();
+            });
+
+            document.getElementById('calendar-block-form').addEventListener('submit', addCalendarBlock);
+
+            // Modal events
+            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            document.getElementById('confirmation-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'confirmation-modal') closeModal();
+            });
+        }
+
+        async function loadBookings() {
+            const loadingEl = document.getElementById('bookings-loading');
+            const listEl = document.getElementById('bookings-list');
+            const emptyEl = document.getElementById('bookings-empty');
+            const filterStatus = document.getElementById('filter-status').value;
+
+            loadingEl.classList.remove('hidden');
+            listEl.classList.add('hidden');
+            emptyEl.classList.add('hidden');
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                let url = '/api/admin/bookings';
+                if (filterStatus) url += `?status=${filterStatus}`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    displayBookings(data.bookings || []);
+                    document.getElementById('stats-total').textContent = data.bookings?.length || 0;
+                } else {
+                    throw new Error('Eroare la încărcarea rezervărilor');
+                }
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                listEl.innerHTML = `<div class="text-red-600 text-center py-4">Eroare: ${error.message}</div>`;
+                listEl.classList.remove('hidden');
+            } finally {
+                loadingEl.classList.add('hidden');
+            }
+        }
+
+        function displayBookings(bookings) {
+            const listEl = document.getElementById('bookings-list');
+            const emptyEl = document.getElementById('bookings-empty');
+
+            if (bookings.length === 0) {
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            listEl.innerHTML = bookings.map(booking => `
+                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                ${formatDate(booking.checkin)} - ${formatDate(booking.checkout)}
+                            </h3>
+                            <p class="text-gray-600">${booking.name || booking.email}</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(booking.status)}">
+                                <i class="${getStatusIcon(booking.status)} mr-1"></i>
+                                ${getStatusText(booking.status)}
+                            </span>
+                            ${booking.status === 'pending' ? `
+                                <button onclick="updateBookingStatus('${booking.id}', 'confirmed')" 
+                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-check mr-1"></i>Aprobă
+                                </button>
+                                <button onclick="updateBookingStatus('${booking.id}', 'cancelled')" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                    <i class="fas fa-times mr-1"></i>Respinge
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-500">Email:</span>
+                            <p class="text-gray-900">${booking.email}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Telefon:</span>
+                            <p class="text-gray-900">${booking.phone || 'N/A'}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Persoane:</span>
+                            <p class="text-gray-900">${booking.guests}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Data rezervării:</span>
+                            <p class="text-gray-900">${formatDate(booking.created)}</p>
+                        </div>
+                    </div>
+                    ${booking.message ? `
+                        <div class="mt-4">
+                            <span class="font-medium text-gray-500">Mesaj:</span>
+                            <p class="text-gray-900 mt-1">${booking.message}</p>
+                        </div>
+                    ` : ''}
+                </div>
+            `).join('');
+
+            listEl.classList.remove('hidden');
+        }
+
+        async function updateBookingStatus(bookingId, newStatus) {
+            const actionText = newStatus === 'confirmed' ? 'aprobă' : 'respinge';
+            
+            showConfirmationModal(
+                `Confirmă ${actionText} rezervarea`,
+                `Ești sigur că vrei să ${actionText} această rezervare?`,
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify({ status: newStatus })
+                        });
+
+                        if (response.ok) {
+                            loadBookings(); // Refresh the list
+                            showToast(`Rezervarea a fost ${newStatus === 'confirmed' ? 'aprobată' : 'respinsă'} cu succes!`, 'success');
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Eroare la actualizarea rezervării');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        async function loadGallery() {
+            // Implementation for loading gallery photos for admin
+            const galleryEl = document.getElementById('admin-gallery');
+            
+            try {
+                const response = await fetch('/api/photos');
+                const data = await response.json();
+                const photos = data.items || [];
+
+                if (photos.length === 0) {
+                    galleryEl.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există poze în galerie</h3>
+                            <p class="text-gray-600">Adaugă prima poză folosind butonul de mai sus.</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                galleryEl.innerHTML = photos.map(photo => `
+                    <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
+                        <img src="${photo.imageUrl}" alt="Gallery photo" 
+                            class="w-full h-64 object-cover">
+                        <div class="p-4">
+                            <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
+                        </div>
+                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-x-2">
+                                <button onclick="editPhoto('${photo.id}')" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-edit mr-1"></i>Editează
+                                </button>
+                                <button onclick="deletePhoto('${photo.id}')" 
+                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                    <i class="fas fa-trash mr-1"></i>Șterge
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                `).join('');
+            } catch (error) {
+                galleryEl.innerHTML = `
+                    <div class="col-span-full text-red-600 text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <p>Eroare la încărcarea galeriei: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function uploadPhoto(e) {
+            e.preventDefault();
+            
+            const formData = new FormData();
+            const fileInput = document.getElementById('photo-file');
+            const description = document.getElementById('photo-description').value;
+            
+            if (!fileInput.files[0]) {
+                showToast('Selectează o poză pentru încărcare', 'error');
+                return;
+            }
+
+            formData.append('photo', fileInput.files[0]);
+            if (description) formData.append('description', description);
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/photos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    document.getElementById('photo-upload-form').classList.add('hidden');
+                    document.getElementById('upload-form').reset();
+                    loadGallery();
+                    showToast('Poza a fost încărcată cu succes!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Eroare la încărcarea pozei');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function editPhoto(photoId) {
+            // Get current photo data first
+            try {
+                const response = await fetch('/api/photos');
+                const data = await response.json();
+                const photos = data.items || [];
+                const photo = photos.find(p => p.id === photoId);
+                
+                if (!photo) {
+                    alert('Poza nu a fost găsită');
+                    return;
+                }
+
+                const newDescription = prompt('Introduceți noua descriere:', photo.description || '');
+                if (newDescription === null) return; // User cancelled
+
+                const token = sessionStorage.getItem('auth_token');
+                const editResponse = await fetch(`/api/admin/photos/${photoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ description: newDescription })
+                });
+
+                if (editResponse.ok) {
+                    loadGallery();
+                    showToast('Descrierea pozei a fost actualizată cu succes!', 'success');
+                } else {
+                    const errorData = await editResponse.json();
+                    throw new Error(errorData.error || 'Eroare la actualizarea pozei');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function deletePhoto(photoId) {
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această poză?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/photos/${photoId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            loadGallery();
+                            showToast('Poza a fost ștearsă cu succes!', 'success');
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Eroare la ștergerea pozei');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        async function loadCalendarBlocks() {
+            // Implementation for loading calendar blocks
+            const blocksEl = document.getElementById('calendar-blocks');
+            
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/calendar-blocks', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const blocks = data.blocks || [];
+
+                    if (blocks.length === 0) {
+                        blocksEl.innerHTML = `
+                            <div class="text-center py-12">
+                                <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
+                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există blocări de calendar</h3>
+                                <p class="text-gray-600">Adaugă o blocare pentru a preveni rezervările în anumite perioade.</p>
+                            </div>
+                        `;
+                        return;
+                    }
+
+                    blocksEl.innerHTML = blocks.map(block => {
+                        const startDate = new Date(block.startDate);
+                        const endDate = new Date(block.endDate);
+                        const isActive = endDate >= new Date();
+                        
+                        return `
+                            <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6">
+                                <div class="flex justify-between items-start">
+                                    <div class="flex-1">
+                                        <div class="flex items-center mb-2">
+                                            <h4 class="font-semibold ${isActive ? 'text-red-800' : 'text-gray-600'}">
+                                                ${formatDate(block.startDate)} - ${formatDate(block.endDate)}
+                                            </h4>
+                                            ${isActive ? 
+                                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' : 
+                                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
+                                            }
+                                        </div>
+                                        <p class="${isActive ? 'text-red-600' : 'text-gray-500'}">${block.reason || 'Fără motiv specificat'}</p>
+                                        <p class="text-xs ${isActive ? 'text-red-500' : 'text-gray-400'} mt-2">
+                                            Creată: ${formatDate(block.created)}
+                                        </p>
+                                    </div>
+                                    <button onclick="deleteCalendarBlock('${block.id}')" 
+                                        class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
+                                        <i class="fas fa-trash"></i>
+                                    </button>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    throw new Error('Eroare la încărcarea blocărilor');
+                }
+            } catch (error) {
+                blocksEl.innerHTML = `
+                    <div class="text-red-600 text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <p>Eroare la încărcarea blocărilor: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function addCalendarBlock(e) {
+            e.preventDefault();
+            
+            const startDate = document.getElementById('block-start').value;
+            const endDate = document.getElementById('block-end').value;
+            const reason = document.getElementById('block-reason').value;
+
+            // Validation
+            if (!startDate || !endDate) {
+                showToast('Ambele date sunt obligatorii', 'error');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (start < today) {
+                showToast('Data de început nu poate fi în trecut', 'error');
+                return;
+            }
+
+            if (start >= end) {
+                showToast('Data de sfârșit trebuie să fie după data de început', 'error');
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/calendar-blocks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        startDate,
+                        endDate,
+                        reason: reason || 'Blocare administrativă'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('block-form').classList.add('hidden');
+                    document.getElementById('calendar-block-form').reset();
+                    loadCalendarBlocks();
+                    
+                    // Show success message
+                    showToast('Blocarea a fost adăugată cu succes!', 'success');
+                } else {
+                    throw new Error(data.error || 'Eroare la adăugarea blocării');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteCalendarBlock(blockId) {
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această blocare?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/calendar-blocks/${blockId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            loadCalendarBlocks();
+                            showToast('Blocarea a fost ștearsă cu succes!', 'success');
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Eroare la ștergerea blocării');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        function showConfirmationModal(title, message, onConfirm) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+            
+            document.getElementById('modal-confirm').onclick = () => {
+                closeModal();
+                onConfirm();
+            };
+        }
+
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.add('hidden');
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toastId = 'toast-' + Date.now();
+            
+            const toast = document.createElement('div');
+            toast.id = toastId;
+            toast.className = `toast transform transition-all duration-300 ease-in-out translate-x-full opacity-0 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`;
+            
+            const iconClass = type === 'success' ? 'text-green-500 fas fa-check-circle' : 
+                             type === 'error' ? 'text-red-500 fas fa-exclamation-circle' : 
+                             'text-blue-500 fas fa-info-circle';
+            
+            const bgClass = type === 'success' ? 'bg-green-50' : 
+                           type === 'error' ? 'bg-red-50' : 
+                           'bg-blue-50';
+            
+            toast.innerHTML = `
+                <div class="flex-1 w-0 p-4">
+                    <div class="flex items-start">
+                        <div class="flex-shrink-0">
+                            <i class="${iconClass} text-xl"></i>
+                        </div>
+                        <div class="ml-3 flex-1">
+                            <p class="text-sm font-medium text-gray-900">${message}</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="flex border-l border-gray-200">
+                    <button onclick="removeToast('${toastId}')" class="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+            
+            toastContainer.appendChild(toast);
+            
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove('translate-x-full', 'opacity-0');
+            }, 100);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                removeToast(toastId);
+            }, 5000);
+        }
+
+        function removeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.add('translate-x-full', 'opacity-0');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+        }
+
+        // Utility functions
+        function getStatusClass(status) {
+            switch(status) {
+                case 'confirmed': return 'bg-green-100 text-green-800';
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                default: return 'bg-blue-100 text-blue-800';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'confirmed': return 'fas fa-check-circle';
+                case 'pending': return 'fas fa-clock';
+                case 'cancelled': return 'fas fa-times-circle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'confirmed': return 'Confirmată';
+                case 'pending': return 'În așteptare';
+                case 'cancelled': return 'Anulată';
+                default: return 'Nouă';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ro-RO');
+        }
+    </script>
+</body>
+
+</html>
