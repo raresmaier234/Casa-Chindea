@@ -12,16 +12,13 @@ app.use(express.json());
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-// Get availability endpoint
 app.get('/api/availability', async (req, res) => {
     try {
-        // Get all bookings from PocketBase
         const bookings = await pb.collection('booking').getFullList({
             sort: 'checkin',
-            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`, // Only future bookings
+            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`,
         });
 
-        // Format the bookings into unavailable ranges
         const unavailableDates = bookings.map(booking => ({
             start: booking.checkin,
             end: booking.checkout
@@ -56,8 +53,6 @@ app.post(`/api/booking`, async (req, res) => {
             });
         }
 
-        console.log('Booking received:', { name, email, phone, guests, checkin, checkout, roomType, message });
-
         const pbResult = await pb.collection('booking').create({
             name,
             email,
@@ -68,13 +63,12 @@ app.post(`/api/booking`, async (req, res) => {
             roomType,
             message
         });
-        console.log('PocketBase result:', pbResult);
 
         if (!process.env.CONTACT_PHONE) {
             throw new Error('CONTACT_PHONE nu este setat în .env!');
         }
 
-        const waResult = await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
+        await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
             name,
             phone,
             guests,
@@ -83,8 +77,7 @@ app.post(`/api/booking`, async (req, res) => {
             roomType,
             message
         });
-        console.log('WhatsApp result:', waResult);
-        res.json({ success: true });
+        return pbResult;
     } catch (err) {
         console.error('Eroare:', err);
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
