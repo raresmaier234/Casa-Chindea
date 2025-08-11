@@ -323,4 +323,61 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
     }
 });
 
+// Endpoint temporar pentru a seta utilizatorul ca admin (doar pentru debug)
+app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
+    try {
+        const { userId } = req.user;
+        
+        // Actualizează utilizatorul să fie admin
+        const updatedUser = await pb.collection('users').update(userId, {
+            admin: true
+        });
+        
+        console.log('✅ User set as admin:', updatedUser.email);
+        
+        res.json({
+            success: true,
+            message: 'Utilizatorul a fost setat ca administrator.',
+            user: {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                admin: updatedUser.admin
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error setting user as admin:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la setarea permisiunilor de admin: ' + err.message
+        });
+    }
+});
+
+// Endpoint pentru verificarea statusului de admin
+app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
+    try {
+        const { userId } = req.user;
+        
+        // Obține utilizatorul din PocketBase
+        const user = await pb.collection('users').getOne(userId);
+        
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                admin: user.admin || false,
+                tokenAdmin: req.user.admin || false
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error checking admin status:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la verificarea statusului de admin: ' + err.message
+        });
+    }
+});
+
 export default app;

@@ -8,28 +8,50 @@ import PocketBase from 'pocketbase';
 import { authenticateToken } from './auth-server.js';
 
 const router = express.Router();
-const pb = new PocketBase(process.env.POCKET_BASE_URL);
+const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
+
+console.log('🏛️ Admin server initialized with PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
 // Middleware pentru verificarea permisiunilor de admin
 const requireAdmin = async (req, res, next) => {
     try {
-        // Verifică dacă utilizatorul este admin
+        console.log('🔍 Checking admin permissions for user:', req.user);
+        
+        // Verifică dacă userId există în token
+        if (!req.user || !req.user.userId) {
+            console.error('❌ No userId found in token');
+            return res.status(401).json({
+                success: false,
+                error: 'Token invalid - lipsește userId.'
+            });
+        }
+
+        // Verifică dacă utilizatorul este admin direct din token (dacă câmpul admin este în JWT)
+        if (req.user.admin === true) {
+            console.log('✅ User is admin (from token)');
+            return next();
+        }
+        
+        // Dacă admin nu este în token, verifică din baza de date
         const user = await pb.collection('users').getOne(req.user.userId);
+        console.log('👤 User from DB:', { id: user.id, email: user.email, admin: user.admin });
         
         // Verifică dacă utilizatorul are câmpul admin setat pe true
         if (!user.admin) {
+            console.log('❌ User is not admin');
             return res.status(403).json({
                 success: false,
                 error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
             });
         }
         
+        console.log('✅ User is admin (from DB)');
         next();
     } catch (err) {
-        console.error('Error checking admin permissions:', err);
+        console.error('❌ Error checking admin permissions:', err);
         res.status(500).json({
             success: false,
-            error: 'Eroare la verificarea permisiunilor.'
+            error: 'Eroare la verificarea permisiunilor: ' + err.message
         });
     }
 };
