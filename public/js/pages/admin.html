@@ -74,6 +74,9 @@
                     <div class="text-right">
                         <div class="text-2xl font-bold text-primary" id="stats-total">0</div>
                         <div class="text-sm text-gray-500">Total rezervări</div>
+                        <button onclick="debugAdmin()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm">
+                            🐛 Debug Admin
+                        </button>
                     </div>
                 </div>
             </div>
@@ -912,6 +915,118 @@
             if (!dateStr) return '';
             const date = new Date(dateStr);
             return date.toLocaleDateString('ro-RO');
+        }
+
+        // Debug function to check admin status
+        async function debugAdmin() {
+            const token = sessionStorage.getItem('auth_token');
+            const userInfo = sessionStorage.getItem('user_info');
+            
+            console.log('🔍 Debug Admin Info:');
+            console.log('Token:', token ? 'EXISTS' : 'MISSING');
+            console.log('User Info:', userInfo);
+            
+            if (userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    console.log('Parsed user:', user);
+                    console.log('User admin field:', user.admin);
+                } catch (err) {
+                    console.error('Error parsing user info:', err);
+                }
+            }
+
+            // Test admin status endpoint
+            try {
+                const statusResponse = await fetch('/api/auth/admin-status', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const statusData = await statusResponse.json();
+                console.log('Admin status response:', statusData);
+                
+                if (statusResponse.ok) {
+                    showToast(`Admin Status: DB=${statusData.user.admin}, Token=${statusData.user.tokenAdmin}`, 'info');
+                    
+                    // Dacă utilizatorul este admin în DB dar nu în token, refreshează token-ul
+                    if (statusData.user.admin && !statusData.user.tokenAdmin) {
+                        console.log('🔄 Admin in DB but not in token, refreshing...');
+                        await refreshAdminToken();
+                        return;
+                    }
+                } else {
+                    showToast(`Error checking admin: ${statusData.error}`, 'error');
+                }
+            } catch (err) {
+                console.error('Error checking admin status:', err);
+                showToast(`Network error: ${err.message}`, 'error');
+            }
+
+            // Test make admin endpoint only if not already admin
+            const currentUser = JSON.parse(sessionStorage.getItem('user_info') || '{}');
+            if (!currentUser.admin) {
+                try {
+                    const response = await fetch('/api/auth/make-admin', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    
+                    const data = await response.json();
+                    console.log('Make admin response:', data);
+                    
+                    if (response.ok) {
+                        showToast('User set as admin successfully!', 'success');
+                        // Refreshează token-ul cu noile permisiuni
+                        await refreshAdminToken();
+                    } else {
+                        showToast(`Error setting admin: ${data.error}`, 'error');
+                    }
+                } catch (err) {
+                    console.error('Error setting admin:', err);
+                    showToast(`Network error: ${err.message}`, 'error');
+                }
+            } else {
+                showToast('User is already admin!', 'info');
+            }
+        }
+
+        // Function to refresh token with updated permissions
+        async function refreshAdminToken() {
+            const token = sessionStorage.getItem('auth_token');
+            
+            try {
+                const response = await fetch('/api/auth/refresh-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+                
+                const data = await response.json();
+                console.log('Token refresh response:', data);
+                
+                if (response.ok) {
+                    // Actualizează token-ul și informațiile utilizatorului
+                    sessionStorage.setItem('auth_token', data.token);
+                    sessionStorage.setItem('user_info', JSON.stringify(data.user));
+                    
+                    showToast('Token actualizat cu permisiuni admin!', 'success');
+                    
+                    // Reîncarcă pagina pentru a aplica noile permisiuni
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`Error refreshing token: ${data.error}`, 'error');
+                }
+            } catch (err) {
+                console.error('Error refreshing token:', err);
+                showToast(`Network error: ${err.message}`, 'error');
+            }
         }
     </script>
 </body>
