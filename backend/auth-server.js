@@ -85,6 +85,7 @@ app.post('/api/auth/login', async (req, res) => {
                     userId: authData.record.id,
                     email: authData.record.email,
                     name: authData.record.name || authData.record.email,
+                    admin: authData.record.admin || false,
                     exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 ore
                 },
                 JWT_SECRET
@@ -99,7 +100,8 @@ app.post('/api/auth/login', async (req, res) => {
                     id: authData.record.id,
                     email: authData.record.email,
                     name: authData.record.name || authData.record.email,
-                    avatar: authData.record.avatar
+                    avatar: authData.record.avatar,
+                    admin: authData.record.admin || false
                 }
             });
         } else {
@@ -243,6 +245,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
                 name: user.name,
                 phone: user.phone,
                 avatar: user.avatar,
+                admin: user.admin || false,
                 created: user.created,
                 updated: user.updated
             }
