@@ -274,8 +274,8 @@
 
             try {
                 const user = JSON.parse(userInfo);
-                // Check if user is admin (you can implement your own logic here)
-                if (!user.email || !user.email.includes('admin')) {
+                // Check if user is admin using the admin field
+                if (!user.admin) {
                     showToast('Acces restricționat! Doar administratorii pot accesa această pagină.', 'error');
                     setTimeout(() => {
                         window.location.href = '/js/pages/home.html';

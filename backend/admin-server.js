@@ -16,8 +16,8 @@ const requireAdmin = async (req, res, next) => {
         // Verifică dacă utilizatorul este admin
         const user = await pb.collection('users').getOne(req.user.userId);
         
-        // Verifică dacă utilizatorul are email de admin sau rol de admin
-        if (!user.email.includes('admin') && user.role !== 'admin') {
+        // Verifică dacă utilizatorul are câmpul admin setat pe true
+        if (!user.admin) {
             return res.status(403).json({
                 success: false,
                 error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'

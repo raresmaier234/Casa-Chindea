@@ -84,7 +84,7 @@ class CasaChindeaNav {
         element.className = 'relative auth-element';
         
         // Check if user is admin
-        const isAdmin = this.currentUser.email && this.currentUser.email.includes('admin');
+        const isAdmin = this.currentUser.admin === true;
         
         element.innerHTML = `
             <button id="profile-dropdown" 
@@ -148,7 +148,7 @@ class CasaChindeaNav {
         element.className = 'auth-element border-t border-gray-200 pt-3 mt-3';
         
         // Check if user is admin
-        const isAdmin = this.currentUser.email && this.currentUser.email.includes('admin');
+        const isAdmin = this.currentUser.admin === true;
         
         element.innerHTML = `
             <a href="/js/pages/profile.html"
