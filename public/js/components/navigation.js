@@ -14,7 +14,7 @@ class CasaChindeaNav {
     checkAuthentication() {
         const token = sessionStorage.getItem('auth_token');
         const userInfo = sessionStorage.getItem('user_info');
-        
+
         if (token && userInfo) {
             try {
                 this.currentUser = JSON.parse(userInfo);
@@ -34,24 +34,24 @@ class CasaChindeaNav {
     updateNavigation() {
         const desktopNav = document.querySelector('#desktop-nav') || document.querySelector('.hidden.md\\:flex');
         const mobileNav = document.querySelector('#mobile-nav') || document.querySelector('#mobile-menu .space-y-1');
-        
+
         if (!desktopNav || !mobileNav) return;
 
         // Remove existing auth elements first
         this.removeExistingAuthElements(desktopNav, mobileNav);
 
         // Update desktop navigation
-        const desktopAuthElement = this.currentUser 
-            ? this.createAuthenticatedDesktopNav() 
+        const desktopAuthElement = this.currentUser
+            ? this.createAuthenticatedDesktopNav()
             : this.createUnauthenticatedDesktopNav();
-        
+
         desktopNav.appendChild(desktopAuthElement);
 
         // Update mobile navigation
-        const mobileAuthElement = this.currentUser 
-            ? this.createAuthenticatedMobileNav() 
+        const mobileAuthElement = this.currentUser
+            ? this.createAuthenticatedMobileNav()
             : this.createUnauthenticatedMobileNav();
-        
+
         mobileNav.appendChild(mobileAuthElement);
     }
 
@@ -59,8 +59,8 @@ class CasaChindeaNav {
         // Remove from desktop nav
         const desktopAuthElements = desktopNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"], [href*="admin"]');
         desktopAuthElements.forEach(el => {
-            if (el.textContent.includes('Login') || 
-                el.textContent.includes('Logout') || 
+            if (el.textContent.includes('Login') ||
+                el.textContent.includes('Logout') ||
                 el.textContent.includes('Profil') ||
                 el.textContent.includes('Admin Dashboard')) {
                 el.remove();
@@ -70,8 +70,8 @@ class CasaChindeaNav {
         // Remove from mobile nav
         const mobileAuthElements = mobileNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"], [href*="admin"]');
         mobileAuthElements.forEach(el => {
-            if (el.textContent.includes('Login') || 
-                el.textContent.includes('Logout') || 
+            if (el.textContent.includes('Login') ||
+                el.textContent.includes('Logout') ||
                 el.textContent.includes('Profil') ||
                 el.textContent.includes('Admin Dashboard')) {
                 el.remove();
@@ -82,10 +82,10 @@ class CasaChindeaNav {
     createAuthenticatedDesktopNav() {
         const element = document.createElement('div');
         element.className = 'relative auth-element';
-        
+
         // Check if user is admin
         const isAdmin = this.currentUser.admin === true;
-        
+
         element.innerHTML = `
             <button id="profile-dropdown" 
                 class="flex items-center space-x-2 text-primary font-semibold hover:text-secondary transition-colors duration-200">
@@ -146,10 +146,10 @@ class CasaChindeaNav {
     createAuthenticatedMobileNav() {
         const element = document.createElement('div');
         element.className = 'auth-element border-t border-gray-200 pt-3 mt-3';
-        
+
         // Check if user is admin
         const isAdmin = this.currentUser.admin === true;
-        
+
         element.innerHTML = `
             <a href="/js/pages/profile.html"
                 class="nav-link block px-3 py-2 text-primary font-semibold hover:bg-gray-50 rounded-md">
@@ -188,18 +188,18 @@ class CasaChindeaNav {
     setupMobileMenu() {
         const mobileMenuBtn = document.getElementById('mobile-menu-btn');
         const mobileMenu = document.getElementById('mobile-menu');
-        
+
         if (mobileMenuBtn && mobileMenu) {
             // Remove any existing event listeners to avoid duplicates
             mobileMenuBtn.removeEventListener('click', this.toggleMobileMenu);
-            
+
             // Add new event listener
             this.toggleMobileMenu = () => {
                 mobileMenu.classList.toggle('hidden');
             };
-            
+
             mobileMenuBtn.addEventListener('click', this.toggleMobileMenu);
-            
+
             // Close mobile menu when clicking outside
             document.addEventListener('click', (e) => {
                 if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
@@ -211,7 +211,7 @@ class CasaChindeaNav {
 
     logout() {
         this.clearAuthData();
-        
+
         // Show success message briefly
         const logoutButtons = document.querySelectorAll('#logout-btn, #mobile-logout-btn');
         logoutButtons.forEach(btn => {
@@ -224,11 +224,37 @@ class CasaChindeaNav {
             window.location.href = '/js/pages/home.html';
         }, 1000);
     }
+
+    // Function to manually refresh navigation (useful for debugging or after login)
+    refreshNavigation() {
+        this.checkAuthentication();
+        this.updateNavigation();
+    }
 }
 
 // Initialize navigation when DOM is loaded
-document.addEventListener('DOMContentLoaded', function() {
+document.addEventListener('DOMContentLoaded', function () {
     window.casaChindeaNav = new CasaChindeaNav();
+
+    // Debug function - accessible from browser console
+    window.debugAuth = function () {
+        const userInfo = sessionStorage.getItem('user_info');
+        const token = sessionStorage.getItem('auth_token');
+        console.log('=== AUTH DEBUG ===');
+        console.log('Token exists:', !!token);
+        console.log('User info:', userInfo ? JSON.parse(userInfo) : null);
+        console.log('Current user in nav:', window.casaChindeaNav.currentUser);
+        if (window.casaChindeaNav.currentUser) {
+            console.log('Is admin?', window.casaChindeaNav.currentUser.admin === true);
+        }
+        console.log('==================');
+    };
+
+    // Function to force navigation refresh
+    window.refreshNavigation = function () {
+        window.casaChindeaNav.refreshNavigation();
+        console.log('Navigation refreshed');
+    };
 });
 
 // Export for use in other scripts
