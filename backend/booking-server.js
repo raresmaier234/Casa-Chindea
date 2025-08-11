@@ -14,15 +14,39 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 app.get('/api/availability', async (req, res) => {
     try {
+        // Get all confirmed bookings
         const bookings = await pb.collection('booking').getFullList({
             sort: 'checkin',
-            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`,
+            filter: `checkin >= "${new Date().toISOString().split('T')[0]}" && status != "cancelled"`,
         });
 
-        const unavailableDates = bookings.map(booking => ({
-            start: booking.checkin,
-            end: booking.checkout
-        }));
+        // Get all calendar blocks (admin-blocked dates)
+        const calendarBlocks = await pb.collection('calendar_blocks').getFullList({
+            sort: 'startDate',
+            filter: `endDate >= "${new Date().toISOString().split('T')[0]}"`
+        });
+
+        const unavailableDates = [];
+
+        // Add booking dates
+        bookings.forEach(booking => {
+            unavailableDates.push({
+                start: booking.checkin,
+                end: booking.checkout,
+                type: 'booking',
+                reason: 'Rezervat'
+            });
+        });
+
+        // Add blocked dates
+        calendarBlocks.forEach(block => {
+            unavailableDates.push({
+                start: block.startDate,
+                end: block.endDate,
+                type: 'blocked',
+                reason: block.reason || 'Blocat de administrator'
+            });
+        });
 
         res.json({
             success: true,
@@ -42,14 +66,25 @@ app.post(`/api/booking`, async (req, res) => {
     }
 
     try {
-        // Check if dates overlap with existing bookings
+        // Check if dates overlap with existing confirmed bookings
         const existingBookings = await pb.collection('booking').getFullList({
-            filter: `(checkin <= "${checkout}" && checkout >= "${checkin}")`,
+            filter: `(checkin <= "${checkout}" && checkout >= "${checkin}") && status != "cancelled"`,
         });
 
         if (existingBookings.length > 0) {
             return res.status(400).json({
                 error: 'Ne pare rău, dar datele selectate se suprapun cu o rezervare existentă.'
+            });
+        }
+
+        // Check if dates overlap with calendar blocks (admin-blocked dates)
+        const calendarBlocks = await pb.collection('calendar_blocks').getFullList({
+            filter: `(startDate <= "${checkout}" && endDate >= "${checkin}")`
+        });
+
+        if (calendarBlocks.length > 0) {
+            return res.status(400).json({
+                error: 'Ne pare rău, dar datele selectate sunt blocate pentru rezervări.'
             });
         }
 
@@ -61,7 +96,8 @@ app.post(`/api/booking`, async (req, res) => {
             checkin,
             checkout,
             roomType,
-            message
+            message,
+            status: 'pending'
         });
 
         if (!process.env.CONTACT_PHONE) {
@@ -77,7 +113,12 @@ app.post(`/api/booking`, async (req, res) => {
             roomType,
             message
         });
-        return pbResult;
+        
+        res.json({ 
+            success: true, 
+            message: 'Rezervarea a fost trimisă cu succes! Veți fi contactat în curând.',
+            booking: pbResult
+        });
     } catch (err) {
         console.error('Eroare:', err);
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
