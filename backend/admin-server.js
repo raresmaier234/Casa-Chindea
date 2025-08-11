@@ -12,6 +12,54 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'
 
 console.log('🏛️ Admin server initialized with PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
+// Test endpoint pentru verificarea conectivității PocketBase
+router.get('/test-pb', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        console.log('🧪 Testing PocketBase connectivity...');
+        console.log('🔗 PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
+        
+        // Test conectivitate la colecții
+        const collections = await pb.collections.getFullList();
+        console.log('📊 Available collections:', collections.map(c => c.name));
+        
+        // Test specific la colecția booking
+        const bookingsCount = await pb.collection('booking').getList(1, 1);
+        console.log('📋 Bookings collection info:', {
+            totalItems: bookingsCount.totalItems,
+            totalPages: bookingsCount.totalPages
+        });
+        
+        // Test la colecția users
+        const usersCount = await pb.collection('users').getList(1, 1);
+        console.log('👥 Users collection info:', {
+            totalItems: usersCount.totalItems,
+            totalPages: usersCount.totalPages
+        });
+        
+        res.json({
+            success: true,
+            message: 'PocketBase connectivity test successful',
+            data: {
+                pbUrl: process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090',
+                collections: collections.map(c => c.name),
+                bookingsCount: bookingsCount.totalItems,
+                usersCount: usersCount.totalItems
+            }
+        });
+    } catch (err) {
+        console.error('❌ PocketBase connectivity test failed:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Test PocketBase eșuat: ' + err.message,
+            details: {
+                message: err.message,
+                status: err.status,
+                data: err.data
+            }
+        });
+    }
+});
+
 // Middleware pentru verificarea permisiunilor de admin
 const requireAdmin = async (req, res, next) => {
     try {
@@ -92,17 +140,31 @@ const upload = multer({
 // Obține toate rezervările pentru admin
 router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
     try {
+        console.log('📋 Fetching bookings for admin...');
         const { status } = req.query;
         let filter = '';
 
         if (status) {
             filter = `status = "${status}"`;
+            console.log('🔍 Using filter:', filter);
         }
+
+        console.log('🔗 PocketBase URL:', process.env.POCKET_BASE_URL);
+        console.log('📊 Attempting to fetch from booking collection...');
 
         const bookings = await pb.collection('booking').getFullList({
             filter,
             sort: '-created'
         });
+
+        console.log(`✅ Successfully fetched ${bookings.length} bookings`);
+        console.log('📝 First booking sample:', bookings[0] ? {
+            id: bookings[0].id,
+            name: bookings[0].name,
+            email: bookings[0].email,
+            status: bookings[0].status,
+            created: bookings[0].created
+        } : 'No bookings found');
 
         res.json({
             success: true,
@@ -122,10 +184,17 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
             }))
         });
     } catch (err) {
-        console.error('Error fetching admin bookings:', err);
+        console.error('❌ Error fetching admin bookings:', err);
+        console.error('❌ Error details:', {
+            message: err.message,
+            status: err.status,
+            data: err.data,
+            isAbortError: err.isAbortError
+        });
+        
         res.status(500).json({
             success: false,
-            error: 'Eroare la încărcarea rezervărilor.'
+            error: 'Eroare la încărcarea rezervărilor: ' + err.message
         });
     }
 });
