@@ -34,7 +34,7 @@
                         <h1 class="text-2xl font-bold text-primary">Casa Chindea</h1>
                     </div>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
                     <a href="/js/pages/home.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
                     <a href="/js/pages/about.html"
@@ -47,7 +47,7 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
                     <a href="/js/pages/contact.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
-                    <!-- Dynamic auth element will be inserted here by navigation.js -->
+                    <!-- Auth element will be dynamically added by navigation.js -->
                 </div>
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
@@ -58,7 +58,7 @@
         </div>
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
-            <div class="px-2 pt-2 pb-3 space-y-1">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
                 <a href="/js/pages/home.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"
@@ -71,13 +71,13 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
                 <a href="/js/pages/contact.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
-                <!-- Dynamic auth element will be inserted here by navigation.js -->
+                <!-- Auth element will be dynamically added by navigation.js -->
             </div>
         </div>
     </nav>
     
     <!-- Include navigation component -->
-    <script src="../components/navigation.js"></script>
+    <script src="/js/components/navigation.js"></script>
     <script>
         // Mobile navbar toggle
         document.addEventListener('DOMContentLoaded', function () {
