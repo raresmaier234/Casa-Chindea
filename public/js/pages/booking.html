@@ -76,7 +76,7 @@
             </div>
         </div>
     </nav>
-    
+
     <!-- Include navigation component -->
     <script src="/js/components/navigation.js"></script>
     <section class="py-20 bg-white">
@@ -198,15 +198,6 @@
 
         // Ensure DOM is loaded before initializing
         document.addEventListener('DOMContentLoaded', function () {
-            // Mobile navbar toggle
-            const btn = document.getElementById('mobile-menu-btn');
-            const menu = document.getElementById('mobile-menu');
-            if (btn && menu) {
-                btn.addEventListener('click', function () {
-                    menu.classList.toggle('hidden');
-                });
-            }
-
             fetchAvailabilityAndInitCalendar();
         });
 
