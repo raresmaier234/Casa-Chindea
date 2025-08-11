@@ -12,14 +12,52 @@ app.use(express.json());
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Get availability endpoint
+app.get('/api/availability', async (req, res) => {
+    try {
+        // Get all bookings from PocketBase
+        const bookings = await pb.collection('booking').getFullList({
+            sort: 'checkin',
+            filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`, // Only future bookings
+        });
+
+        // Format the bookings into unavailable ranges
+        const unavailableDates = bookings.map(booking => ({
+            start: booking.checkin,
+            end: booking.checkout
+        }));
+
+        res.json({
+            success: true,
+            unavailableDates
+        });
+    } catch (err) {
+        console.error('Error fetching availability:', err);
+        res.status(500).json({ error: 'Error checking availability: ' + err.message });
+    }
+});
+
 // Booking endpoint
 app.post(`/api/booking`, async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
     }
-    console.log('Booking received:', { name, email, phone, guests, checkin, checkout, roomType, message });
+
     try {
+        // Check if dates overlap with existing bookings
+        const existingBookings = await pb.collection('booking').getFullList({
+            filter: `(checkin <= "${checkout}" && checkout >= "${checkin}")`,
+        });
+
+        if (existingBookings.length > 0) {
+            return res.status(400).json({
+                error: 'Ne pare rău, dar datele selectate se suprapun cu o rezervare existentă.'
+            });
+        }
+
+        console.log('Booking received:', { name, email, phone, guests, checkin, checkout, roomType, message });
+
         const pbResult = await pb.collection('booking').create({
             name,
             email,
@@ -31,9 +69,11 @@ app.post(`/api/booking`, async (req, res) => {
             message
         });
         console.log('PocketBase result:', pbResult);
+
         if (!process.env.CONTACT_PHONE) {
             throw new Error('CONTACT_PHONE nu este setat în .env!');
         }
+
         const waResult = await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
             name,
             phone,
