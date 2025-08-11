@@ -164,8 +164,21 @@ class CasaChindeaNav {
         const mobileMenu = document.getElementById('mobile-menu');
         
         if (mobileMenuBtn && mobileMenu) {
-            mobileMenuBtn.addEventListener('click', () => {
+            // Remove any existing event listeners to avoid duplicates
+            mobileMenuBtn.removeEventListener('click', this.toggleMobileMenu);
+            
+            // Add new event listener
+            this.toggleMobileMenu = () => {
                 mobileMenu.classList.toggle('hidden');
+            };
+            
+            mobileMenuBtn.addEventListener('click', this.toggleMobileMenu);
+            
+            // Close mobile menu when clicking outside
+            document.addEventListener('click', (e) => {
+                if (!mobileMenu.contains(e.target) && !mobileMenuBtn.contains(e.target)) {
+                    mobileMenu.classList.add('hidden');
+                }
             });
         }
     }
