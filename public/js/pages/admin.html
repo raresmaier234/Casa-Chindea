@@ -74,9 +74,6 @@
                     <div class="text-right">
                         <div class="text-2xl font-bold text-primary" id="stats-total">0</div>
                         <div class="text-sm text-gray-500">Total rezervări</div>
-                        <button onclick="debugAdmin()" class="mt-2 bg-blue-500 text-white px-3 py-1 rounded text-sm">
-                            🐛 Debug Admin
-                        </button>
                     </div>
                 </div>
             </div>
@@ -85,15 +82,15 @@
             <div class="bg-white rounded-2xl shadow-lg mb-8">
                 <div class="border-b border-gray-200">
                     <nav class="flex space-x-8 px-8">
-                        <button id="tab-bookings" 
+                        <button id="tab-bookings"
                             class="tab-button py-4 px-1 border-b-2 border-primary text-primary font-medium">
                             <i class="fas fa-calendar-alt mr-2"></i>Rezervări
                         </button>
-                        <button id="tab-gallery" 
+                        <button id="tab-gallery"
                             class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-images mr-2"></i>Galerie
                         </button>
-                        <button id="tab-calendar" 
+                        <button id="tab-calendar"
                             class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-ban mr-2"></i>Blocări Calendar
                         </button>
@@ -111,7 +108,7 @@
                                 <option value="confirmed">Confirmate</option>
                                 <option value="cancelled">Anulate</option>
                             </select>
-                            <button id="refresh-bookings" 
+                            <button id="refresh-bookings"
                                 class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
@@ -141,7 +138,7 @@
                 <div id="content-gallery" class="tab-content p-8 hidden">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-gray-900">Gestionare Galerie</h2>
-                        <button id="add-photo-btn" 
+                        <button id="add-photo-btn"
                             class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-plus mr-2"></i>Adaugă Poză
                         </button>
@@ -157,17 +154,18 @@
                                         class="w-full border border-gray-300 rounded-lg px-3 py-2">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descriere (opțional)</label>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descriere
+                                        (opțional)</label>
                                     <input type="text" id="photo-description" placeholder="Descrierea pozei..."
                                         class="w-full border border-gray-300 rounded-lg px-3 py-2">
                                 </div>
                             </div>
                             <div class="mt-4 flex space-x-2">
-                                <button type="submit" 
+                                <button type="submit"
                                     class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
                                     <i class="fas fa-upload mr-2"></i>Încarcă
                                 </button>
-                                <button type="button" id="cancel-upload" 
+                                <button type="button" id="cancel-upload"
                                     class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                                     Anulează
                                 </button>
@@ -185,8 +183,7 @@
                 <div id="content-calendar" class="tab-content p-8 hidden">
                     <div class="flex justify-between items-center mb-6">
                         <h2 class="text-xl font-bold text-gray-900">Blocări Calendar</h2>
-                        <button id="add-block-btn" 
-                            class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                        <button id="add-block-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
                             <i class="fas fa-ban mr-2"></i>Adaugă Blocare
                         </button>
                     </div>
@@ -212,11 +209,11 @@
                                 </div>
                             </div>
                             <div class="mt-4 flex space-x-2">
-                                <button type="submit" 
+                                <button type="submit"
                                     class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
                                     <i class="fas fa-ban mr-2"></i>Blochează
                                 </button>
-                                <button type="button" id="cancel-block" 
+                                <button type="button" id="cancel-block"
                                     class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
                                     Anulează
                                 </button>
@@ -234,7 +231,8 @@
     </main>
 
     <!-- Confirmation Modal -->
-    <div id="confirmation-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+    <div id="confirmation-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
         <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
             <h3 class="text-lg font-semibold text-gray-900 mb-4" id="modal-title">Confirmă Acțiunea</h3>
             <p class="text-gray-600 mb-6" id="modal-message">Ești sigur că vrei să continui?</p>
@@ -256,7 +254,7 @@
 
     <script>
         // Check admin authentication
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             checkAdminAuth();
             initializeTabs();
             loadBookings();
@@ -266,7 +264,7 @@
         function checkAdminAuth() {
             const token = sessionStorage.getItem('auth_token');
             const userInfo = sessionStorage.getItem('user_info');
-            
+
             if (!token || !userInfo) {
                 showToast('Trebuie să fii autentificat pentru a accesa această pagină', 'error');
                 setTimeout(() => {
@@ -302,7 +300,7 @@
             tabButtons.forEach(button => {
                 button.addEventListener('click', () => {
                     const tabId = button.id.replace('tab-', '');
-                    
+
                     // Update button states
                     tabButtons.forEach(btn => {
                         btn.classList.remove('border-primary', 'text-primary');
@@ -326,7 +324,7 @@
         function setupEventListeners() {
             // Refresh bookings
             document.getElementById('refresh-bookings').addEventListener('click', loadBookings);
-            
+
             // Filter bookings
             document.getElementById('filter-status').addEventListener('change', loadBookings);
 
@@ -465,7 +463,7 @@
 
         async function updateBookingStatus(bookingId, newStatus) {
             const actionText = newStatus === 'confirmed' ? 'aprobă' : 'respinge';
-            
+
             showConfirmationModal(
                 `Confirmă ${actionText} rezervarea`,
                 `Ești sigur că vrei să ${actionText} această rezervare?`,
@@ -498,7 +496,7 @@
         async function loadGallery() {
             // Implementation for loading gallery photos for admin
             const galleryEl = document.getElementById('admin-gallery');
-            
+
             try {
                 const response = await fetch('/api/photos');
                 const data = await response.json();
@@ -548,11 +546,11 @@
 
         async function uploadPhoto(e) {
             e.preventDefault();
-            
+
             const formData = new FormData();
             const fileInput = document.getElementById('photo-file');
             const description = document.getElementById('photo-description').value;
-            
+
             if (!fileInput.files[0]) {
                 showToast('Selectează o poză pentru încărcare', 'error');
                 return;
@@ -592,7 +590,7 @@
                 const data = await response.json();
                 const photos = data.items || [];
                 const photo = photos.find(p => p.id === photoId);
-                
+
                 if (!photo) {
                     alert('Poza nu a fost găsită');
                     return;
@@ -654,7 +652,7 @@
         async function loadCalendarBlocks() {
             // Implementation for loading calendar blocks
             const blocksEl = document.getElementById('calendar-blocks');
-            
+
             try {
                 const token = sessionStorage.getItem('auth_token');
                 const response = await fetch('/api/admin/calendar-blocks', {
@@ -682,7 +680,7 @@
                         const startDate = new Date(block.startDate);
                         const endDate = new Date(block.endDate);
                         const isActive = endDate >= new Date();
-                        
+
                         return `
                             <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6">
                                 <div class="flex justify-between items-start">
@@ -691,10 +689,10 @@
                                             <h4 class="font-semibold ${isActive ? 'text-red-800' : 'text-gray-600'}">
                                                 ${formatDate(block.startDate)} - ${formatDate(block.endDate)}
                                             </h4>
-                                            ${isActive ? 
-                                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' : 
-                                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
-                                            }
+                                            ${isActive ?
+                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' :
+                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
+                            }
                                         </div>
                                         <p class="${isActive ? 'text-red-600' : 'text-gray-500'}">${block.reason || 'Fără motiv specificat'}</p>
                                         <p class="text-xs ${isActive ? 'text-red-500' : 'text-gray-400'} mt-2">
@@ -724,7 +722,7 @@
 
         async function addCalendarBlock(e) {
             e.preventDefault();
-            
+
             const startDate = document.getElementById('block-start').value;
             const endDate = document.getElementById('block-end').value;
             const reason = document.getElementById('block-reason').value;
@@ -771,7 +769,7 @@
                     document.getElementById('block-form').classList.add('hidden');
                     document.getElementById('calendar-block-form').reset();
                     loadCalendarBlocks();
-                    
+
                     // Show success message
                     showToast('Blocarea a fost adăugată cu succes!', 'success');
                 } else {
@@ -814,7 +812,7 @@
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
             document.getElementById('confirmation-modal').classList.remove('hidden');
-            
+
             document.getElementById('modal-confirm').onclick = () => {
                 closeModal();
                 onConfirm();
@@ -829,19 +827,19 @@
         function showToast(message, type = 'success') {
             const toastContainer = document.getElementById('toast-container');
             const toastId = 'toast-' + Date.now();
-            
+
             const toast = document.createElement('div');
             toast.id = toastId;
             toast.className = `toast transform transition-all duration-300 ease-in-out translate-x-full opacity-0 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`;
-            
-            const iconClass = type === 'success' ? 'text-green-500 fas fa-check-circle' : 
-                             type === 'error' ? 'text-red-500 fas fa-exclamation-circle' : 
-                             'text-blue-500 fas fa-info-circle';
-            
-            const bgClass = type === 'success' ? 'bg-green-50' : 
-                           type === 'error' ? 'bg-red-50' : 
-                           'bg-blue-50';
-            
+
+            const iconClass = type === 'success' ? 'text-green-500 fas fa-check-circle' :
+                type === 'error' ? 'text-red-500 fas fa-exclamation-circle' :
+                    'text-blue-500 fas fa-info-circle';
+
+            const bgClass = type === 'success' ? 'bg-green-50' :
+                type === 'error' ? 'bg-red-50' :
+                    'bg-blue-50';
+
             toast.innerHTML = `
                 <div class="flex-1 w-0 p-4">
                     <div class="flex items-start">
@@ -859,14 +857,14 @@
                     </button>
                 </div>
             `;
-            
+
             toastContainer.appendChild(toast);
-            
+
             // Animate in
             setTimeout(() => {
                 toast.classList.remove('translate-x-full', 'opacity-0');
             }, 100);
-            
+
             // Auto remove after 5 seconds
             setTimeout(() => {
                 removeToast(toastId);
@@ -885,7 +883,7 @@
 
         // Utility functions
         function getStatusClass(status) {
-            switch(status) {
+            switch (status) {
                 case 'confirmed': return 'bg-green-100 text-green-800';
                 case 'pending': return 'bg-yellow-100 text-yellow-800';
                 case 'cancelled': return 'bg-red-100 text-red-800';
@@ -894,7 +892,7 @@
         }
 
         function getStatusIcon(status) {
-            switch(status) {
+            switch (status) {
                 case 'confirmed': return 'fas fa-check-circle';
                 case 'pending': return 'fas fa-clock';
                 case 'cancelled': return 'fas fa-times-circle';
@@ -903,7 +901,7 @@
         }
 
         function getStatusText(status) {
-            switch(status) {
+            switch (status) {
                 case 'confirmed': return 'Confirmată';
                 case 'pending': return 'În așteptare';
                 case 'cancelled': return 'Anulată';
@@ -917,87 +915,10 @@
             return date.toLocaleDateString('ro-RO');
         }
 
-        // Debug function to check admin status
-        async function debugAdmin() {
-            const token = sessionStorage.getItem('auth_token');
-            const userInfo = sessionStorage.getItem('user_info');
-            
-            console.log('🔍 Debug Admin Info:');
-            console.log('Token:', token ? 'EXISTS' : 'MISSING');
-            console.log('User Info:', userInfo);
-            
-            if (userInfo) {
-                try {
-                    const user = JSON.parse(userInfo);
-                    console.log('Parsed user:', user);
-                    console.log('User admin field:', user.admin);
-                } catch (err) {
-                    console.error('Error parsing user info:', err);
-                }
-            }
-
-            // Test admin status endpoint
-            try {
-                const statusResponse = await fetch('/api/auth/admin-status', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
-                
-                const statusData = await statusResponse.json();
-                console.log('Admin status response:', statusData);
-                
-                if (statusResponse.ok) {
-                    showToast(`Admin Status: DB=${statusData.user.admin}, Token=${statusData.user.tokenAdmin}`, 'info');
-                    
-                    // Dacă utilizatorul este admin în DB dar nu în token, refreshează token-ul
-                    if (statusData.user.admin && !statusData.user.tokenAdmin) {
-                        console.log('🔄 Admin in DB but not in token, refreshing...');
-                        await refreshAdminToken();
-                        return;
-                    }
-                } else {
-                    showToast(`Error checking admin: ${statusData.error}`, 'error');
-                }
-            } catch (err) {
-                console.error('Error checking admin status:', err);
-                showToast(`Network error: ${err.message}`, 'error');
-            }
-
-            // Test make admin endpoint only if not already admin
-            const currentUser = JSON.parse(sessionStorage.getItem('user_info') || '{}');
-            if (!currentUser.admin) {
-                try {
-                    const response = await fetch('/api/auth/make-admin', {
-                        method: 'POST',
-                        headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
-                    });
-                    
-                    const data = await response.json();
-                    console.log('Make admin response:', data);
-                    
-                    if (response.ok) {
-                        showToast('User set as admin successfully!', 'success');
-                        // Refreshează token-ul cu noile permisiuni
-                        await refreshAdminToken();
-                    } else {
-                        showToast(`Error setting admin: ${data.error}`, 'error');
-                    }
-                } catch (err) {
-                    console.error('Error setting admin:', err);
-                    showToast(`Network error: ${err.message}`, 'error');
-                }
-            } else {
-                showToast('User is already admin!', 'info');
-            }
-        }
-
         // Function to refresh token with updated permissions
         async function refreshAdminToken() {
             const token = sessionStorage.getItem('auth_token');
-            
+
             try {
                 const response = await fetch('/api/auth/refresh-token', {
                     method: 'POST',
@@ -1005,17 +926,17 @@
                         'Authorization': `Bearer ${token}`
                     }
                 });
-                
+
                 const data = await response.json();
                 console.log('Token refresh response:', data);
-                
+
                 if (response.ok) {
                     // Actualizează token-ul și informațiile utilizatorului
                     sessionStorage.setItem('auth_token', data.token);
                     sessionStorage.setItem('user_info', JSON.stringify(data.user));
-                    
+
                     showToast('Token actualizat cu permisiuni admin!', 'success');
-                    
+
                     // Reîncarcă pagina pentru a aplica noile permisiuni
                     setTimeout(() => {
                         window.location.reload();
