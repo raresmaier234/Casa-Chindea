@@ -37,35 +37,40 @@ class CasaChindeaNav {
         
         if (!desktopNav || !mobileNav) return;
 
+        // Remove existing auth elements first
+        this.removeExistingAuthElements(desktopNav, mobileNav);
+
         // Update desktop navigation
         const desktopAuthElement = this.currentUser 
             ? this.createAuthenticatedDesktopNav() 
             : this.createUnauthenticatedDesktopNav();
         
-        // Replace the last child (login/profile element)
-        const lastChild = desktopNav.lastElementChild;
-        if (lastChild && (lastChild.textContent.includes('Login') || lastChild.classList.contains('auth-element'))) {
-            desktopNav.replaceChild(desktopAuthElement, lastChild);
-        } else {
-            desktopNav.appendChild(desktopAuthElement);
-        }
+        desktopNav.appendChild(desktopAuthElement);
 
         // Update mobile navigation
         const mobileAuthElement = this.currentUser 
             ? this.createAuthenticatedMobileNav() 
             : this.createUnauthenticatedMobileNav();
         
-        // Replace or add auth element in mobile nav
-        const existingMobileAuth = mobileNav.querySelector('.auth-element');
-        const lastMobileChild = mobileNav.lastElementChild;
-        
-        if (existingMobileAuth) {
-            mobileNav.replaceChild(mobileAuthElement, existingMobileAuth);
-        } else if (lastMobileChild && lastMobileChild.textContent.includes('Login')) {
-            mobileNav.replaceChild(mobileAuthElement, lastMobileChild);
-        } else {
-            mobileNav.appendChild(mobileAuthElement);
-        }
+        mobileNav.appendChild(mobileAuthElement);
+    }
+
+    removeExistingAuthElements(desktopNav, mobileNav) {
+        // Remove from desktop nav
+        const desktopAuthElements = desktopNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"]');
+        desktopAuthElements.forEach(el => {
+            if (el.textContent.includes('Login') || el.textContent.includes('Logout') || el.textContent.includes('Profil')) {
+                el.remove();
+            }
+        });
+
+        // Remove from mobile nav
+        const mobileAuthElements = mobileNav.querySelectorAll('.auth-element, [href*="login"], [href*="profile"]');
+        mobileAuthElements.forEach(el => {
+            if (el.textContent.includes('Login') || el.textContent.includes('Logout') || el.textContent.includes('Profil')) {
+                el.remove();
+            }
+        });
     }
 
     createAuthenticatedDesktopNav() {
