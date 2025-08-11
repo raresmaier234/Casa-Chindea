@@ -170,4 +170,18 @@ app.post('/api/auth/logout', (req, res) => {
     });
 });
 
+// Configuration endpoint for frontend
+app.get('/api/config', (req, res) => {
+    res.json({
+        auth0: {
+            domain: process.env.AUTH0_DOMAIN || "dev-casa-chindea.eu.auth0.com",
+            clientId: process.env.AUTH0_CLIENT_ID || "YOUR_REAL_AUTH0_CLIENT_ID"
+        },
+        // Add other public config here
+        recaptcha: {
+            siteKey: process.env.RECAPTCHA_SITE_KEY
+        }
+    });
+});
+
 export default app;
