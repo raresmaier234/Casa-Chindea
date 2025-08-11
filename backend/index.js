@@ -7,7 +7,7 @@ import { fileURLToPath } from "url";
 import bookingRouter from './booking-server.js';
 import contactRouter from './contact-server.js';
 import galleryRouter from './gallery-server.js';
-
+import authRouter from './auth-server.js';
 
 dotenv.config();
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -28,6 +28,12 @@ app.use(express.json());
 
 app.use(express.static(join(__dirname, "js")));
 
+// Health check endpoint
+app.get('/api/health', (req, res) => {
+    res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+app.use(authRouter);
 app.use(bookingRouter);
 app.use(contactRouter);
 app.use(galleryRouter);
