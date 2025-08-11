@@ -78,16 +78,6 @@
             </div>
         </div>
     </nav>
-    <script>
-        // Mobile navbar toggle
-        document.addEventListener('DOMContentLoaded', function () {
-            const btn = document.getElementById('mobile-menu-btn');
-            const menu = document.getElementById('mobile-menu');
-            btn.addEventListener('click', function () {
-                menu.classList.toggle('hidden');
-            });
-        });
-    </script>
     <section class="py-20 bg-white">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
@@ -129,7 +119,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Perioada Cazării</label>
-                        <input type="text" id="date-range" required placeholder="Alege perioada"
+                        <input type="text" id="date-range" required placeholder="Se încarcă calendarul..."
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         <input type="hidden" id="checkin">
                         <input type="hidden" id="checkout">
@@ -205,25 +195,50 @@
     <script>
         let unavailableDateRanges = [];
 
-        // Fetch unavailable dates from the backend
-        fetch('/api/availability')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    unavailableDateRanges = data.unavailableDates;
+        // Ensure DOM is loaded before initializing
+        document.addEventListener('DOMContentLoaded', function () {
+            // Mobile navbar toggle
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            if (btn && menu) {
+                btn.addEventListener('click', function () {
+                    menu.classList.toggle('hidden');
+                });
+            }
+
+            fetchAvailabilityAndInitCalendar();
+        });
+
+        function fetchAvailabilityAndInitCalendar() {
+            // Fetch unavailable dates from the backend
+            fetch('/api/availability')
+                .then(res => {
+                    console.log('API response status:', res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        unavailableDateRanges = data.unavailableDates;
+                    }
                     initCalendar();
-                }
-            })
-            .catch(err => {
-                console.error('Error fetching availability:', err);
-                initCalendar(); // Initialize anyway but without blocked dates
-            });
+                })
+                .catch(err => {
+                    initCalendar(); // Initialize anyway but without blocked dates
+                });
+        }
 
         function isDateUnavailable(date) {
             const dateStr = date.toISOString().split('T')[0];
             return unavailableDateRanges.some(range => {
                 const start = new Date(range.start);
                 const end = new Date(range.end);
+                // Set time to avoid timezone issues
+                start.setHours(0, 0, 0, 0);
+                end.setHours(23, 59, 59, 999);
+                date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
                 return date >= start && date <= end;
             });
         }
@@ -239,22 +254,31 @@
 
         function setDateRangeInput(start, end) {
             if (start && end) {
-                document.getElementById('date-range').value = `${formatDateDMY(start)} - ${formatDateDMY(end)}`;
+                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
+                const endFormatted = formatDateDMY(end.toISOString ? end.toISOString().split('T')[0] : end);
+                document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
             } else if (start) {
-                document.getElementById('date-range').value = formatDateDMY(start);
+                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
+                document.getElementById('date-range').value = startFormatted;
             } else {
                 document.getElementById('date-range').value = '';
             }
         }
 
         function initCalendar() {
-            flatpickr("#date-range", {
+            // Update placeholder to show calendar is ready
+            document.getElementById('date-range').placeholder = "Alege perioada";
+
+            const fp = flatpickr("#date-range", {
                 mode: "range",
                 minDate: "today",
                 locale: "ro",
-                dateFormat: "Y-m-d",
-                disable: [isDateUnavailable],
-                onChange: function (selectedDates) {
+                dateFormat: "d.m.Y",
+                altInput: false,
+                allowInput: false,
+                clickOpens: true,
+                disable: unavailableDateRanges.length > 0 ? [isDateUnavailable] : [],
+                onChange: function (selectedDates, dateStr, instance) {
                     if (selectedDates.length === 2) {
                         const [start, end] = selectedDates;
                         document.getElementById('checkin').value = start.toISOString().split('T')[0];
@@ -263,15 +287,25 @@
                         updateBookingSummary();
                     } else if (selectedDates.length === 1) {
                         setDateRangeInput(selectedDates[0]);
+                        document.getElementById('checkin').value = selectedDates[0].toISOString().split('T')[0];
+                        document.getElementById('checkout').value = '';
                     } else {
                         setDateRangeInput();
+                        document.getElementById('checkin').value = '';
+                        document.getElementById('checkout').value = '';
                     }
                 },
-                formatDate: function (date, format) {
-                    // Override Flatpickr's display format for the input
-                    return formatDateDMY(date.toISOString().split('T')[0]);
+                onReady: function (selectedDates, dateStr, instance) {
                 },
+                onOpen: function (selectedDates, dateStr, instance) {
+                }
             });
+
+            // Fallback check if calendar doesn't initialize
+            setTimeout(() => {
+                if (!fp || !fp.isOpen) {
+                }
+            }, 1000);
         }
 
         function updateBookingSummary() {
