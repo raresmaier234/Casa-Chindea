@@ -45,14 +45,14 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
                     <a href="/js/pages/contact.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <!-- Auth element will be added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
                 </div>
             </div>
-            <div class="md:hidden flex items-center">
-                <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
-                    <i class="fas fa-bars text-xl"></i>
-                </button>
-            </div>
-        </div>
         </div>
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
@@ -69,8 +69,7 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
                 <a href="/js/pages/contact.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
-                <button id="mobile-logout-btn"
-                    class="nav-link block px-3 py-2 text-red-600 font-semibold w-full text-left">Logout</button>
+                <!-- Auth element will be added by navigation.js -->
             </div>
         </div>
     </nav>
@@ -225,7 +224,7 @@
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function () {
             checkAuthentication();
-            setupEventListeners();
+            setupProfileForm(); // Setup only profile-specific functionality
             loadUserProfile();
             loadUserBookings();
         });
@@ -239,41 +238,7 @@
             }
         }
 
-        function setupEventListeners() {
-            // Mobile menu toggle
-            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
-            const mobileMenu = document.getElementById('mobile-menu');
-            if (mobileMenuBtn && mobileMenu) {
-                mobileMenuBtn.addEventListener('click', () => {
-                    mobileMenu.classList.toggle('hidden');
-                });
-            }
-
-            // Profile dropdown
-            const profileDropdown = document.getElementById('profile-dropdown');
-            const dropdownMenu = document.getElementById('dropdown-menu');
-            if (profileDropdown && dropdownMenu) {
-                profileDropdown.addEventListener('click', () => {
-                    dropdownMenu.classList.toggle('hidden');
-                });
-
-                // Close dropdown when clicking outside
-                document.addEventListener('click', (e) => {
-                    if (!profileDropdown.contains(e.target)) {
-                        dropdownMenu.classList.add('hidden');
-                    }
-                });
-            }
-
-            // Logout buttons
-            const logoutBtns = ['logout-btn', 'mobile-logout-btn'];
-            logoutBtns.forEach(id => {
-                const btn = document.getElementById(id);
-                if (btn) {
-                    btn.addEventListener('click', logout);
-                }
-            });
-
+        function setupProfileForm() {
             // Profile form submission
             const profileForm = document.getElementById('profile-form');
             if (profileForm) {
@@ -476,11 +441,6 @@
                 console.error('Error updating profile:', error);
                 alert('Eroare la actualizarea profilului. Încercați din nou.');
             }
-        }
-
-        function logout() {
-            sessionStorage.removeItem('auth_token');
-            window.location.href = '/js/pages/home.html';
         }
     </script>
 </body>
