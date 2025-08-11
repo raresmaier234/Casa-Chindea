@@ -1,8 +1,2 @@
-api/pb_migrations/
-api/pb_data/
-api/pocketbase
-api/start.sh
-api/Dockerfile
-api/fly.toml
 api/CHANGELOG.md
 api/LICENSE.md
