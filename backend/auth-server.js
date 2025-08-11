@@ -229,4 +229,95 @@ app.get('/api/config', (req, res) => {
     });
 });
 
+// User profile endpoints
+app.get('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        // Obține informațiile utilizatorului din PocketBase
+        const user = await pb.collection('users').getOne(req.user.userId);
+        
+        res.json({
+            success: true,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name,
+                phone: user.phone,
+                avatar: user.avatar,
+                created: user.created,
+                updated: user.updated
+            }
+        });
+    } catch (err) {
+        console.error('Error fetching user profile:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la încărcarea profilului.'
+        });
+    }
+});
+
+app.put('/api/user/profile', authenticateToken, async (req, res) => {
+    try {
+        const { name, phone } = req.body;
+        
+        // Actualizează informațiile utilizatorului în PocketBase
+        const updatedUser = await pb.collection('users').update(req.user.userId, {
+            name,
+            phone
+        });
+        
+        res.json({
+            success: true,
+            message: 'Profil actualizat cu succes.',
+            user: {
+                id: updatedUser.id,
+                email: updatedUser.email,
+                name: updatedUser.name,
+                phone: updatedUser.phone,
+                avatar: updatedUser.avatar
+            }
+        });
+    } catch (err) {
+        console.error('Error updating user profile:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la actualizarea profilului.'
+        });
+    }
+});
+
+// User bookings endpoint
+app.get('/api/user/bookings', authenticateToken, async (req, res) => {
+    try {
+        // Caută rezervările utilizatorului curent în PocketBase
+        const bookings = await pb.collection('booking').getFullList({
+            filter: `email = "${req.user.email}"`,
+            sort: '-created'
+        });
+        
+        res.json({
+            success: true,
+            bookings: bookings.map(booking => ({
+                id: booking.id,
+                checkin: booking.checkin,
+                checkout: booking.checkout,
+                guests: booking.guests,
+                roomType: booking.roomType || 'standard',
+                phone: booking.phone,
+                message: booking.message,
+                status: booking.status || 'pending',
+                created: booking.created,
+                updated: booking.updated
+            }))
+        });
+    } catch (err) {
+        console.error('Error fetching user bookings:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la încărcarea rezervărilor.',
+            bookings: []
+        });
+    }
+});
+
 export default app;

@@ -21,6 +21,7 @@
             }
         }
     </script>
+    <script src="/js/components/navigation.js"></script>
 </head>
 
 <body class="bg-gray-50">
@@ -32,7 +33,7 @@
                         <h1 class="text-2xl font-bold text-primary">Casa Chindea</h1>
                     </div>
                 </div>
-                <div class="hidden md:flex items-center space-x-8">
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
                     <a href="/js/pages/home.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
                     <a href="/js/pages/about.html"
@@ -57,7 +58,7 @@
         </div>
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
-            <div class="px-2 pt-2 pb-3 space-y-1">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
                 <a href="/js/pages/home.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"

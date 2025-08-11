@@ -1,0 +1,503 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Profilul Meu - Casa Chindea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">Casa Chindea</h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/rooms.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Camere</a>
+                    <a href="/js/pages/gallery.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <div class="relative">
+                        <button id="profile-dropdown" 
+                            class="flex items-center space-x-2 text-primary font-semibold hover:text-secondary transition-colors duration-200">
+                            <i class="fas fa-user-circle"></i>
+                            <span id="user-name">Profil</span>
+                            <i class="fas fa-chevron-down text-xs"></i>
+                        </button>
+                        <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10">
+                            <a href="/js/pages/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-user mr-2"></i>Profilul Meu
+                            </a>
+                            <button id="logout-btn" class="block w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                                <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                            </button>
+                        </div>
+                    </div>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/rooms.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Camere</a>
+                <a href="/js/pages/gallery.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <a href="/js/pages/profile.html"
+                    class="nav-link block px-3 py-2 text-primary font-semibold">Profil</a>
+                <button id="mobile-logout-btn"
+                    class="nav-link block px-3 py-2 text-red-600 font-semibold w-full text-left">Logout</button>
+            </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <!-- Main Content -->
+    <main class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header -->
+            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
+                <div class="flex items-center space-x-6">
+                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
+                        <i class="fas fa-user text-white text-3xl"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-3xl font-bold text-gray-900" id="profile-name">Bun venit!</h1>
+                        <p class="text-gray-600" id="profile-email">Încarcă...</p>
+                        <div class="flex items-center mt-2">
+                            <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                                <i class="fas fa-check-circle mr-1"></i>
+                                Cont verificat
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Profile Settings -->
+                <div class="lg:col-span-1">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <h2 class="text-xl font-bold text-gray-900 mb-6">
+                            <i class="fas fa-user-edit text-primary mr-2"></i>
+                            Informații Personale
+                        </h2>
+                        <form id="profile-form" class="space-y-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Nume</label>
+                                <input type="text" id="first-name" 
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Prenume</label>
+                                <input type="text" id="last-name" 
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <input type="email" id="email" disabled
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-500 cursor-not-allowed">
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                                <input type="tel" id="phone" placeholder="Ex: +40 123 456 789"
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+                            <button type="submit" 
+                                class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                                <i class="fas fa-save mr-2"></i>
+                                Salvează Modificările
+                            </button>
+                        </form>
+                    </div>
+                </div>
+
+                <!-- Bookings History -->
+                <div class="lg:col-span-2">
+                    <div class="bg-white rounded-2xl shadow-lg p-6">
+                        <div class="flex items-center justify-between mb-6">
+                            <h2 class="text-xl font-bold text-gray-900">
+                                <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                                Rezervările Mele
+                            </h2>
+                            <a href="/js/pages/booking.html" 
+                                class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                                <i class="fas fa-plus mr-1"></i>
+                                Rezervare Nouă
+                            </a>
+                        </div>
+                        
+                        <!-- Loading State -->
+                        <div id="bookings-loading" class="text-center py-8">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p class="text-gray-600">Se încarcă rezervările...</p>
+                        </div>
+
+                        <!-- Empty State -->
+                        <div id="bookings-empty" class="hidden text-center py-12">
+                            <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu ai rezervări încă</h3>
+                            <p class="text-gray-600 mb-6">Fă prima ta rezervare la Casa Chindea!</p>
+                            <a href="/js/pages/booking.html" 
+                                class="inline-flex items-center bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
+                                <i class="fas fa-calendar-plus mr-2"></i>
+                                Rezervă Acum
+                            </a>
+                        </div>
+
+                        <!-- Bookings List -->
+                        <div id="bookings-list" class="hidden space-y-4">
+                            <!-- Bookings will be dynamically inserted here -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gray-800 text-white py-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Casa Chindea</h3>
+                    <p class="text-gray-300">Refugiul perfect în inima naturii, la poalele Hășmașului Mare.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>Hășmaș, județul Harghita</p>
+                        <p><i class="fas fa-phone mr-2"></i>+40 XXX XXX XXX</p>
+                        <p><i class="fas fa-envelope mr-2"></i>contact@casachindea.ro</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Urmărește-ne</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/casa.chindea?locale=ro_RO"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="https://www.instagram.com/casachindea2019?igsh=bW1oMmdhcDcwbXhi"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@casachindea?_t=ZN-8xQ5XCOZp2I&_r=1"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-tiktok text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Check authentication on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            checkAuthentication();
+            setupEventListeners();
+            loadUserProfile();
+            loadUserBookings();
+        });
+
+        function checkAuthentication() {
+            const token = sessionStorage.getItem('auth_token');
+            if (!token) {
+                // Redirect to login if not authenticated
+                window.location.href = '/js/pages/login.html';
+                return;
+            }
+        }
+
+        function setupEventListeners() {
+            // Mobile menu toggle
+            const mobileMenuBtn = document.getElementById('mobile-menu-btn');
+            const mobileMenu = document.getElementById('mobile-menu');
+            if (mobileMenuBtn && mobileMenu) {
+                mobileMenuBtn.addEventListener('click', () => {
+                    mobileMenu.classList.toggle('hidden');
+                });
+            }
+
+            // Profile dropdown
+            const profileDropdown = document.getElementById('profile-dropdown');
+            const dropdownMenu = document.getElementById('dropdown-menu');
+            if (profileDropdown && dropdownMenu) {
+                profileDropdown.addEventListener('click', () => {
+                    dropdownMenu.classList.toggle('hidden');
+                });
+
+                // Close dropdown when clicking outside
+                document.addEventListener('click', (e) => {
+                    if (!profileDropdown.contains(e.target)) {
+                        dropdownMenu.classList.add('hidden');
+                    }
+                });
+            }
+
+            // Logout buttons
+            const logoutBtns = ['logout-btn', 'mobile-logout-btn'];
+            logoutBtns.forEach(id => {
+                const btn = document.getElementById(id);
+                if (btn) {
+                    btn.addEventListener('click', logout);
+                }
+            });
+
+            // Profile form submission
+            const profileForm = document.getElementById('profile-form');
+            if (profileForm) {
+                profileForm.addEventListener('submit', updateProfile);
+            }
+        }
+
+        async function loadUserProfile() {
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.user;
+
+                    // Update UI with user data
+                    document.getElementById('profile-name').textContent = user.name || 'Utilizator';
+                    document.getElementById('profile-email').textContent = user.email;
+                    document.getElementById('user-name').textContent = user.name || 'Profil';
+
+                    // Populate form fields
+                    const nameParts = (user.name || '').split(' ');
+                    document.getElementById('first-name').value = nameParts[0] || '';
+                    document.getElementById('last-name').value = nameParts.slice(1).join(' ') || '';
+                    document.getElementById('email').value = user.email;
+                    document.getElementById('phone').value = user.phone || '';
+                } else if (response.status === 401 || response.status === 403) {
+                    // Token invalid, redirect to login
+                    logout();
+                }
+            } catch (error) {
+                console.error('Error loading user profile:', error);
+                logout();
+            }
+        }
+
+        async function loadUserBookings() {
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/user/bookings', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const loadingEl = document.getElementById('bookings-loading');
+                const emptyEl = document.getElementById('bookings-empty');
+                const listEl = document.getElementById('bookings-list');
+
+                loadingEl.classList.add('hidden');
+
+                if (response.ok) {
+                    const data = await response.json();
+                    
+                    if (data.bookings && data.bookings.length > 0) {
+                        displayBookings(data.bookings);
+                        listEl.classList.remove('hidden');
+                    } else {
+                        emptyEl.classList.remove('hidden');
+                    }
+                } else {
+                    emptyEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading bookings:', error);
+                document.getElementById('bookings-loading').classList.add('hidden');
+                document.getElementById('bookings-empty').classList.remove('hidden');
+            }
+        }
+
+        function displayBookings(bookings) {
+            const listEl = document.getElementById('bookings-list');
+            listEl.innerHTML = '';
+
+            bookings.forEach(booking => {
+                const statusClass = getStatusClass(booking.status);
+                const statusIcon = getStatusIcon(booking.status);
+
+                const bookingEl = document.createElement('div');
+                bookingEl.className = 'border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200';
+                bookingEl.innerHTML = `
+                    <div class="flex justify-between items-start mb-4">
+                        <div>
+                            <h3 class="text-lg font-semibold text-gray-900">
+                                ${formatDate(booking.checkin)} - ${formatDate(booking.checkout)}
+                            </h3>
+                            <p class="text-gray-600">${booking.roomType === 'standard' ? 'Camera Standard' : 'Camera Premium'}</p>
+                        </div>
+                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                            <i class="${statusIcon} mr-1"></i>
+                            ${getStatusText(booking.status)}
+                        </span>
+                    </div>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+                        <div>
+                            <span class="font-medium text-gray-500">Persoane:</span>
+                            <p class="text-gray-900">${booking.guests}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Telefon:</span>
+                            <p class="text-gray-900">${booking.phone}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">Data rezervării:</span>
+                            <p class="text-gray-900">${formatDate(booking.created)}</p>
+                        </div>
+                        <div>
+                            <span class="font-medium text-gray-500">ID:</span>
+                            <p class="text-gray-900 font-mono text-xs">${booking.id.substring(0, 8)}...</p>
+                        </div>
+                    </div>
+                    ${booking.message ? `
+                        <div class="mt-4">
+                            <span class="font-medium text-gray-500">Mesaj:</span>
+                            <p class="text-gray-900 mt-1">${booking.message}</p>
+                        </div>
+                    ` : ''}
+                `;
+                listEl.appendChild(bookingEl);
+            });
+        }
+
+        function getStatusClass(status) {
+            switch(status) {
+                case 'confirmed': return 'bg-green-100 text-green-800';
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                default: return 'bg-blue-100 text-blue-800';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch(status) {
+                case 'confirmed': return 'fas fa-check-circle';
+                case 'pending': return 'fas fa-clock';
+                case 'cancelled': return 'fas fa-times-circle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            switch(status) {
+                case 'confirmed': return 'Confirmată';
+                case 'pending': return 'În așteptare';
+                case 'cancelled': return 'Anulată';
+                default: return 'Nouă';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ro-RO');
+        }
+
+        async function updateProfile(e) {
+            e.preventDefault();
+
+            const firstName = document.getElementById('first-name').value;
+            const lastName = document.getElementById('last-name').value;
+            const phone = document.getElementById('phone').value;
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/user/profile', {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        name: `${firstName} ${lastName}`.trim(),
+                        phone
+                    })
+                });
+
+                if (response.ok) {
+                    // Show success message
+                    const btn = e.target.querySelector('button[type="submit"]');
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = '<i class="fas fa-check mr-2"></i>Salvat!';
+                    btn.className = btn.className.replace('bg-primary', 'bg-green-600');
+                    
+                    setTimeout(() => {
+                        btn.innerHTML = originalText;
+                        btn.className = btn.className.replace('bg-green-600', 'bg-primary');
+                    }, 2000);
+
+                    // Refresh profile data
+                    loadUserProfile();
+                } else {
+                    throw new Error('Eroare la actualizare');
+                }
+            } catch (error) {
+                console.error('Error updating profile:', error);
+                alert('Eroare la actualizarea profilului. Încercați din nou.');
+            }
+        }
+
+        function logout() {
+            sessionStorage.removeItem('auth_token');
+            window.location.href = '/js/pages/home.html';
+        }
+    </script>
+</body>
+
+</html>
