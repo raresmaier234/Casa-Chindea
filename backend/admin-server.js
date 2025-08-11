@@ -16,7 +16,7 @@ console.log('🏛️ Admin server initialized with PocketBase URL:', process.env
 const requireAdmin = async (req, res, next) => {
     try {
         console.log('🔍 Checking admin permissions for user:', req.user);
-        
+
         // Verifică dacă userId există în token
         if (!req.user || !req.user.userId) {
             console.error('❌ No userId found in token');
@@ -31,11 +31,11 @@ const requireAdmin = async (req, res, next) => {
             console.log('✅ User is admin (from token)');
             return next();
         }
-        
+
         // Dacă admin nu este în token, verifică din baza de date
         const user = await pb.collection('users').getOne(req.user.userId);
         console.log('👤 User from DB:', { id: user.id, email: user.email, admin: user.admin });
-        
+
         // Verifică dacă utilizatorul are câmpul admin setat pe true
         if (!user.admin) {
             console.log('❌ User is not admin');
@@ -44,7 +44,7 @@ const requireAdmin = async (req, res, next) => {
                 error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
             });
         }
-        
+
         console.log('✅ User is admin (from DB)');
         next();
     } catch (err) {
@@ -71,14 +71,14 @@ const storage = multer.diskStorage({
     }
 });
 
-const upload = multer({ 
+const upload = multer({
     storage: storage,
     limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
     fileFilter: (req, file, cb) => {
         const allowedTypes = /jpeg|jpg|png|gif|webp/;
         const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
         const mimetype = allowedTypes.test(file.mimetype);
-        
+
         if (mimetype && extname) {
             return cb(null, true);
         } else {
@@ -94,16 +94,16 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { status } = req.query;
         let filter = '';
-        
+
         if (status) {
             filter = `status = "${status}"`;
         }
-        
+
         const bookings = await pb.collection('booking').getFullList({
             filter,
             sort: '-created'
         });
-        
+
         res.json({
             success: true,
             bookings: bookings.map(booking => ({
@@ -135,19 +135,19 @@ router.put('/bookings/:id', authenticateToken, requireAdmin, async (req, res) =>
     try {
         const { id } = req.params;
         const { status } = req.body;
-        
+
         if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
             return res.status(400).json({
                 success: false,
                 error: 'Status invalid.'
             });
         }
-        
+
         const updatedBooking = await pb.collection('booking').update(id, {
             status,
             updated: new Date().toISOString()
         });
-        
+
         res.json({
             success: true,
             message: `Rezervarea a fost ${status === 'confirmed' ? 'aprobată' : 'respinsă'} cu succes.`,
@@ -177,9 +177,9 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
                 error: 'Nu a fost încărcată nicio poză.'
             });
         }
-        
+
         const { description } = req.body;
-        
+
         // Creează înregistrarea în PocketBase
         const photoData = {
             filename: req.file.filename,
@@ -188,7 +188,7 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
             uploadedBy: req.user.userId,
             size: req.file.size
         };
-        
+
         // Încarcă fișierul în PocketBase
         const formData = new FormData();
         const fileBuffer = fs.readFileSync(req.file.path);
@@ -196,12 +196,12 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
         formData.append('image', blob, req.file.filename);
         formData.append('description', description || '');
         formData.append('uploadedBy', req.user.userId);
-        
+
         const record = await pb.collection('photos').create(formData);
-        
+
         // Șterge fișierul temporar
         fs.unlinkSync(req.file.path);
-        
+
         res.json({
             success: true,
             message: 'Poza a fost încărcată cu succes.',
@@ -214,12 +214,12 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
         });
     } catch (err) {
         console.error('Error uploading photo:', err);
-        
+
         // Șterge fișierul temporar în cazul erorii
         if (req.file && fs.existsSync(req.file.path)) {
             fs.unlinkSync(req.file.path);
         }
-        
+
         res.status(500).json({
             success: false,
             error: 'Eroare la încărcarea pozei.'
@@ -231,9 +231,9 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
 router.delete('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         await pb.collection('photos').delete(id);
-        
+
         res.json({
             success: true,
             message: 'Poza a fost ștearsă cu succes.'
@@ -252,12 +252,12 @@ router.put('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { description } = req.body;
-        
+
         const updatedPhoto = await pb.collection('photos').update(id, {
             description,
             updated: new Date().toISOString()
         });
-        
+
         res.json({
             success: true,
             message: 'Descrierea pozei a fost actualizată.',
@@ -284,7 +284,7 @@ router.get('/calendar-blocks', authenticateToken, requireAdmin, async (req, res)
         const blocks = await pb.collection('calendar_blocks').getFullList({
             sort: 'startDate'
         });
-        
+
         res.json({
             success: true,
             blocks: blocks.map(block => ({
@@ -308,34 +308,34 @@ router.get('/calendar-blocks', authenticateToken, requireAdmin, async (req, res)
 router.post('/calendar-blocks', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { startDate, endDate, reason } = req.body;
-        
+
         if (!startDate || !endDate) {
             return res.status(400).json({
                 success: false,
                 error: 'Data de început și sfârșitul sunt obligatorii.'
             });
         }
-        
+
         // Verifică dacă datele sunt valide
         const start = new Date(startDate);
         const end = new Date(endDate);
-        
+
         if (start >= end) {
             return res.status(400).json({
                 success: false,
                 error: 'Data de început trebuie să fie înainte de data de sfârșit.'
             });
         }
-        
+
         const blockData = {
             startDate,
             endDate,
             reason: reason || 'Blocare administrativă',
             createdBy: req.user.userId
         };
-        
+
         const block = await pb.collection('calendar_blocks').create(blockData);
-        
+
         res.json({
             success: true,
             message: 'Blocarea a fost adăugată cu succes.',
@@ -360,9 +360,9 @@ router.post('/calendar-blocks', authenticateToken, requireAdmin, async (req, res
 router.delete('/calendar-blocks/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        
+
         await pb.collection('calendar_blocks').delete(id);
-        
+
         res.json({
             success: true,
             message: 'Blocarea a fost ștearsă cu succes.'
@@ -380,19 +380,19 @@ router.delete('/calendar-blocks/:id', authenticateToken, requireAdmin, async (re
 router.get('/calendar-blocks/check', async (req, res) => {
     try {
         const { startDate, endDate } = req.query;
-        
+
         if (!startDate || !endDate) {
             return res.status(400).json({
                 success: false,
                 error: 'Datele de început și sfârșit sunt obligatorii.'
             });
         }
-        
+
         // Verifică dacă există blocări care se suprapun cu perioada solicitată
         const blocks = await pb.collection('calendar_blocks').getFullList({
             filter: `(startDate <= "${endDate}" && endDate >= "${startDate}")`
         });
-        
+
         res.json({
             success: true,
             hasBlocks: blocks.length > 0,
