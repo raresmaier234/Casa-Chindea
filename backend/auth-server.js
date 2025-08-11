@@ -380,4 +380,47 @@ app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
     }
 });
 
+// Endpoint pentru regenerarea token-ului cu permisiunile actualizate
+app.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
+    try {
+        const { userId } = req.user;
+        
+        // Obține utilizatorul actualizat din PocketBase
+        const user = await pb.collection('users').getOne(userId);
+        
+        // Generează un nou token cu permisiunile actuale
+        const newToken = jwt.sign(
+            {
+                userId: user.id,
+                email: user.email,
+                name: user.name || user.email,
+                admin: user.admin || false,
+                exp: Math.floor(Date.now() / 1000) + (60 * 60 * 24) // 24 ore
+            },
+            JWT_SECRET
+        );
+        
+        console.log('🔄 Token refreshed for user:', user.email, 'Admin:', user.admin);
+        
+        res.json({
+            success: true,
+            message: 'Token actualizat cu succes.',
+            token: newToken,
+            user: {
+                id: user.id,
+                email: user.email,
+                name: user.name || user.email,
+                avatar: user.avatar,
+                admin: user.admin || false
+            }
+        });
+    } catch (err) {
+        console.error('❌ Error refreshing token:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la actualizarea token-ului: ' + err.message
+        });
+    }
+});
+
 export default app;

@@ -18,10 +18,69 @@ class CasaChindeaNav {
         if (token && userInfo) {
             try {
                 this.currentUser = JSON.parse(userInfo);
+                // Verifică dacă utilizatorul a devenit admin între timp
+                this.checkAndRefreshAdminToken();
             } catch (err) {
                 console.error('Error parsing user info:', err);
                 this.clearAuthData();
             }
+        }
+    }
+
+    // Verifică dacă utilizatorul este admin și refreshează token-ul dacă este necesar
+    async checkAndRefreshAdminToken() {
+        const token = sessionStorage.getItem('auth_token');
+        if (!token || !this.currentUser) return;
+
+        try {
+            const response = await fetch('/api/auth/admin-status', {
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const statusData = await response.json();
+                console.log('Admin status check:', statusData);
+
+                // Dacă utilizatorul este admin în DB dar nu în token, refreshează token-ul
+                if (statusData.user.admin && !statusData.user.tokenAdmin) {
+                    console.log('🔄 User is admin in DB but not in token, refreshing...');
+                    await this.refreshTokenWithAdminPermissions();
+                }
+            }
+        } catch (err) {
+            console.log('Could not check admin status:', err.message);
+        }
+    }
+
+    // Refreshează token-ul cu permisiunile actualizate
+    async refreshTokenWithAdminPermissions() {
+        const token = sessionStorage.getItem('auth_token');
+        if (!token) return;
+
+        try {
+            const response = await fetch('/api/auth/refresh-token', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${token}`
+                }
+            });
+
+            if (response.ok) {
+                const data = await response.json();
+                console.log('Token refreshed with admin permissions:', data);
+
+                // Actualizează token-ul și informațiile utilizatorului
+                sessionStorage.setItem('auth_token', data.token);
+                sessionStorage.setItem('user_info', JSON.stringify(data.user));
+                this.currentUser = data.user;
+
+                // Actualizează navigația pentru a afișa link-ul de admin
+                this.updateNavigation();
+            }
+        } catch (err) {
+            console.log('Could not refresh token:', err.message);
         }
     }
 
