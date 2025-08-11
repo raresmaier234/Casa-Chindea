@@ -162,10 +162,10 @@
     </footer>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js"></script>
     <script>
-        // Configurare Auth0
+        // Configurare Auth0 pentru Casa Chindea
         const auth0Config = {
-            domain: "YOUR_AUTH0_DOMAIN",
-            clientId: "YOUR_AUTH0_CLIENT_ID",
+            domain: "casa-chindea.eu.auth0.com",
+            clientId: "your-auth0-client-id", // Trebuie înlocuit cu ID-ul real din Auth0 Dashboard
             redirect_uri: window.location.origin + "/js/pages/login.html"
         };
         let auth0 = null;
@@ -199,47 +199,118 @@
                 sessionStorage.removeItem('auth_token');
             }
         }
-        window.onload = async () => {
-            await configureClient();
-            // Handle redirect from Auth0
-            if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
-                await auth0.handleRedirectCallback();
-                window.history.replaceState({}, document.title, "/js/pages/login.html");
-            }
-            updateUI();
-            document.getElementById('auth0-btn').onclick = () => auth0.loginWithRedirect();
-            document.getElementById('logout-btn').onclick = () => auth0.logout({ logoutParams: { returnTo: window.location.origin + "/js/pages/login.html" } });
-        };
-        // Clasic login demo (doar frontend, pentru demo; pentru backend, vezi mai jos)
+        // Login cu PocketBase
         document.getElementById('login-form').onsubmit = async function (e) {
             e.preventDefault();
             document.getElementById('login-error').classList.add('hidden');
             document.getElementById('login-error').innerText = '';
-            // Pentru demo: trimite datele la backend (exemplu fetch)
+            
             const email = document.getElementById('email').value;
             const password = document.getElementById('password').value;
+            
             try {
-                // Folosește doar window.API_URL sau fallback gol
-                const API_URL = window.API_URL || '';
-                const res = await fetch(`/api/login`, {
+                const res = await fetch(`/api/auth/login`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ email, password })
                 });
+                
                 const data = await res.json();
+                
                 if (res.ok && data.success) {
-                    // Poți salva tokenul primit dacă backend-ul returnează unul
+                    // Salvează tokenul și informațiile utilizatorului
                     sessionStorage.setItem('auth_token', data.token);
-                    location.reload();
+                    sessionStorage.setItem('user_info', JSON.stringify(data.user));
+                    
+                    // Actualizează UI-ul
+                    updateClassicLoginUI(data.user);
+                    
+                    alert('Autentificare reușită!');
                 } else {
                     document.getElementById('login-error').classList.remove('hidden');
                     document.getElementById('login-error').innerText = data.error || 'Eroare la autentificare.';
                 }
             } catch (err) {
+                console.error('Login error:', err);
                 document.getElementById('login-error').classList.remove('hidden');
-                document.getElementById('login-error').innerText = 'Eroare server.';
+                document.getElementById('login-error').innerText = 'Eroare de conexiune la server.';
+            }
+        };
+        
+        // Actualizează UI pentru login clasic
+        function updateClassicLoginUI(user) {
+            const loginForm = document.getElementById('login-form');
+            const logoutBtn = document.getElementById('logout-btn');
+            const userInfo = document.getElementById('user-info');
+            
+            if (user) {
+                loginForm.classList.add('hidden');
+                logoutBtn.classList.remove('hidden');
+                userInfo.classList.remove('hidden');
+                userInfo.innerHTML = `
+                    <div class='mb-2'>
+                        <i class='fas fa-user-circle text-4xl text-primary'></i>
+                    </div>
+                    <div class='font-semibold'>${user.name || user.email}</div>
+                    <div class='text-gray-500 text-sm'>${user.email}</div>
+                    <div class='text-xs text-gray-400 mt-2'>Autentificat cu PocketBase</div>
+                `;
+                
+                // Actualizează butonul de logout pentru PocketBase
+                logoutBtn.onclick = function() {
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('user_info');
+                    location.reload();
+                };
             }
         }
+        
+        // Verifică dacă utilizatorul este deja autentificat cu PocketBase
+        function checkClassicAuth() {
+            const token = sessionStorage.getItem('auth_token');
+            const userInfo = sessionStorage.getItem('user_info');
+            
+            if (token && userInfo) {
+                try {
+                    const user = JSON.parse(userInfo);
+                    updateClassicLoginUI(user);
+                } catch (err) {
+                    console.error('Error parsing user info:', err);
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('user_info');
+                }
+            }
+        }
+        
+        // Inițializare la încărcarea paginii
+        window.onload = async () => {
+            // Verifică autentificarea clasică
+            checkClassicAuth();
+            
+            // Configurează Auth0 doar dacă domeniul nu este placeholder
+            if (auth0Config.domain !== "casa-chindea.eu.auth0.com" && auth0Config.clientId !== "your-auth0-client-id") {
+                try {
+                    await configureClient();
+                    
+                    // Handle redirect from Auth0
+                    if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
+                        await auth0.handleRedirectCallback();
+                        window.history.replaceState({}, document.title, "/js/pages/login.html");
+                    }
+                    
+                    await updateUI();
+                    
+                    document.getElementById('auth0-btn').onclick = () => auth0.loginWithRedirect();
+                } catch (err) {
+                    console.error('Auth0 configuration error:', err);
+                    // Ascunde opțiunea Auth0 dacă nu este configurată
+                    document.querySelector('.mt-6.text-center').style.display = 'none';
+                }
+            } else {
+                // Ascunde opțiunea Auth0 dacă nu este configurată
+                document.querySelector('.mt-6.text-center').style.display = 'none';
+            }
+        };
     </script>
 </body>
 
