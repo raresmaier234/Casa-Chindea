@@ -78,16 +78,6 @@
             </div>
         </div>
     </nav>
-    <script>
-        // Mobile navbar toggle
-        document.addEventListener('DOMContentLoaded', function () {
-            const btn = document.getElementById('mobile-menu-btn');
-            const menu = document.getElementById('mobile-menu');
-            btn.addEventListener('click', function () {
-                menu.classList.toggle('hidden');
-            });
-        });
-    </script>
     <section class="py-20 bg-white">
         <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
@@ -129,7 +119,7 @@
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Perioada Cazării</label>
-                        <input type="text" id="date-range" required placeholder="Alege perioada"
+                        <input type="text" id="date-range" required placeholder="Se încarcă calendarul..."
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         <input type="hidden" id="checkin">
                         <input type="hidden" id="checkout">
@@ -205,20 +195,64 @@
     <script>
         let unavailableDateRanges = [];
 
-        // Fetch unavailable dates from the backend
-        console.log('Fetching availability from /api/availability...');
-        fetch('/api/availability')
-            .then(res => res.json())
-            .then(data => {
-                if (data.success) {
-                    unavailableDateRanges = data.unavailableDates;
+        // Ensure DOM is loaded before initializing
+        document.addEventListener('DOMContentLoaded', function() {
+            // Mobile navbar toggle
+            const btn = document.getElementById('mobile-menu-btn');
+            const menu = document.getElementById('mobile-menu');
+            if (btn && menu) {
+                btn.addEventListener('click', function () {
+                    menu.classList.toggle('hidden');
+                });
+            }
+
+            // Initialize calendar after DOM is ready
+            initializeBookingSystem();
+        });
+
+        function initializeBookingSystem() {
+            // First test if API is reachable
+            console.log('Testing API connectivity...');
+            fetch('/api/health')
+                .then(res => res.json())
+                .then(data => {
+                    console.log('API health check successful:', data);
+                    fetchAvailabilityAndInitCalendar();
+                })
+                .catch(err => {
+                    console.error('API health check failed:', err);
+                    console.warn('API not reachable, initializing calendar without availability data');
                     initCalendar();
-                }
-            })
-            .catch(err => {
-                console.error('Error fetching availability:', err);
-                initCalendar(); // Initialize anyway but without blocked dates
-            });
+                });
+        }
+
+        function fetchAvailabilityAndInitCalendar() {
+            // Fetch unavailable dates from the backend
+            console.log('Fetching availability from /api/availability...');
+            fetch('/api/availability')
+                .then(res => {
+                    console.log('API response status:', res.status);
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    console.log('API response data:', data);
+                    if (data.success) {
+                        unavailableDateRanges = data.unavailableDates;
+                        console.log('Loaded unavailable date ranges:', unavailableDateRanges);
+                    } else {
+                        console.warn('API returned success: false');
+                    }
+                    initCalendar();
+                })
+                .catch(err => {
+                    console.error('Error fetching availability:', err);
+                    console.warn('Initializing calendar without availability data');
+                    initCalendar(); // Initialize anyway but without blocked dates
+                });
+        }
 
         function isDateUnavailable(date) {
             const dateStr = date.toISOString().split('T')[0];
@@ -258,15 +292,19 @@
         function initCalendar() {
             console.log('Initializing calendar with unavailable dates:', unavailableDateRanges);
 
-            flatpickr("#date-range", {
+            // Update placeholder to show calendar is ready
+            document.getElementById('date-range').placeholder = "Alege perioada";
+
+            const fp = flatpickr("#date-range", {
                 mode: "range",
                 minDate: "today",
                 locale: "ro",
                 dateFormat: "d.m.Y",
-                altInput: true,
-                altFormat: "d.m.Y",
-                disable: [isDateUnavailable],
-                onChange: function (selectedDates) {
+                altInput: false,
+                allowInput: false,
+                clickOpens: true,
+                disable: unavailableDateRanges.length > 0 ? [isDateUnavailable] : [],
+                onChange: function (selectedDates, dateStr, instance) {
                     console.log('Date selection changed:', selectedDates);
                     if (selectedDates.length === 2) {
                         const [start, end] = selectedDates;
@@ -284,10 +322,21 @@
                         document.getElementById('checkout').value = '';
                     }
                 },
-                onReady: function () {
+                onReady: function (selectedDates, dateStr, instance) {
                     console.log('Flatpickr calendar ready');
+                    console.log('Calendar element:', instance.element);
+                },
+                onOpen: function (selectedDates, dateStr, instance) {
+                    console.log('Calendar opened');
                 }
             });
+
+            // Fallback check if calendar doesn't initialize
+            setTimeout(() => {
+                if (!fp || !fp.isOpen) {
+                    console.log('Calendar initialized successfully');
+                }
+            }, 1000);
         }
 
         function updateBookingSummary() {
