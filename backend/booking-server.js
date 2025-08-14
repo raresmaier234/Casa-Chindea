@@ -11,10 +11,10 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'
 
 console.log('📅 Booking server initialized with PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
-router.get('/api/availability', async (req, res) => {
+router.get('/api/booking-availability', async (req, res) => {
     try {
         console.log('🔍 Checking availability from PocketBase:', process.env.POCKET_BASE_URL);
-        
+
         // Get all confirmed bookings
         const bookings = await pb.collection('booking').getFullList({
             sort: 'checkin',
@@ -61,9 +61,9 @@ router.get('/api/availability', async (req, res) => {
         });
     } catch (err) {
         console.error('❌ Error fetching availability:', err);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            error: 'Error checking availability: ' + err.message 
+            error: 'Error checking availability: ' + err.message
         });
     }
 });
@@ -71,13 +71,13 @@ router.get('/api/availability', async (req, res) => {
 // Booking endpoint
 router.post('/api/booking', async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
-    
+
     console.log('📝 New booking request:', { name, email, checkin, checkout, guests, roomType });
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         console.error('❌ Missing required fields:', { name: !!name, email: !!email, phone: !!phone, guests: !!guests, checkin: !!checkin, checkout: !!checkout, roomType: !!roomType });
-        return res.status(400).json({ 
+        return res.status(400).json({
             success: false,
-            error: 'Toate câmpurile obligatorii trebuie completate.' 
+            error: 'Toate câmpurile obligatorii trebuie completate.'
         });
     }
 
@@ -147,9 +147,9 @@ router.post('/api/booking', async (req, res) => {
                 // Don't fail the booking if WhatsApp fails
             }
         }
-        
-        res.json({ 
-            success: true, 
+
+        res.json({
+            success: true,
             message: 'Rezervarea a fost trimisă cu succes! Veți fi contactat în curând.',
             booking: {
                 id: pbResult.id,
@@ -162,9 +162,9 @@ router.post('/api/booking', async (req, res) => {
         });
     } catch (err) {
         console.error('❌ Booking error:', err);
-        res.status(500).json({ 
+        res.status(500).json({
             success: false,
-            error: 'Eroare la rezervare: ' + err.message 
+            error: 'Eroare la rezervare: ' + err.message
         });
     }
 });
