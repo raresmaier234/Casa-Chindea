@@ -12,6 +12,9 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'
 
 const requireAdmin = async (req, res, next) => {
     try {
+
+
+        // Verifică dacă userId există în token
         if (!req.user || !req.user.userId) {
             console.error('❌ No userId found in token');
             return res.status(401).json({
@@ -98,7 +101,7 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
         console.log('🔗 PocketBase URL:', process.env.POCKET_BASE_URL);
         console.log('📊 Attempting to fetch from booking collection...');
 
-        const bookings = await pb.collection('booking').getFullList({
+        const bookings = await pb.collection('booking').getFullList(100, {
             filter,
             sort: '-created'
         });
@@ -296,7 +299,7 @@ router.put('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
 // Obține toate blocările de calendar
 router.get('/calendar-blocks', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const blocks = await pb.collection('calendar_blocks').getFullList({
+        const blocks = await pb.collection('calendar_blocks').getFullList(200, {
             sort: 'startDate'
         });
 
@@ -404,7 +407,7 @@ router.get('/calendar-blocks/check', async (req, res) => {
         }
 
         // Verifică dacă există blocări care se suprapun cu perioada solicitată
-        const blocks = await pb.collection('calendar_blocks').getFullList({
+        const blocks = await pb.collection('calendar_blocks').getFullList(200, {
             filter: `(startDate <= "${endDate}" && endDate >= "${startDate}")`
         });
 

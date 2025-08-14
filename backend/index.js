@@ -36,8 +36,8 @@ app.get('/api/health', (req, res) => {
 
 app.use(authRouter);
 app.use('/api/booking', bookingRouter);
-app.use('/api/contact', contactRouter);
-app.use('/photos', galleryRouter);
+app.use(contactRouter);
+app.use(galleryRouter);
 app.use('/api/admin', adminRouter);
 
 const PORT = process.env.PORT || 3001;
