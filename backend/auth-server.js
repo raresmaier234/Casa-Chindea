@@ -308,7 +308,7 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
         const bookings = await pb.collection('booking').getFullList(
             200,
             {
-                filter: `email = "${req.user.email}"`,
+                filter: `email="${req.user.email}"`,
                 sort: '-created',
                 $autoCancel: false
             }
