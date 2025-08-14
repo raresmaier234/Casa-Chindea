@@ -305,11 +305,14 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
         }
 
         // Caută rezervările utilizatorului curent în PocketBase
-        const bookings = await pb.collection('booking').getFullList({
-            filter: `email = "${req.user.email}"`,
-            sort: '-created'
-        });
-
+        const bookings = await pb.collection('booking').getFullList(
+            200,
+            {
+                filter: `email = "${req.user.email}"`,
+                sort: '-created',
+                $autoCancel: false
+            }
+        );
         console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
 
         res.json({
