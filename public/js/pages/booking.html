@@ -205,7 +205,7 @@
 
         function fetchAvailabilityAndInitCalendar() {
             // Fetch unavailable dates from the backend
-            fetch('/api/booking-availability')
+            fetch('/api/booking/booking-availability')
                 .then(res => {
                     if (!res.ok) {
                         throw new Error(`HTTP error! status: ${res.status}`);
