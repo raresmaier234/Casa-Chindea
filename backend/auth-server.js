@@ -403,7 +403,7 @@ app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
 });
 
 // Endpoint pentru regenerarea token-ului cu permisiunile actualizate
-router.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
+api.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
 
