@@ -1,16 +1,15 @@
-// backend/whatsapp.js
-// Trimite mesaj WhatsApp prin Meta API WhatsApp Business
-import fetch from 'node-fetch';
-import dotenv from 'dotenv';
-dotenv.config();
+import { refreshWhatsAppToken } from './whatsapp-token-helper.js';
 
-/**
- * Trimite un mesaj WhatsApp folosind Meta API
- * @param {string} toPhone - numărul destinatarului (format international, ex: '407xxxxxxxx')
- * @param {object} bookingData - obiect cu datele rezervării
- * @returns {Promise<object>} răspunsul de la Meta API
- */
 export async function sendWhatsAppMessage(toPhone, bookingData) {
+    let token = process.env.WHATSAPP_TOKEN;
+
+    // Reîmprospătăm token-ul înainte de trimis
+    try {
+        token = await refreshWhatsAppToken();
+    } catch (err) {
+        console.warn('⚠️ Nu s-a putut reîmprospăta token-ul, folosim token existent:', err.message);
+    }
+
     const url = `https://graph.facebook.com/v22.0/${process.env.WHATSAPP_PHONE_ID}/messages`;
     const payload = {
         messaging_product: 'whatsapp',
@@ -35,19 +34,21 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
             ]
         }
     };
-    console.log('WhatsApp API payload:', JSON.stringify(payload, null, 2));
+
     const res = await fetch(url, {
         method: 'POST',
         headers: {
-            'Authorization': `Bearer ${process.env.WHATSAPP_TOKEN}`,
+            'Authorization': `Bearer ${token}`,
             'Content-Type': 'application/json'
         },
         body: JSON.stringify(payload)
     });
+
     const data = await res.json();
     if (!res.ok) {
         console.error('WhatsApp API error:', data);
         throw new Error(data.error?.message || 'Eroare la trimitere WhatsApp');
     }
+
     return data;
 }
