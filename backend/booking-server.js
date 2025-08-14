@@ -6,13 +6,11 @@ import PocketBase from 'pocketbase';
 import { sendWhatsAppMessage } from './whatsapp.js';
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-app.get('/booking-availability', async (req, res) => {
+router.get('/booking-availability', async (req, res) => {
     try {
         const bookings = await pb.collection('booking').getFullList(
             200, // batch size maxim, poți pune și mai mic dacă vrei
@@ -39,7 +37,7 @@ app.get('/booking-availability', async (req, res) => {
 });
 
 // Booking endpoint
-app.post(`/api/booking`, async (req, res) => {
+router.post(`/`, async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
@@ -92,4 +90,4 @@ app.post(`/api/booking`, async (req, res) => {
     }
 });
 
-export default app;
+export default router;
