@@ -48,4 +48,4 @@ router.post('/photos', upload.single('file'), async (req, res) => {
     }
 });
 
-export default app;
+export default router;
