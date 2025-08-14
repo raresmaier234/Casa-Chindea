@@ -11,7 +11,7 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'
 
 console.log('📅 Booking server initialized with PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
-router.get('-availability', async (req, res) => {
+router.get('/booking-availability', async (req, res) => {
     try {
         console.log('🔍 Checking availability from PocketBase:', process.env.POCKET_BASE_URL);
 
@@ -69,7 +69,7 @@ router.get('-availability', async (req, res) => {
 });
 
 // Booking endpoint
-router.post('', async (req, res) => {
+router.post('/', async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
 
     console.log('📝 New booking request:', { name, email, checkin, checkout, guests, roomType });
