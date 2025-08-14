@@ -9,13 +9,11 @@ import PocketBase from 'pocketbase';
 
 dotenv.config();
 
-const app = express();
-app.use(cors());
-app.use(express.json());
+const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-app.get('/api/photos', async (req, res) => {
+router.get('/photos', async (req, res) => {
     try {
 
         let limit = parseInt(req.query.limit, 10);
@@ -34,7 +32,7 @@ app.get('/api/photos', async (req, res) => {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-app.post('/api/photos', upload.single('file'), async (req, res) => {
+router.post('/photos', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Niciun fișier trimis.' });

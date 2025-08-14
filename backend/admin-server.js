@@ -10,15 +10,8 @@ import { authenticateToken } from './auth-server.js';
 const router = express.Router();
 const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
-console.log('🏛️ Admin server initialized with PocketBase URL:', process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
-
-
-// Middleware pentru verificarea permisiunilor de admin
 const requireAdmin = async (req, res, next) => {
     try {
-        console.log('🔍 Checking admin permissions for user:', req.user);
-
-        // Verifică dacă userId există în token
         if (!req.user || !req.user.userId) {
             console.error('❌ No userId found in token');
             return res.status(401).json({
