@@ -236,7 +236,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         // Obține informațiile utilizatorului din PocketBase
         const user = await pb.collection('users').getOne(req.user.userId);
-        
+
         res.json({
             success: true,
             user: {
@@ -262,13 +262,13 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const { name, phone } = req.body;
-        
+
         // Actualizează informațiile utilizatorului în PocketBase
         const updatedUser = await pb.collection('users').update(req.user.userId, {
             name,
             phone
         });
-        
+
         res.json({
             success: true,
             message: 'Profil actualizat cu succes.',
@@ -292,12 +292,26 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 // User bookings endpoint
 app.get('/api/user/bookings', authenticateToken, async (req, res) => {
     try {
+        console.log('🔍 Fetching bookings for user:', req.user.email);
+        console.log('🏗️ PocketBase URL:', process.env.POCKET_BASE_URL);
+
+        // Test PocketBase connection first
+        try {
+            await pb.collection('booking').getList(1, 1);
+            console.log('✅ PocketBase connection successful');
+        } catch (connErr) {
+            console.error('❌ PocketBase connection failed:', connErr);
+            throw new Error('Nu se poate conecta la baza de date: ' + connErr.message);
+        }
+
         // Caută rezervările utilizatorului curent în PocketBase
         const bookings = await pb.collection('booking').getFullList({
             filter: `email = "${req.user.email}"`,
             sort: '-created'
         });
-        
+
+        console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
+
         res.json({
             success: true,
             bookings: bookings.map(booking => ({
@@ -314,10 +328,18 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
             }))
         });
     } catch (err) {
-        console.error('Error fetching user bookings:', err);
+        console.error('❌ Error fetching user bookings:', err);
+        console.error('❌ Full error details:', {
+            message: err.message,
+            status: err.status,
+            data: err.data,
+            stack: err.stack
+        });
+
         res.status(500).json({
             success: false,
-            error: 'Eroare la încărcarea rezervărilor.',
+            error: 'Eroare la încărcarea rezervărilor: ' + err.message,
+            details: err.message,
             bookings: []
         });
     }
@@ -327,14 +349,14 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
 app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-        
+
         // Actualizează utilizatorul să fie admin
         const updatedUser = await pb.collection('users').update(userId, {
             admin: true
         });
-        
+
         console.log('✅ User set as admin:', updatedUser.email);
-        
+
         res.json({
             success: true,
             message: 'Utilizatorul a fost setat ca administrator.',
@@ -357,10 +379,10 @@ app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
 app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-        
+
         // Obține utilizatorul din PocketBase
         const user = await pb.collection('users').getOne(userId);
-        
+
         res.json({
             success: true,
             user: {
@@ -381,13 +403,13 @@ app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
 });
 
 // Endpoint pentru regenerarea token-ului cu permisiunile actualizate
-app.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
+router.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-        
+
         // Obține utilizatorul actualizat din PocketBase
         const user = await pb.collection('users').getOne(userId);
-        
+
         // Generează un nou token cu permisiunile actuale
         const newToken = jwt.sign(
             {
@@ -399,9 +421,9 @@ app.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
             },
             JWT_SECRET
         );
-        
+
         console.log('🔄 Token refreshed for user:', user.email, 'Admin:', user.admin);
-        
+
         res.json({
             success: true,
             message: 'Token actualizat cu succes.',
