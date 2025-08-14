@@ -6,7 +6,7 @@ import PocketBase from 'pocketbase';
 const router = express.Router();
 const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
 
-router.get('/api/photos', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         let limit = parseInt(req.query.limit, 10);
         if (isNaN(limit) || limit < 1) limit = 10;
@@ -33,7 +33,7 @@ router.get('/api/photos', async (req, res) => {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/api/photos', upload.single('file'), async (req, res) => {
+router.post('/', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'No file sent.' });

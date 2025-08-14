@@ -13,7 +13,7 @@ const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-router.get('/photos', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
 
         let limit = parseInt(req.query.limit, 10);
@@ -32,7 +32,7 @@ router.get('/photos', async (req, res) => {
 
 const upload = multer({ storage: multer.memoryStorage() });
 
-router.post('/photos', upload.single('file'), async (req, res) => {
+router.post('/', upload.single('file'), async (req, res) => {
     try {
         if (!req.file) {
             return res.status(400).json({ error: 'Niciun fișier trimis.' });

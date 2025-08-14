@@ -498,7 +498,7 @@
             const galleryEl = document.getElementById('admin-gallery');
 
             try {
-                const response = await fetch('/api/photos');
+                const response = await fetch('/photos');
                 const data = await response.json();
                 const photos = data.items || [];
 
@@ -586,7 +586,7 @@
         async function editPhoto(photoId) {
             // Get current photo data first
             try {
-                const response = await fetch('/api/photos');
+                const response = await fetch('/photos');
                 const data = await response.json();
                 const photos = data.items || [];
                 const photo = photos.find(p => p.id === photoId);

@@ -105,7 +105,7 @@
     <script>
         async function loadGalleryPhotos() {
             try {
-                const response = await fetch('/api/photos');
+                const response = await fetch('/photos');
                 const data = await response.json();
                 const photos = data.items || [];
                 const gallery = document.getElementById('full-gallery');
