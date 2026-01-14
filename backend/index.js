@@ -10,8 +10,9 @@ import galleryRouter from './gallery-server.js';
 import authRouter from './auth-server.js';
 import adminRouter from './admin-server.js';
 
-dotenv.config();
+// Load .env from parent directory (root of project)
 const __dirname = dirname(fileURLToPath(import.meta.url));
+dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 

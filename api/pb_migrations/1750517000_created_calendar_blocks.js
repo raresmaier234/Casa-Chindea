@@ -1,82 +1,105 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const collection = new Collection({
-        "id": "calendar_blocks_id",
-        "created": "2025-01-20 10:00:00.000Z",
-        "updated": "2025-01-20 10:00:00.000Z",
-        "name": "calendar_blocks",
-        "type": "base",
+migrate((app) => {
+  const collection = new Collection({
+    "name": "calendar_blocks",
+    "type": "base",
+    "system": false,
+    "fields": [
+      {
+        "autogeneratePattern": "[a-z0-9]{15}",
+        "hidden": false,
+        "id": "text_id",
+        "max": 15,
+        "min": 15,
+        "name": "id",
+        "pattern": "^[a-z0-9]+$",
+        "presentable": false,
+        "primaryKey": true,
+        "required": true,
+        "system": true,
+        "type": "text"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_created",
+        "name": "created",
+        "onCreate": true,
+        "onUpdate": false,
+        "presentable": false,
         "system": false,
-        "schema": [
-            {
-                "system": false,
-                "id": "startdate_field",
-                "name": "startDate",
-                "type": "date",
-                "required": true,
-                "presentable": false,
-                "unique": false,
-                "options": {
-                    "min": "",
-                    "max": ""
-                }
-            },
-            {
-                "system": false,
-                "id": "enddate_field",
-                "name": "endDate",
-                "type": "date",
-                "required": true,
-                "presentable": false,
-                "unique": false,
-                "options": {
-                    "min": "",
-                    "max": ""
-                }
-            },
-            {
-                "system": false,
-                "id": "reason_field",
-                "name": "reason",
-                "type": "text",
-                "required": false,
-                "presentable": false,
-                "unique": false,
-                "options": {
-                    "min": null,
-                    "max": 500,
-                    "pattern": ""
-                }
-            },
-            {
-                "system": false,
-                "id": "createdby_field",
-                "name": "createdBy",
-                "type": "relation",
-                "required": false,
-                "presentable": false,
-                "unique": false,
-                "options": {
-                    "collectionId": "_pb_users_auth_",
-                    "cascadeDelete": false,
-                    "minSelect": null,
-                    "maxSelect": 1,
-                    "displayFields": ["email"]
-                }
-            }
-        ],
-        "indexes": [
-            "CREATE INDEX idx_calendar_blocks_dates ON calendar_blocks (startDate, endDate)"
-        ],
-        "listRule": "",
-        "viewRule": "",
-        "createRule": "@request.auth.id != \"\"",
-        "updateRule": "@request.auth.id != \"\"",
-        "deleteRule": "@request.auth.id != \"\"",
-        "options": {}
-    })
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "autodate_updated",
+        "name": "updated",
+        "onCreate": true,
+        "onUpdate": true,
+        "presentable": false,
+        "system": false,
+        "type": "autodate"
+      },
+      {
+        "hidden": false,
+        "id": "startdate_field",
+        "name": "startDate",
+        "type": "date",
+        "required": true,
+        "presentable": false,
+        "system": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "hidden": false,
+        "id": "enddate_field",
+        "name": "endDate",
+        "type": "date",
+        "required": true,
+        "presentable": false,
+        "system": false,
+        "min": "",
+        "max": ""
+      },
+      {
+        "hidden": false,
+        "id": "reason_field",
+        "name": "reason",
+        "type": "text",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "autogeneratePattern": "",
+        "max": 500,
+        "min": 0,
+        "pattern": "",
+        "primaryKey": false
+      },
+      {
+        "hidden": false,
+        "id": "createdby_field",
+        "name": "createdBy",
+        "type": "relation",
+        "required": false,
+        "presentable": false,
+        "system": false,
+        "cascadeDelete": false,
+        "collectionId": "_pb_users_auth_",
+        "displayFields": null,
+        "maxSelect": 1,
+        "minSelect": null
+      }
+    ],
+    "listRule": "",
+    "viewRule": "",
+    "createRule": "@request.auth.id != \"\"",
+    "updateRule": "@request.auth.id != \"\"",
+    "deleteRule": "@request.auth.id != \"\""
+  })
 
-    return Dao(db).saveCollection(collection)
-}, (db) => {
-    return Dao(db).deleteCollection("calendar_blocks_id")
+  return app.save(collection)
+}, (app) => {
+  const collection = app.findCollectionByNameOrId("calendar_blocks")
+
+  return app.delete(collection)
 })

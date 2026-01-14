@@ -1,27 +1,25 @@
 /// <reference path="../pb_data/types.d.ts" />
-migrate((db) => {
-    const dao = new Dao(db)
-    const collection = dao.findCollectionByNameOrId("_pb_users_auth_")
+migrate((app) => {
+  const collection = app.findCollectionByNameOrId("_pb_users_auth_")
 
-    // add admin field
-    collection.schema.addField(new SchemaField({
-        "system": false,
-        "id": "admin_field",
-        "name": "admin",
-        "type": "bool",
-        "required": false,
-        "presentable": false,
-        "unique": false,
-        "options": {}
-    }))
+  // add admin field
+  collection.fields.addAt(collection.fields.length, new Field({
+    "system": false,
+    "id": "admin_field",
+    "name": "admin",
+    "type": "bool",
+    "required": false,
+    "presentable": false,
+    "unique": false,
+    "options": {}
+  }))
 
-    return dao.saveCollection(collection)
-}, (db) => {
-    const dao = new Dao(db)
-    const collection = dao.findCollectionByNameOrId("_pb_users_auth_")
+  return app.save(collection)
+}, (app) => {
+  const collection = app.findCollectionByNameOrId("_pb_users_auth_")
 
-    // remove admin field
-    collection.schema.removeField("admin_field")
+  // remove admin field
+  collection.fields.removeById("admin_field")
 
-    return dao.saveCollection(collection)
+  return app.save(collection)
 })
