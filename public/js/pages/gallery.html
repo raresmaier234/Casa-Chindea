@@ -40,8 +40,8 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
                     <a href="/js/pages/about.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/rooms.html"
-                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Camere</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
                     <a href="/js/pages/gallery.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
                     <a href="/js/pages/booking.html"
@@ -64,8 +64,8 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/rooms.html"
-                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Camere</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
                 <a href="/js/pages/gallery.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
                 <a href="/js/pages/booking.html"
@@ -79,11 +79,14 @@
 
     <!-- Include navigation component -->
     <script src="/js/components/navigation.js"></script>
+    <script src="/js/components/cms-loader.js"></script>
+    <script src="/js/components/visual-editor.js"></script>
+
     <section class="py-20 bg-white mt-16">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h1 class="text-5xl font-bold text-gray-900 mb-6">Galeria Foto</h1>
-                <p class="text-xl text-gray-600">Descoperă frumusețea Casei Chindea</p>
+                <h1 id="cms-gallery-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Galeria Foto</h1>
+                <p id="cms-gallery-hero-subtitle" class="text-xl text-gray-600">Descoperă frumusețea Casei Chindea</p>
             </div>
             <div id="full-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                 <!-- Photos will be loaded here -->
@@ -171,6 +174,7 @@
             }
         }
         document.addEventListener('DOMContentLoaded', () => {
+            loadCMSContent('gallery');
             loadGalleryPhotos();
         });
     </script>

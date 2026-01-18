@@ -6,14 +6,20 @@ import path from 'path';
 import fs from 'fs';
 import PocketBase from 'pocketbase';
 import { authenticateToken } from './auth-server.js';
+import dotenv from 'dotenv';
+
+dotenv.config();
 
 const router = express.Router();
-const pb = new PocketBase(process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
+
+const pb = new PocketBase(process.env.POCKET_BASE_URL);
+
+// Cache pentru status admin (pentru a evita request-uri duplicate)
+const adminCache = new Map();
+const CACHE_TTL = 5 * 60 * 1000; // 5 minute
 
 const requireAdmin = async (req, res, next) => {
     try {
-
-
         // Verifică dacă userId există în token
         if (!req.user || !req.user.userId) {
             console.error('❌ No userId found in token');
@@ -23,32 +29,90 @@ const requireAdmin = async (req, res, next) => {
             });
         }
 
-        // Verifică dacă utilizatorul este admin direct din token (dacă câmpul admin este în JWT)
+        // Verifică dacă utilizatorul este admin direct din token (PRIORITATE)
         if (req.user.admin === true) {
             console.log('✅ User is admin (from token)');
             return next();
         }
 
-        // Dacă admin nu este în token, verifică din baza de date
-        const user = await pb.collection('users').getOne(req.user.userId);
-        console.log('👤 User from DB:', { id: user.id, email: user.email, admin: user.admin });
-
-        // Verifică dacă utilizatorul are câmpul admin setat pe true
-        if (!user.admin) {
-            console.log('❌ User is not admin');
-            return res.status(403).json({
-                success: false,
-                error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
-            });
+        // Verifică cache-ul mai întâi
+        const cached = adminCache.get(req.user.userId);
+        if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
+            if (cached.isAdmin) {
+                console.log('✅ User is admin (from cache)');
+                return next();
+            } else {
+                console.log('❌ User is not admin (from cache)');
+                return res.status(403).json({
+                    success: false,
+                    error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
+                });
+            }
         }
 
-        console.log('✅ User is admin (from DB)');
-        next();
+        // Doar dacă nu e în token și nu e în cache, verifică din baza de date
+        try {
+            const user = await pb.collection('users').getOne(req.user.userId, {
+                // Prevent auto-cancellation
+                $autoCancel: false
+            });
+
+            console.log('👤 User from DB:', { id: user.id, email: user.email, admin: user.admin });
+
+            // Cache rezultatul
+            adminCache.set(req.user.userId, {
+                isAdmin: user.admin === true,
+                timestamp: Date.now()
+            });
+
+            // Verifică dacă utilizatorul are câmpul admin setat pe true
+            if (!user.admin) {
+                console.log('❌ User is not admin');
+                return res.status(403).json({
+                    success: false,
+                    error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
+                });
+            }
+
+            console.log('✅ User is admin (from DB)');
+            next();
+        } catch (dbError) {
+            console.log('⚠️ Database lookup error:', dbError.message, 'Status:', dbError.status);
+
+            // Dacă DB lookup eșuează, dar avem admin în token, permitem accesul
+            if (req.user.admin === true) {
+                console.log('✅ DB check failed but admin in token, allowing access');
+                return next();
+            }
+
+            // Dacă utilizatorul nu există (404) sau altă eroare, și nu e admin în token
+            if (dbError.status === 404) {
+                console.log('❌ User not found in database and not admin in token');
+                return res.status(401).json({
+                    success: false,
+                    error: 'Utilizatorul nu există. Te rugăm să te autentifici din nou.'
+                });
+            }
+
+            // Pentru alte erori
+            console.error('❌ Unexpected error in admin check:', dbError);
+            return res.status(500).json({
+                success: false,
+                error: 'Eroare la verificarea statusului de admin. Te rugăm să încerci din nou.'
+            });
+        }
     } catch (err) {
-        console.error('❌ Error checking admin permissions:', err);
+        console.error('❌ Unexpected error in requireAdmin middleware:', err);
+
+        // În caz de eroare neprevăzută, verifică dacă utilizatorul este admin în token
+        if (req.user && req.user.admin === true) {
+            console.log('⚠️ Unexpected error but admin in token, allowing access');
+            return next();
+        }
+
         res.status(500).json({
             success: false,
-            error: 'Eroare la verificarea permisiunilor: ' + err.message
+            error: 'Eroare la verificarea permisiunilor de admin. Te rugăm să te autentifici din nou.'
         });
     }
 };
@@ -87,33 +151,21 @@ const upload = multer({
 // **REZERVĂRI ADMIN**
 
 // Obține toate rezervările pentru admin
-router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/booking', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        console.log('📋 Fetching bookings for admin...');
         const { status } = req.query;
         let filter = '';
 
-        if (status) {
+        if (status !== "") {
             filter = `status = "${status}"`;
             console.log('🔍 Using filter:', filter);
         }
 
-        console.log('🔗 PocketBase URL:', process.env.POCKET_BASE_URL);
-        console.log('📊 Attempting to fetch from booking collection...');
-
-        const bookings = await pb.collection('booking').getFullList(100, {
-            filter,
-            sort: '-created'
+        const bookings = await pb.collection('booking').getFullList(500, {
+            filter: filter,
+            sort: 'createdAt',
+            $autoCancel: false
         });
-
-        console.log(`✅ Successfully fetched ${bookings.length} bookings`);
-        console.log('📝 First booking sample:', bookings[0] ? {
-            id: bookings[0].id,
-            name: bookings[0].name,
-            email: bookings[0].email,
-            status: bookings[0].status,
-            created: bookings[0].created
-        } : 'No bookings found');
 
         res.json({
             success: true,
@@ -126,6 +178,7 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
                 checkout: booking.checkout,
                 guests: booking.guests,
                 roomType: booking.roomType || 'standard',
+                numberOfRooms: booking.numberOfRooms || 1,
                 message: booking.message,
                 status: booking.status || 'pending',
                 created: booking.created,
@@ -133,14 +186,6 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
             }))
         });
     } catch (err) {
-        console.error('❌ Error fetching admin bookings:', err);
-        console.error('❌ Error details:', {
-            message: err.message,
-            status: err.status,
-            data: err.data,
-            isAbortError: err.isAbortError
-        });
-
         res.status(500).json({
             success: false,
             error: 'Eroare la încărcarea rezervărilor: ' + err.message
@@ -149,7 +194,7 @@ router.get('/bookings', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 // Actualizează statusul unei rezervări
-router.put('/bookings/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const { status } = req.body;
@@ -299,8 +344,9 @@ router.put('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
 // Obține toate blocările de calendar
 router.get('/calendar-blocks', authenticateToken, requireAdmin, async (req, res) => {
     try {
-        const blocks = await pb.collection('calendar_blocks').getFullList(200, {
-            sort: 'startDate'
+        const blocks = await pb.collection('calendar_blocks').getFullList(500, {
+            sort: 'startDate',
+            $autoCancel: false
         });
 
         res.json({
@@ -407,8 +453,9 @@ router.get('/calendar-blocks/check', async (req, res) => {
         }
 
         // Verifică dacă există blocări care se suprapun cu perioada solicitată
-        const blocks = await pb.collection('calendar_blocks').getFullList(200, {
-            filter: `(startDate <= "${endDate}" && endDate >= "${startDate}")`
+        const blocks = await pb.collection('calendar_blocks').getFullList(500, {
+            filter: `(startDate <= "${endDate}" && endDate >= "${startDate}")`,
+            $autoCancel: false
         });
 
         res.json({
@@ -426,6 +473,212 @@ router.get('/calendar-blocks/check', async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Eroare la verificarea blocărilor de calendar.'
+        });
+    }
+});
+
+// **CMS - PAGE SECTIONS (Universal Content Management)**
+
+// Obține toate secțiunile pentru o pagină
+router.get('/cms/sections', async (req, res) => {
+    try {
+        const { page, section, key } = req.query;
+        let filter = 'active = true || active = false';
+
+        if (page) {
+            filter += ` && page = "${page}"`;
+        }
+        if (section) {
+            filter += ` && section = "${section}"`;
+        }
+        if (key) {
+            filter += ` && key = "${key}"`;
+        }
+
+        const sections = await pb.collection('page_sections').getFullList(500, {
+            filter,
+            sort: 'page,section,order',
+            $autoCancel: false
+        });
+
+        res.json({
+            success: true,
+            sections: sections.map(sec => ({
+                id: sec.id,
+                page: sec.page,
+                section: sec.section,
+                key: sec.key,
+                type: sec.type,
+                content: sec.content,
+                imageUrl: sec.image ? pb.getFileUrl(sec, sec.image) : null,
+                data: sec.data,
+                order: sec.order,
+                active: sec.active,
+                created: sec.created,
+                updated: sec.updated
+            }))
+        });
+    } catch (err) {
+        console.error('Error fetching CMS sections:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la încărcarea secțiunilor.'
+        });
+    }
+});
+
+// Actualizează sau creează o secțiune
+router.post('/cms/sections', authenticateToken, requireAdmin, upload.single('image'), async (req, res) => {
+    try {
+        const { page, section, key, type, content, data, order, active } = req.body;
+
+        if (!page || !section || !key || !type) {
+            if (req.file && fs.existsSync(req.file.path)) {
+                fs.unlinkSync(req.file.path);
+            }
+            return res.status(400).json({
+                success: false,
+                error: 'Pagina, secțiunea, cheia și tipul sunt obligatorii.'
+            });
+        }
+
+        // Verifică dacă există deja această secțiune
+        const existingList = await pb.collection('page_sections').getList(1, 1, {
+            filter: `page = "${page}" && section = "${section}" && key = "${key}"`
+        });
+
+        const updateData = {
+            type: type,
+            content: content || '',
+            data: data ? JSON.parse(data) : null,
+            order: order ? parseInt(order) : 0,
+            active: active !== 'false'
+        };
+
+        // Dacă există imagine nouă
+        if (req.file) {
+            const formData = new FormData();
+            const fileBuffer = fs.readFileSync(req.file.path);
+            const blob = new Blob([fileBuffer], { type: req.file.mimetype });
+            formData.append('image', blob, req.file.filename);
+
+            Object.keys(updateData).forEach(key => {
+                if (updateData[key] !== null && updateData[key] !== undefined) {
+                    if (typeof updateData[key] === 'object') {
+                        formData.append(key, JSON.stringify(updateData[key]));
+                    } else {
+                        formData.append(key, updateData[key]);
+                    }
+                }
+            });
+
+            if (existingList.items && existingList.items.length > 0) {
+                const updated = await pb.collection('page_sections').update(existingList.items[0].id, formData);
+                fs.unlinkSync(req.file.path);
+
+                return res.json({
+                    success: true,
+                    message: 'Secțiunea a fost actualizată cu succes.',
+                    section: {
+                        id: updated.id,
+                        imageUrl: updated.image ? pb.getFileUrl(updated, updated.image) : null,
+                        page: updated.page,
+                        section: updated.section,
+                        key: updated.key
+                    }
+                });
+            } else {
+                formData.append('page', page);
+                formData.append('section', section);
+                formData.append('key', key);
+
+                const created = await pb.collection('page_sections').create(formData);
+                fs.unlinkSync(req.file.path);
+
+                return res.json({
+                    success: true,
+                    message: 'Secțiunea a fost creată cu succes.',
+                    section: {
+                        id: created.id,
+                        imageUrl: created.image ? pb.getFileUrl(created, created.image) : null,
+                        page: created.page,
+                        section: created.section,
+                        key: created.key
+                    }
+                });
+            }
+        }
+
+        // Fără imagine
+        if (existingList.items && existingList.items.length > 0) {
+            const updated = await pb.collection('page_sections').update(existingList.items[0].id, updateData);
+
+            return res.json({
+                success: true,
+                message: 'Secțiunea a fost actualizată cu succes.',
+                section: {
+                    id: updated.id,
+                    page: updated.page,
+                    section: updated.section,
+                    key: updated.key,
+                    type: updated.type,
+                    content: updated.content,
+                    imageUrl: updated.image ? pb.getFileUrl(updated, updated.image) : null,
+                    data: updated.data,
+                    updated: updated.updated
+                }
+            });
+        } else {
+            const created = await pb.collection('page_sections').create({
+                page,
+                section,
+                key,
+                ...updateData
+            });
+
+            return res.json({
+                success: true,
+                message: 'Secțiunea a fost creată cu succes.',
+                section: {
+                    id: created.id,
+                    page: created.page,
+                    section: created.section,
+                    key: created.key,
+                    type: created.type,
+                    content: created.content,
+                    imageUrl: created.image ? pb.getFileUrl(created, created.image) : null,
+                    data: created.data,
+                    created: created.created
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Error saving CMS section:', err);
+        if (req.file && fs.existsSync(req.file.path)) {
+            fs.unlinkSync(req.file.path);
+        }
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la salvarea secțiunii: ' + err.message
+        });
+    }
+});
+
+// Șterge o secțiune
+router.delete('/cms/sections/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        await pb.collection('page_sections').delete(id);
+
+        res.json({
+            success: true,
+            message: 'Secțiunea a fost ștearsă cu succes.'
+        });
+    } catch (err) {
+        console.error('Error deleting CMS section:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la ștergerea secțiunii: ' + err.message
         });
     }
 });

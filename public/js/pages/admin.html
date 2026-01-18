@@ -371,7 +371,7 @@
 
             try {
                 const token = sessionStorage.getItem('auth_token');
-                let url = '/api/admin/bookings';
+                let url = '/api/admin/booking';
                 if (filterStatus) url += `?status=${filterStatus}`;
 
                 const response = await fetch(url, {
@@ -382,10 +382,14 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    if (data.success === false) {
+                        throw new Error(data.error || 'Eroare necunoscută');
+                    }
                     displayBookings(data.bookings || []);
                     document.getElementById('stats-total').textContent = data.bookings?.length || 0;
                 } else {
-                    throw new Error('Eroare la încărcarea rezervărilor');
+                    const errorData = await response.json().catch(() => ({ error: 'Eroare de server' }));
+                    throw new Error(errorData.error || `Eroare HTTP ${response.status}`);
                 }
             } catch (error) {
                 console.error('Error loading bookings:', error);
@@ -393,6 +397,7 @@
                 listEl.classList.remove('hidden');
             } finally {
                 loadingEl.classList.add('hidden');
+                loadBookingsController = null;
             }
         }
 
@@ -445,6 +450,10 @@
                             <p class="text-gray-900">${booking.guests}</p>
                         </div>
                         <div>
+                            <span class="font-medium text-gray-500">Tip închiriere:</span>
+                            <p class="text-gray-900">${booking.roomType === 'entire' ? 'Casa Întreagă' : `${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`}</p>
+                        </div>
+                        <div>
                             <span class="font-medium text-gray-500">Data rezervării:</span>
                             <p class="text-gray-900">${formatDate(booking.created)}</p>
                         </div>
@@ -470,7 +479,7 @@
                 async () => {
                     try {
                         const token = sessionStorage.getItem('auth_token');
-                        const response = await fetch(`/api/admin/bookings/${bookingId}`, {
+                        const response = await fetch(`/api/admin/booking/${bookingId}`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
@@ -663,6 +672,9 @@
 
                 if (response.ok) {
                     const data = await response.json();
+                    if (data.success === false) {
+                        throw new Error(data.error || 'Eroare la încărcarea blocărilor de calendar');
+                    }
                     const blocks = data.blocks || [];
 
                     if (blocks.length === 0) {

@@ -42,8 +42,8 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
                     <a href="/js/pages/about.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/rooms.html"
-                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Camere</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
                     <a href="/js/pages/gallery.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
                     <a href="/js/pages/booking.html"
@@ -66,8 +66,8 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/rooms.html"
-                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Camere</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
                 <a href="/js/pages/gallery.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
                 <a href="/js/pages/booking.html"
@@ -129,13 +129,24 @@
                         <p class="mt-2 text-sm text-gray-500">Datele ocupate sunt dezactivate în calendar</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tipul Camerei</label>
-                        <select id="room-type" required
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip Închiriere</label>
+                        <select id="rental-type" required
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
-                            <option value="">Selectează tipul camerei</option>
-                            <option value="standard">Camera Dublă Standard - 150 RON/noapte</option>
-                            <option value="premium">Camera Dublă Premium - 200 RON/noapte</option>
+                            <option value="">Selectează tipul</option>
+                            <option value="room">Camere Individuale</option>
+                            <option value="entire">Casa Întreagă</option>
                         </select>
+                    </div>
+                    <div id="room-count-section" style="display: none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Număr de Camere</label>
+                        <select id="room-count"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="1">1 cameră</option>
+                            <option value="2">2 camere</option>
+                            <option value="3">3 camere</option>
+                            <option value="4">4 camere</option>
+                        </select>
+                        <p class="mt-2 text-sm text-gray-500">Fiecare cameră poate găzdui 2 persoane</p>
                     </div>
                     <div>
                         <label class="block text-sm font-medium text-gray-700 mb-2">Mesaj Suplimentar (opțional)</label>
@@ -200,8 +211,41 @@
 
         // Ensure DOM is loaded before initializing
         document.addEventListener('DOMContentLoaded', function () {
+            // Handle URL parameters from rooms page
+            const urlParams = new URLSearchParams(window.location.search);
+            const rentalType = urlParams.get('type');
+            const numRooms = urlParams.get('rooms');
+
+            if (rentalType) {
+                document.getElementById('rental-type').value = rentalType;
+                toggleRoomCountSection();
+
+                if (rentalType === 'room' && numRooms) {
+                    document.getElementById('room-count').value = numRooms;
+                }
+            }
+
+            // Add event listener for rental type change
+            document.getElementById('rental-type').addEventListener('change', function() {
+                toggleRoomCountSection();
+                updateBookingSummary();
+            });
+
+            document.getElementById('room-count').addEventListener('change', updateBookingSummary);
+
             fetchAvailabilityAndInitCalendar();
         });
+
+        function toggleRoomCountSection() {
+            const rentalType = document.getElementById('rental-type').value;
+            const roomCountSection = document.getElementById('room-count-section');
+
+            if (rentalType === 'room') {
+                roomCountSection.style.display = 'block';
+            } else {
+                roomCountSection.style.display = 'none';
+            }
+        }
 
         function fetchAvailabilityAndInitCalendar() {
             // Fetch unavailable dates from the backend
@@ -305,11 +349,23 @@
             const checkin = document.getElementById('checkin').value;
             const checkout = document.getElementById('checkout').value;
             const guests = document.getElementById('guests').value;
-            const roomType = document.getElementById('room-type').value;
+            const rentalType = document.getElementById('rental-type').value;
+            const roomCount = document.getElementById('room-count').value;
 
-            if (checkin && checkout && guests && roomType) {
+            if (checkin && checkout && guests && rentalType) {
                 const nights = Math.round((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
-                const pricePerNight = roomType === 'standard' ? 150 : 200;
+                let pricePerNight = 0;
+                let rentalDescription = '';
+
+                if (rentalType === 'room') {
+                    const numRooms = parseInt(roomCount) || 1;
+                    pricePerNight = 150 * numRooms; // 150 RON per room per night
+                    rentalDescription = `${numRooms} ${numRooms === 1 ? 'cameră' : 'camere'}`;
+                } else if (rentalType === 'entire') {
+                    pricePerNight = 500; // Price for entire cottage per night
+                    rentalDescription = 'Casa întreagă (4 camere)';
+                }
+
                 const totalPrice = nights * pricePerNight;
 
                 const summary = `
@@ -317,7 +373,7 @@
                     <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
                     <p><strong>Număr nopți:</strong> ${nights}</p>
                     <p><strong>Număr persoane:</strong> ${guests}</p>
-                    <p><strong>Tip cameră:</strong> ${roomType === 'standard' ? 'Standard' : 'Premium'}</p>
+                    <p><strong>Tip închiriere:</strong> ${rentalDescription}</p>
                     <p><strong>Preț pe noapte:</strong> ${pricePerNight} RON</p>
                     <p class="text-lg font-bold text-primary"><strong>Total:</strong> ${totalPrice} RON</p>
                 `;
@@ -325,7 +381,7 @@
             }
         }
 
-        ['guests', 'room-type'].forEach(id => {
+        ['guests'].forEach(id => {
             document.getElementById(id).addEventListener('change', updateBookingSummary);
         });
 
@@ -337,13 +393,27 @@
             const guests = document.getElementById('guests').value;
             const checkin = document.getElementById('checkin').value;
             const checkout = document.getElementById('checkout').value;
-            const roomType = document.getElementById('room-type').value;
+            const rentalType = document.getElementById('rental-type').value;
+            const numberOfRooms = rentalType === 'room' ? parseInt(document.getElementById('room-count').value) : 4;
             const message = document.getElementById('message').value;
+
+            // Create roomType value for backward compatibility
+            const roomType = rentalType === 'entire' ? 'entire' : 'room';
 
             fetch('/api/booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, phone, guests, checkin, checkout, roomType, message })
+                body: JSON.stringify({
+                    name,
+                    email,
+                    phone,
+                    guests,
+                    checkin,
+                    checkout,
+                    roomType,
+                    numberOfRooms,
+                    message
+                })
             })
                 .then(res => res.json())
                 .then(data => {
@@ -351,6 +421,8 @@
                         alert('Rezervarea a fost trimisă cu succes! Vei primi confirmarea pe WhatsApp.');
                         document.getElementById('booking-form').reset();
                         document.getElementById('booking-summary').innerHTML = '<p>Completează formularul pentru a vedea rezumatul</p>';
+                        // Clear URL parameters
+                        window.history.replaceState({}, document.title, window.location.pathname);
                     } else {
                         alert('Eroare la trimitere: ' + (data.error || 'necunoscută'));
                     }
