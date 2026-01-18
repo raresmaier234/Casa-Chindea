@@ -108,7 +108,8 @@
     <script>
         async function loadGalleryPhotos() {
             try {
-                const response = await fetch('/api/photos');
+                // Request all photos with a high limit to ensure we get everything
+                const response = await fetch('/api/photos?limit=500');
                 const data = await response.json();
                 const photos = data.items || [];
                 const gallery = document.getElementById('full-gallery');

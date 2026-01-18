@@ -17,9 +17,9 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 app.get('/api/photos', async (req, res) => {
     try {
-
+        // Get limit from query or use 500 as default to get all photos
         let limit = parseInt(req.query.limit, 10);
-        if (isNaN(limit) || limit < 1) limit = 10;
+        if (isNaN(limit) || limit < 1) limit = 500;
         const photos = await pb.collection('photos').getList(1, limit, { perPage: limit, sort: '-created' });
         const items = photos.items.map(photo => ({
             ...photo,
