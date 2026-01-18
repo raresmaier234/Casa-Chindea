@@ -110,7 +110,8 @@
 
         async function loadHeroImages() {
             try {
-                const response = await fetch('/api/photos');
+                // Request all photos with a high limit to ensure we get everything
+                const response = await fetch('/api/photos?limit=10');
                 const data = await response.json();
                 const photos = data.items || [];
                 const heroBg = document.getElementById('hero-bg');
@@ -138,7 +139,8 @@
 
         async function loadHomeGallery() {
             try {
-                const response = await fetch('/api/photos');
+                // Request all photos with a high limit to ensure we get everything
+                const response = await fetch('/api/photos?limit=10');
                 const data = await response.json();
                 const photos = data.items || [];
                 const gallery = document.getElementById('photo-gallery');
