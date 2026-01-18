@@ -201,7 +201,8 @@
 
         async function loadRoomPhotos() {
             try {
-                const response = await fetch('/api/photos?limit=100');
+                // Request all photos with a high limit to ensure we get everything
+                const response = await fetch('/api/photos?limit=500');
                 const data = await response.json();
                 const allPhotos = data.items || [];
 
