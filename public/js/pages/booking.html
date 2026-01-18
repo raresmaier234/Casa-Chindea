@@ -133,8 +133,8 @@
                         <select id="rental-type" required
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                             <option value="">Selectează tipul</option>
-                            <option value="room">Camere Individuale</option>
-                            <option value="entire">Casa Întreagă</option>
+                            <option value="room">Camere individuale</option>
+                            <option value="entire">Casa intreaga</option>
                         </select>
                     </div>
                     <div id="room-count-section" style="display: none;">
@@ -363,7 +363,7 @@
                     rentalDescription = `${numRooms} ${numRooms === 1 ? 'cameră' : 'camere'}`;
                 } else if (rentalType === 'entire') {
                     pricePerNight = 500; // Price for entire cottage per night
-                    rentalDescription = 'Casa întreagă (4 camere)';
+                    rentalDescription = 'Casa intreaga(4 camere)';
                 }
 
                 const totalPrice = nights * pricePerNight;

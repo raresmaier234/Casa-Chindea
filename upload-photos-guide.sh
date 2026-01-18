@@ -1,0 +1,40 @@
+#!/bin/bash
+
+# Simple guide to upload photos to PocketBase manually
+echo "📸 Photo Upload Guide for Casa Chindea"
+echo "======================================"
+echo ""
+echo "Please upload these 4 specific photos to PocketBase manually:"
+echo ""
+echo "1. Open PocketBase Admin: http://127.0.0.1:8090/_/"
+echo "2. Navigate to the 'photos' collection"
+echo "3. Upload each photo with the following details:"
+echo ""
+echo "Photo 1: 499130917_1378866240090631_6765327648581463029_n.jpg"
+echo "   - Description: Cabana"
+echo "   - Category: cottage"
+echo "   - isPublic: true"
+echo ""
+echo "Photo 2: 470544860_1267900121187244_2774741334736387792_n.jpg"
+echo "   - Description: Camera"
+echo "   - Category: room"
+echo "   - isPublic: true"
+echo ""
+echo "Photo 3: 499932112_1378866386757283_1325453586212782948_n.jpg"
+echo "   - Description: Camera"
+echo "   - Category: room"
+echo "   - isPublic: true"
+echo ""
+echo "Photo 4: 480554957_1308312703812652_6038427473654614767_n.jpg"
+echo "   - Description: Camera"
+echo "   - Category: room"
+echo "   - isPublic: true"
+echo ""
+echo "After uploading, the offers page will automatically use these photos!"
+echo ""
+echo "Would you like to open the PocketBase admin panel now? (y/n)"
+read -r response
+if [[ "$response" =~ ^([yY][eE][sS]|[yY])$ ]]; then
+    open "http://127.0.0.1:8090/_/"
+fi
+

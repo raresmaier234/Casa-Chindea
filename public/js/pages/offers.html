@@ -85,20 +85,26 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            gap: 1rem;
+            gap: 1.5rem;
             margin: 1.5rem 0;
         }
 
         .room-counter button {
-            width: 40px;
-            height: 40px;
+            width: 48px;
+            height: 48px;
             border-radius: 50%;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 1.2rem;
+            font-size: 1.3rem;
             font-weight: bold;
             transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+
+        .room-counter button:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
         }
 
         .room-counter button:disabled {
@@ -107,9 +113,9 @@
         }
 
         .room-counter .count {
-            font-size: 2rem;
+            font-size: 2.5rem;
             font-weight: bold;
-            min-width: 50px;
+            min-width: 60px;
             text-align: center;
         }
 
@@ -138,52 +144,123 @@
             left: 50%;
             transform: translateX(-50%);
             display: flex;
-            gap: 8px;
+            gap: 10px;
             z-index: 10;
         }
 
         .carousel-dot {
-            width: 12px;
-            height: 12px;
+            width: 10px;
+            height: 10px;
             border-radius: 50%;
-            background: rgba(255, 255, 255, 0.5);
+            background: rgba(255, 255, 255, 0.6);
             cursor: pointer;
             transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.8);
         }
 
         .carousel-dot.active {
             background: white;
-            transform: scale(1.2);
+            transform: scale(1.3);
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+        }
+
+        .carousel-dot:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.15);
+        }
+
+        /* Smooth animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .group {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .group:nth-child(2) {
+            animation-delay: 0.1s;
         }
     </style>
 
     <script>
         let roomPhotos = [];
+        let cottagePhotos = [];
 
         document.addEventListener('DOMContentLoaded', () => {
-            loadCMSContent('rooms');
+            loadCMSContent('offers');
             loadRoomPhotos();
         });
 
         async function loadRoomPhotos() {
             try {
-                const response = await fetch('/api/photos?limit=50');
+                const response = await fetch('/api/photos?limit=100');
                 const data = await response.json();
-                roomPhotos = data.items || [];
+                const allPhotos = data.items || [];
 
-                if (roomPhotos.length > 0) {
-                    initializeCarousels();
+                // Define specific photo identifiers to use
+                const cottagePhotoId = '499130917';
+                const roomPhotoIds = ['470544860', '499932112', '480554957'];
+
+                // Filter cottage photo
+                cottagePhotos = allPhotos.filter(photo => {
+                    const img = (photo.image || '').toLowerCase();
+                    const desc = (photo.description || '').toLowerCase();
+                    return img.includes(cottagePhotoId.toLowerCase()) || desc === 'cabana';
+                });
+
+                // Filter room photos
+                roomPhotos = allPhotos.filter(photo => {
+                    const img = (photo.image || '').toLowerCase();
+                    const desc = (photo.description || '').toLowerCase();
+                    return roomPhotoIds.some(id => img.includes(id.toLowerCase())) ||
+                           (desc === 'camera' && !img.includes(cottagePhotoId.toLowerCase()));
+                });
+
+                // Fallback to placeholder images if photos not found
+                if (cottagePhotos.length === 0) {
+                    console.warn('⚠️  Cottage photo not found in PocketBase, using placeholder');
+                    cottagePhotos = [{
+                        imageUrl: 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800'
+                    }];
                 }
+
+                if (roomPhotos.length === 0) {
+                    console.warn('⚠️  Room photos not found in PocketBase, using placeholder');
+                    roomPhotos = [{
+                        imageUrl: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800'
+                    }];
+                }
+
+                console.log(`✅ Loaded ${cottagePhotos.length} cottage photo(s) and ${roomPhotos.length} room photo(s)`);
+                initializeCarousels();
             } catch (error) {
-                console.error('Error loading photos:', error);
+                console.error('❌ Error loading photos:', error);
+                // Use placeholders on error
+                cottagePhotos = [{
+                    imageUrl: 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800'
+                }];
+                roomPhotos = [{
+                    imageUrl: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800'
+                }];
+                initializeCarousels();
             }
         }
 
         function initializeCarousels() {
-            // Initialize carousel for room rental
-            initCarousel('room-carousel', roomPhotos);
-            // Initialize carousel for entire cottage
-            initCarousel('cottage-carousel', roomPhotos);
+            if (roomPhotos.length > 0) {
+                initCarousel('room-carousel', roomPhotos);
+            }
+            if (cottagePhotos.length > 0) {
+                initCarousel('cottage-carousel', cottagePhotos);
+            }
         }
 
         function initCarousel(carouselId, photos) {
@@ -192,31 +269,31 @@
 
             let currentIndex = 0;
             const imagesHtml = photos.map((photo, idx) =>
-                `<img src="${photo.imageUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}">`
+                `<img src="${photo.imageUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}"
+                      loading="lazy" style="object-fit: cover;">`
             ).join('');
 
-            const dotsHtml = photos.map((_, idx) =>
+            const dotsHtml = photos.length > 1 ? `<div class="carousel-dots">${photos.map((_, idx) =>
                 `<div class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></div>`
-            ).join('');
+            ).join('')}</div>` : '';
 
-            carousel.innerHTML = `
-                ${imagesHtml}
-                <div class="carousel-dots">${dotsHtml}</div>
-            `;
+            carousel.innerHTML = `${imagesHtml}${dotsHtml}`;
 
-            // Auto-rotate
-            setInterval(() => {
-                currentIndex = (currentIndex + 1) % photos.length;
-                updateCarousel(carousel, currentIndex);
-            }, 4000);
-
-            // Dot click handlers
-            carousel.querySelectorAll('.carousel-dot').forEach(dot => {
-                dot.addEventListener('click', (e) => {
-                    currentIndex = parseInt(e.target.dataset.index);
+            // Auto-rotate only if multiple photos
+            if (photos.length > 1) {
+                setInterval(() => {
+                    currentIndex = (currentIndex + 1) % photos.length;
                     updateCarousel(carousel, currentIndex);
+                }, 5000);
+
+                // Dot click handlers
+                carousel.querySelectorAll('.carousel-dot').forEach(dot => {
+                    dot.addEventListener('click', (e) => {
+                        currentIndex = parseInt(e.target.dataset.index);
+                        updateCarousel(carousel, currentIndex);
+                    });
                 });
-            });
+            }
         }
 
         function updateCarousel(carousel, index) {
@@ -251,153 +328,150 @@
         }
     </script>
 
-    <section class="py-20 bg-white mt-16">
+    <section class="py-12 bg-gradient-to-b from-gray-50 to-white mt-16 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div class="text-center mb-16">
-                <h1 id="cms-offers-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Opțiuni de Cazare</h1>
-                <p id="cms-offers-hero-subtitle" class="text-xl text-gray-600">Alege varianta care ți se potrivește cel mai bine</p>
-            </div>
-            <div id="cms-offers-description" class="text-center mb-12 text-gray-600 max-w-3xl mx-auto">
-                <p>Casa Chindea oferă două opțiuni de cazare: poți închiria camere individuale sau întreaga casă pentru grupuri mai mari sau evenimente speciale.</p>
-            </div>
+            <!-- Simplified header - subtle -->
 
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 mb-20">
+            <!-- Main Cards - Full Focus -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
                 <!-- Rent Rooms Option -->
-                <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300">
-                    <div class="photo-carousel" id="room-carousel">
+                <div class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                    <div class="photo-carousel h-96" id="room-carousel">
                         <img src="https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800"
                             alt="Cameră" class="active">
                     </div>
                     <div class="p-8">
                         <div class="text-center mb-6">
-                            <div class="inline-flex items-center justify-center w-16 h-16 bg-primary/10 rounded-full mb-4">
-                                <i class="fas fa-door-open text-primary text-3xl"></i>
+                            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl mb-4 shadow-lg">
+                                <i class="fas fa-door-open text-white text-4xl"></i>
                             </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-2">Închiriază Camere</h3>
-                            <p class="text-gray-600">Perfectă pentru cupluri sau grupuri mici</p>
+                            <h3 class="text-3xl font-bold text-gray-900 mb-3">Închiriază Camere</h3>
+                            <p class="text-lg text-gray-600">Pentru cupluri sau grupuri mici</p>
                         </div>
 
-                        <div class="space-y-4 mb-6">
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-check-circle text-primary mr-3 text-lg"></i>
-                                <span>Maximum 4 camere disponibile</span>
+                        <div class="space-y-3 mb-8">
+                            <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                <i class="fas fa-check-circle text-primary mr-3 text-xl"></i>
+                                <span class="font-medium">Maximum 4 camere disponibile</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-users text-primary mr-3 text-lg"></i>
-                                <span>2 persoane per cameră</span>
+                            <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                <i class="fas fa-users text-primary mr-3 text-xl"></i>
+                                <span class="font-medium">2 persoane per cameră</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-bed text-primary mr-3 text-lg"></i>
-                                <span>Camere confortabile cu toate facilitățile</span>
+                            <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                <i class="fas fa-bed text-primary mr-3 text-xl"></i>
+                                <span class="font-medium">Camere confortabile cu toate facilitățile</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-bath text-primary mr-3 text-lg"></i>
-                                <span>Baie privată în fiecare cameră</span>
+                            <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                <i class="fas fa-bath text-primary mr-3 text-xl"></i>
+                                <span class="font-medium">Baie privată în fiecare cameră</span>
                             </div>
                         </div>
 
-                        <div class="bg-gray-50 rounded-xl p-6 mb-6">
-                            <h4 class="text-center font-semibold text-gray-900 mb-3">Câte camere dorești să închieriezi?</h4>
+                        <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 mb-6">
+                            <h4 class="text-center font-bold text-gray-900 mb-4 text-xl">Câte camere dorești?</h4>
                             <div class="room-counter">
                                 <button id="decrease-rooms" onclick="updateRoomCount(-1)"
-                                    class="bg-gray-200 text-gray-700 hover:bg-gray-300" disabled>
+                                    class="bg-gray-200 text-gray-700 hover:bg-gray-300 hover:scale-110" disabled>
                                     <i class="fas fa-minus"></i>
                                 </button>
                                 <div class="count text-primary" id="room-count">1</div>
                                 <button id="increase-rooms" onclick="updateRoomCount(1)"
-                                    class="bg-primary text-white hover:bg-secondary">
+                                    class="bg-primary text-white hover:bg-secondary hover:scale-110">
                                     <i class="fas fa-plus"></i>
                                 </button>
                             </div>
-                            <p class="text-center text-sm text-gray-500 mt-2">Selectează între 1-4 camere</p>
+                            <p class="text-center text-sm text-gray-500 mt-3">Alege între 1-4 camere</p>
                         </div>
 
                         <button onclick="reserveRooms()"
-                            class="w-full bg-primary hover:bg-secondary text-white font-bold py-4 px-6 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            class="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-5 px-6 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl">
                             <i class="fas fa-calendar-check mr-2"></i>
-                            Rezervă Camere
+                            Rezervă Acum
                         </button>
                     </div>
                 </div>
 
                 <!-- Rent Entire Cottage Option -->
-                <div class="bg-white rounded-2xl shadow-2xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300">
-                    <div class="photo-carousel" id="cottage-carousel">
+                <div class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-accent transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                    <div class="photo-carousel h-96" id="cottage-carousel">
                         <img src="https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800"
-                            alt="Casa întreagă" class="active">
+                            alt="Casa intreaga" class="active">
                     </div>
                     <div class="p-8">
                         <div class="text-center mb-6">
-                            <div class="inline-flex items-center justify-center w-16 h-16 bg-accent/10 rounded-full mb-4">
-                                <i class="fas fa-home text-accent text-3xl"></i>
+                            <div class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl mb-4 shadow-lg">
+                                <i class="fas fa-home text-white text-4xl"></i>
                             </div>
-                            <h3 class="text-3xl font-bold text-gray-900 mb-2">Închiriază Casa Întreagă</h3>
-                            <p class="text-gray-600">Ideală pentru grupuri mari sau evenimente</p>
+                            <h3 class="text-3xl font-bold text-gray-900 mb-3">Casa intreaga</h3>
+                            <p class="text-lg text-gray-600">Pentru grupuri mari sau evenimente</p>
                         </div>
 
-                        <div class="space-y-4 mb-6">
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-check-circle text-accent mr-3 text-lg"></i>
-                                <span>Toate cele 4 camere incluse</span>
+                        <div class="space-y-3 mb-8">
+                            <div class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                <i class="fas fa-check-circle text-accent mr-3 text-xl"></i>
+                                <span class="font-medium">Toate cele 4 camere incluse</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-users text-accent mr-3 text-lg"></i>
-                                <span>Până la 8-10 persoane</span>
+                            <div class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                <i class="fas fa-users text-accent mr-3 text-xl"></i>
+                                <span class="font-medium">Până la 8-10 persoane</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-utensils text-accent mr-3 text-lg"></i>
-                                <span>Bucătărie completă echipată</span>
+                            <div class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                <i class="fas fa-utensils text-accent mr-3 text-xl"></i>
+                                <span class="font-medium">Bucătărie completă echipată</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-couch text-accent mr-3 text-lg"></i>
-                                <span>Living spațios & terasă privată</span>
+                            <div class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                <i class="fas fa-couch text-accent mr-3 text-xl"></i>
+                                <span class="font-medium">Living spațios & terasă</span>
                             </div>
-                            <div class="flex items-center text-gray-700">
-                                <i class="fas fa-crown text-accent mr-3 text-lg"></i>
-                                <span>Intimitate completă</span>
+                            <div class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                <i class="fas fa-crown text-accent mr-3 text-xl"></i>
+                                <span class="font-medium">Intimitate completă</span>
                             </div>
                         </div>
 
-                        <div class="bg-gradient-to-r from-accent/10 to-secondary/10 rounded-xl p-6 mb-6 text-center">
-                            <div class="text-sm text-gray-600 mb-1">Perfect pentru</div>
-                            <div class="font-bold text-lg text-gray-900">Familii • Evenimente • Grupuri</div>
+                        <div class="bg-gradient-to-r from-accent/20 to-secondary/20 rounded-2xl p-6 mb-6 text-center border-2 border-accent/30">
+                            <div class="text-sm font-semibold text-gray-600 mb-2">✨ Perfect pentru</div>
+                            <div class="font-bold text-xl text-gray-900">Familii • Evenimente • Grupuri</div>
                         </div>
 
                         <button onclick="reserveCottage()"
-                            class="w-full bg-gradient-to-r from-accent to-secondary hover:from-secondary hover:to-accent text-white font-bold py-4 px-6 rounded-xl text-lg transition-all duration-300 transform hover:scale-105 shadow-lg">
+                            class="w-full bg-gradient-to-r from-accent to-secondary hover:from-secondary hover:to-accent text-white font-bold py-5 px-6 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl">
                             <i class="fas fa-calendar-check mr-2"></i>
-                            Rezervă Casa Întreagă
+                            Rezervă Acum
                         </button>
                     </div>
                 </div>
             </div>
 
-            <!-- Amenities Section -->
-            <h2 class="text-3xl font-bold text-center text-gray-900 mb-12">Toate Opțiunile Includ</h2>
-            <div class="grid grid-cols-2 md:grid-cols-4 gap-8">
-                <div class="text-center">
-                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-wifi text-2xl"></i>
+            <!-- Amenities Section - Minimal, at bottom -->
+            <div class="mt-16 pt-12 border-t border-gray-200">
+                <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Incluse în Toate Opțiunile</h2>
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-wifi text-2xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Wi-Fi Gratuit</h4>
                     </div>
-                    <h4 class="font-semibold">Wi-Fi Gratuit</h4>
-                </div>
-                <div class="text-center">
-                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-tv text-2xl"></i>
+                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-tv text-2xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">TV LED</h4>
                     </div>
-                    <h4 class="font-semibold">TV LED</h4>
-                </div>
-                <div class="text-center">
-                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-bath text-2xl"></i>
+                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-bath text-2xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Băi Private</h4>
                     </div>
-                    <h4 class="font-semibold">Băi Private</h4>
-                </div>
-                <div class="text-center">
-                    <div class="bg-primary text-white w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
-                        <i class="fas fa-car text-2xl"></i>
+                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                            <i class="fas fa-car text-2xl"></i>
+                        </div>
+                        <h4 class="font-semibold text-gray-800">Parcare</h4>
                     </div>
-                    <h4 class="font-semibold">Parcare Gratuită</h4>
                 </div>
             </div>
         </div>
@@ -443,3 +517,4 @@
 </body>
 
 </html>
+
