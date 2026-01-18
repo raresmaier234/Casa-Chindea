@@ -9,9 +9,25 @@ dotenv.config();
 const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
+let pbAdminLoginPromise;
+const ensurePbAdminAuth = async () => {
+    if (pb.authStore.isValid) return;
+    if (!pbAdminLoginPromise) {
+        pbAdminLoginPromise = pb.admins.authWithPassword(
+            process.env.POCKETBASE_ADMIN_EMAIL,
+            process.env.POCKETBASE_ADMIN_PASSWORD
+        ).catch(err => {
+            pbAdminLoginPromise = null;
+            console.error('PocketBase admin auth failed:', err?.message || err);
+            throw err;
+        });
+    }
+    await pbAdminLoginPromise;
+};
 
 router.get('/booking-availability', async (req, res) => {
     try {
+        await ensurePbAdminAuth();
         const bookings = await pb.collection('booking').getFullList(
             200, // batch size maxim, poți pune și mai mic dacă vrei
             {
@@ -38,13 +54,14 @@ router.get('/booking-availability', async (req, res) => {
 
 // Booking endpoint
 router.post(`/`, async (req, res) => {
-    const { name, email, phone, guests, checkin, checkout, roomType, message } = req.body;
+    const { name, email, phone, guests, checkin, checkout, roomType, numberOfRooms, message } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
     }
 
     try {
         // Check if dates overlap with existing bookings
+        await ensurePbAdminAuth();
         const existingBookings = await pb.collection('booking').getFullList(
             200,
             {
@@ -67,6 +84,7 @@ router.post(`/`, async (req, res) => {
             checkin,
             checkout,
             roomType,
+            numberOfRooms: numberOfRooms || (roomType === 'entire' ? 4 : 1),
             message
         });
 
@@ -74,13 +92,17 @@ router.post(`/`, async (req, res) => {
             throw new Error('CONTACT_PHONE nu este setat în .env!');
         }
 
+        const roomTypeDisplay = roomType === 'entire'
+            ? 'Casa Întreagă'
+            : `${numberOfRooms || 1} ${(numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`;
+
         await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
             name,
             phone,
             guests,
             checkin,
             checkout,
-            roomType,
+            roomType: roomTypeDisplay,
             message
         });
         return pbResult;

@@ -38,8 +38,8 @@
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
                     <a href="/js/pages/about.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/rooms.html"
-                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Camere</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
                     <a href="/js/pages/gallery.html"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
                     <a href="/js/pages/booking.html"
@@ -62,8 +62,8 @@
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
                 <a href="/js/pages/about.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/rooms.html"
-                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Camere</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
                 <a href="/js/pages/gallery.html"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
                 <a href="/js/pages/booking.html"
@@ -77,18 +77,54 @@
 
     <!-- Include navigation component -->
     <script src="/js/components/navigation.js"></script>
+    <script src="/js/components/cms-loader.js"></script>
+    <script src="/js/components/visual-editor.js"></script>
+
+    <script>
+        // Load about content and photos on page load
+        document.addEventListener('DOMContentLoaded', () => {
+            loadCMSContent('about');
+            loadAboutPhotos();
+        });
+
+        // Load about photos from PocketBase
+        async function loadAboutPhotos() {
+            try {
+                const response = await fetch('/api/admin/about-photos?section=story');
+                const data = await response.json();
+
+                if (data.success && data.photos.length > 0) {
+                    const photoGrid = document.getElementById('story-photo-grid');
+                    // Only update if we have photos, otherwise keep the editable placeholders
+                    photoGrid.innerHTML = data.photos.map((photo, idx) => {
+                        const marginClass = idx === 1 ? 'mt-8' : idx === 2 ? '-mt-8' : '';
+                        return `
+                            <img id="cms-about-story-image-${idx + 1}" src="${photo.imageUrl}"
+                                alt="${photo.description || 'Casa Chindea'}"
+                                class="rounded-lg shadow-lg ${marginClass}"
+                                loading="lazy">
+                        `;
+                    }).join('');
+                }
+                // If no photos from API, keep the default images with CMS IDs for editing
+            } catch (error) {
+                console.error('Error loading about photos:', error);
+            }
+        }
+    </script>
+
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h1 class="text-5xl font-bold text-gray-900 mb-6">Despre Casa Chindea</h1>
-                <p class="text-xl text-gray-600 max-w-3xl mx-auto">
+                <h1 id="cms-about-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Despre Casa Chindea</h1>
+                <p id="cms-about-hero-subtitle" class="text-xl text-gray-600 max-w-3xl mx-auto">
                     Refugiul perfect pentru cei care caută liniștea și frumusețea naturii montane
                 </p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12 items-center mb-20">
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-6">Povestea Noastră</h2>
-                    <div class="space-y-4 text-gray-600 text-lg">
+                    <h2 id="cms-about-story-title" class="text-3xl font-bold text-gray-900 mb-6">Povestea Noastră</h2>
+                    <div id="cms-about-story-content" class="space-y-4 text-gray-600 text-lg">
                         <p>
                             Casa Chindea s-a născut din pasiunea pentru natură și dorința de a oferi oaspeților
                             o experiență autentică în mijlocul peisajelor spectaculoase ale Hășmașului Mare.
@@ -105,14 +141,14 @@
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4">
-                    <img src="https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=400"
+                <div class="grid grid-cols-2 gap-4" id="story-photo-grid">
+                    <img id="cms-about-story-image-1" src="https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=400"
                         alt="Casa Chindea exterior" class="rounded-lg shadow-lg">
-                    <img src="https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=400"
+                    <img id="cms-about-story-image-2" src="https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=400"
                         alt="Peisaj montan" class="rounded-lg shadow-lg mt-8">
-                    <img src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=400"
+                    <img id="cms-about-story-image-3" src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=400"
                         alt="Interior confortabil" class="rounded-lg shadow-lg -mt-8">
-                    <img src="https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=400"
+                    <img id="cms-about-story-image-4" src="https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=400"
                         alt="Terasă cu priveliște" class="rounded-lg shadow-lg">
                 </div>
             </div>

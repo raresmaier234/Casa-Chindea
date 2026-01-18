@@ -290,24 +290,16 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 });
 
 // User bookings endpoint
-app.get('/api/user/bookings', authenticateToken, async (req, res) => {
+app.get('/api/user/booking', authenticateToken, async (req, res) => {
     try {
         console.log('🔍 Fetching bookings for user:', req.user.email);
         console.log('🏗️ PocketBase URL:', process.env.POCKET_BASE_URL);
 
-        // Test PocketBase connection first
-        try {
-            await pb.collection('booking').getList(1, 1);
-            console.log('✅ PocketBase connection successful');
-        } catch (connErr) {
-            console.error('❌ PocketBase connection failed:', connErr);
-            throw new Error('Nu se poate conecta la baza de date: ' + connErr.message);
-        }
-
         // Caută rezervările utilizatorului curent în PocketBase
-        const bookings = await pb.collection('booking').getFullList(200, {
-            filter: `email="${req.user.email}" && autoCancel=false`,
-            sort: '-createdAt'
+        const bookings = await pb.collection('booking').getFullList(500, {
+            filter: `email = "${req.user.email}"`,
+            sort: 'createdAt',
+            $autoCancel: false
         });
 
         console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
@@ -320,6 +312,7 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
                 checkout: booking.checkout,
                 guests: booking.guests,
                 roomType: booking.roomType || 'standard',
+                numberOfRooms: booking.numberOfRooms || 1,
                 phone: booking.phone,
                 message: booking.message,
                 status: booking.status || 'pending',
@@ -338,9 +331,7 @@ app.get('/api/user/bookings', authenticateToken, async (req, res) => {
 
         res.status(500).json({
             success: false,
-            error: 'Eroare la încărcarea rezervărilor: ' + err.message,
-            details: err.message,
-            bookings: []
+            error: 'Eroare la încărcarea rezervărilor: ' + err.message
         });
     }
 });
@@ -379,7 +370,7 @@ app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
 app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-
+        console.log(userId)
         // Obține utilizatorul din PocketBase
         const user = await pb.collection('users').getOne(userId);
 
