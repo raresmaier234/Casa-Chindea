@@ -61,7 +61,6 @@ router.post(`/`, async (req, res) => {
 
     try {
         // Check if dates overlap with existing bookings
-        await ensurePbAdminAuth();
         const existingBookings = await pb.collection('booking').getFullList(
             200,
             {
@@ -87,10 +86,6 @@ router.post(`/`, async (req, res) => {
             numberOfRooms: numberOfRooms || (roomType === 'entire' ? 4 : 1),
             message
         });
-
-        if (!process.env.CONTACT_PHONE) {
-            throw new Error('CONTACT_PHONE nu este setat în .env!');
-        }
 
         const roomTypeDisplay = roomType === 'entire'
             ? 'Casa Întreagă'
