@@ -309,28 +309,34 @@ app.get('/api/user/booking', authenticateToken, async (req, res) => {
         console.log('🏗️ PocketBase URL:', process.env.POCKET_BASE_URL);
 
         // Caută rezervările utilizatorului curent în PocketBase
-        // Sort by 'created' field (not 'createdAt')
+        // Remove sort to avoid issues with system fields
         const bookings = await pb.collection('booking').getFullList(500, {
             filter: `email = "${req.user.email}"`,
-            sort: '-created',  // Sort descending by created date
             $autoCancel: false
         });
 
         console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
 
+        // Sort bookings in JavaScript by created date (descending)
+        const sortedBookings = bookings.sort((a, b) => {
+            const dateA = new Date(a.created || a.id);
+            const dateB = new Date(b.created || b.id);
+            return dateB - dateA;
+        });
+
         // Log first booking for debugging if exists
-        if (bookings.length > 0) {
+        if (sortedBookings.length > 0) {
             console.log('📝 Sample booking:', {
-                id: bookings[0].id,
-                email: bookings[0].email,
-                checkin: bookings[0].checkin,
-                created: bookings[0].created
+                id: sortedBookings[0].id,
+                email: sortedBookings[0].email,
+                checkin: sortedBookings[0].checkin,
+                created: sortedBookings[0].created
             });
         }
 
         res.json({
             success: true,
-            bookings: bookings.map(booking => ({
+            bookings: sortedBookings.map(booking => ({
                 id: booking.id,
                 checkin: booking.checkin,
                 checkout: booking.checkout,
@@ -340,8 +346,8 @@ app.get('/api/user/booking', authenticateToken, async (req, res) => {
                 phone: booking.phone,
                 message: booking.message,
                 status: booking.status || 'pending',
-                created: booking.created,
-                updated: booking.updated
+                created: booking.created || booking.id,
+                updated: booking.updated || booking.id
             }))
         });
     } catch (err) {
