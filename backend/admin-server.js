@@ -394,10 +394,10 @@ router.post('/calendar-blocks', authenticateToken, requireAdmin, async (req, res
         const blockData = {
             startDate,
             endDate,
-            reason: reason || 'Blocare administrativă',
-            createdBy: req.user.userId
+            reason: reason || 'Blocare administrativă'
         };
 
+        console.log('Creating calendar block:', blockData);
         const block = await pb.collection('calendar_blocks').create(blockData);
 
         res.json({

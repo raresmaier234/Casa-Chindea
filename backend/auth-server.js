@@ -6,12 +6,19 @@ import PocketBase from 'pocketbase';
 import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { auth } from 'express-openid-connect';
+import multer from 'multer';
 
 dotenv.config();
 
 const app = express();
 app.use(cors());
 app.use(express.json());
+
+// Configure multer for memory storage (temporary, before uploading to PocketBase)
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: { fileSize: 5 * 1024 * 1024 } // 5MB limit
+});
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
@@ -237,6 +244,12 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
         // Obține informațiile utilizatorului din PocketBase
         const user = await pb.collection('users').getOne(req.user.userId);
 
+        // Get full avatar URL if avatar exists
+        let avatarUrl = '';
+        if (user.avatar) {
+            avatarUrl = pb.getFileUrl(user, user.avatar);
+        }
+
         res.json({
             success: true,
             user: {
@@ -244,7 +257,7 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
                 email: user.email,
                 name: user.name,
                 phone: user.phone,
-                avatar: user.avatar,
+                avatar: avatarUrl,
                 admin: user.admin || false,
                 created: user.created,
                 updated: user.updated
@@ -292,17 +305,28 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 // User bookings endpoint
 app.get('/api/user/booking', authenticateToken, async (req, res) => {
     try {
-        console.log('🔍 Fetching bookings for user:', req.user.email);
+        console.log('🔍 Fetching bookings for user:', req.user.email, 'User ID:', req.user.userId);
         console.log('🏗️ PocketBase URL:', process.env.POCKET_BASE_URL);
 
         // Caută rezervările utilizatorului curent în PocketBase
+        // Sort by 'created' field (not 'createdAt')
         const bookings = await pb.collection('booking').getFullList(500, {
             filter: `email = "${req.user.email}"`,
-            sort: 'createdAt',
+            sort: '-created',  // Sort descending by created date
             $autoCancel: false
         });
 
         console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
+
+        // Log first booking for debugging if exists
+        if (bookings.length > 0) {
+            console.log('📝 Sample booking:', {
+                id: bookings[0].id,
+                email: bookings[0].email,
+                checkin: bookings[0].checkin,
+                created: bookings[0].created
+            });
+        }
 
         res.json({
             success: true,
@@ -332,6 +356,109 @@ app.get('/api/user/booking', authenticateToken, async (req, res) => {
         res.status(500).json({
             success: false,
             error: 'Eroare la încărcarea rezervărilor: ' + err.message
+        });
+    }
+});
+
+// Avatar upload endpoint
+app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({
+                success: false,
+                error: 'Niciun fișier încărcat.'
+            });
+        }
+
+        console.log('📸 Avatar upload request for user:', req.user.email);
+        console.log('📦 File details:', {
+            originalname: req.file.originalname,
+            mimetype: req.file.mimetype,
+            size: req.file.size
+        });
+
+        // Create FormData for PocketBase
+        const formData = new FormData();
+
+        // Convert buffer to Blob for PocketBase
+        const blob = new Blob([req.file.buffer], { type: req.file.mimetype });
+        formData.append('avatar', blob, req.file.originalname);
+
+        // Update user record in PocketBase with avatar
+        const updatedUser = await pb.collection('users').update(req.user.userId, formData);
+
+        // Get the avatar URL using correct PocketBase method
+        const avatarUrl = pb.getFileUrl(updatedUser, updatedUser.avatar);
+
+        console.log('✅ Avatar saved to PocketBase:', avatarUrl);
+
+        res.json({
+            success: true,
+            message: 'Avatar încărcat cu succes!',
+            avatarUrl: avatarUrl
+        });
+    } catch (err) {
+        console.error('❌ Error uploading avatar:', err);
+        console.error('Error details:', {
+            message: err.message,
+            status: err.status,
+            data: err.data
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la încărcarea avatar-ului: ' + err.message
+        });
+    }
+});
+
+// Change password endpoint
+app.post('/api/user/change-password', authenticateToken, async (req, res) => {
+    try {
+        const { currentPassword, newPassword } = req.body;
+
+        if (!currentPassword || !newPassword) {
+            return res.status(400).json({
+                success: false,
+                error: 'Parola actuală și parola nouă sunt obligatorii.'
+            });
+        }
+
+        if (newPassword.length < 8) {
+            return res.status(400).json({
+                success: false,
+                error: 'Parola nouă trebuie să aibă cel puțin 8 caractere.'
+            });
+        }
+
+        console.log('🔐 Password change request for user:', req.user.email);
+
+        // Verify current password by attempting to authenticate
+        try {
+            await pb.collection('users').authWithPassword(req.user.email, currentPassword);
+        } catch (authErr) {
+            return res.status(401).json({
+                success: false,
+                error: 'Parola actuală este incorectă.'
+            });
+        }
+
+        // Update password in PocketBase
+        await pb.collection('users').update(req.user.userId, {
+            password: newPassword,
+            passwordConfirm: newPassword
+        });
+
+        console.log('✅ Password changed successfully for:', req.user.email);
+
+        res.json({
+            success: true,
+            message: 'Parola a fost schimbată cu succes.'
+        });
+    } catch (err) {
+        console.error('Error changing password:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la schimbarea parolei.'
         });
     }
 });
