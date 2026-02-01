@@ -78,6 +78,11 @@
         .booking-card {
             animation: fadeInUp 0.5s ease forwards;
         }
+
+        /* Modal animation */
+        .animate-slide-up {
+            animation: fadeInUp 0.3s ease forwards;
+        }
     </style>
 </head>
 
@@ -142,8 +147,15 @@
             <!-- Header -->
             <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
                 <div class="flex items-center space-x-6">
-                    <div class="w-24 h-24 bg-primary rounded-full flex items-center justify-center">
-                        <i class="fas fa-user text-white text-3xl"></i>
+                    <div class="relative group">
+                        <div id="profile-avatar" class="w-24 h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
+                            <i class="fas fa-user text-white text-3xl" id="avatar-icon"></i>
+                            <img id="avatar-img" class="hidden w-full h-full object-cover" alt="Avatar">
+                        </div>
+                        <label for="avatar-upload" class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
+                            <i class="fas fa-camera text-sm"></i>
+                            <input type="file" id="avatar-upload" class="hidden" accept="image/*">
+                        </label>
                     </div>
                     <div>
                         <h1 class="text-3xl font-bold text-gray-900" id="profile-name">Bun venit!</h1>
@@ -169,16 +181,6 @@
                         </h2>
                         <form id="profile-form" class="space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Nume</label>
-                                <input type="text" id="first-name"
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
-                            </div>
-                            <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Prenume</label>
-                                <input type="text" id="last-name"
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
-                            </div>
-                            <div>
                                 <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
                                 <input type="email" id="email" disabled
                                     class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-500 cursor-not-allowed">
@@ -194,6 +196,19 @@
                                 Salvează Modificările
                             </button>
                         </form>
+
+                        <!-- Change Password Section -->
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-key text-primary mr-2"></i>
+                                Securitate
+                            </h3>
+                            <button id="change-password-btn" type="button"
+                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                                <i class="fas fa-lock mr-2"></i>
+                                Schimbă Parola
+                            </button>
+                        </div>
                     </div>
                 </div>
 
@@ -246,7 +261,7 @@
                             </div>
                             
                             <!-- Scrollable Bookings List -->
-                            <div id="bookings-list" class="space-y-4 max-h-96 overflow-y-auto pr-2 custom-scrollbar">
+                            <div id="bookings-list" class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                                 <!-- Bookings will be dynamically inserted here -->
                             </div>
                         </div>
@@ -255,6 +270,52 @@
             </div>
         </div>
     </main>
+
+    <!-- Change Password Modal -->
+    <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-slide-up">
+            <button id="close-password-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-xl"></i>
+            </button>
+
+            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+                <i class="fas fa-key text-primary mr-2"></i>
+                Schimbă Parola
+            </h2>
+
+            <form id="password-form" class="space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Parola Actuală</label>
+                    <input type="password" id="current-password" required
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Parola Nouă</label>
+                    <input type="password" id="new-password" required minlength="8"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                    <p class="text-xs text-gray-500 mt-1">Minimum 8 caractere</p>
+                </div>
+
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirmă Parola Nouă</label>
+                    <input type="password" id="confirm-password" required minlength="8"
+                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                </div>
+
+                <div id="password-error" class="hidden text-red-500 text-sm p-3 bg-red-50 rounded-lg">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span id="password-error-message"></span>
+                </div>
+
+                <button type="submit"
+                    class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    <i class="fas fa-check mr-2"></i>
+                    Schimbă Parola
+                </button>
+            </form>
+        </div>
+    </div>
 
     <!-- Footer -->
     <footer class="bg-gray-800 text-white py-12">
@@ -297,12 +358,17 @@
     </footer>
 
     <script>
+        // Global variable to store current user ID
+        let currentUserId = null;
+
         // Check authentication on page load
         document.addEventListener('DOMContentLoaded', function () {
             checkAuthentication();
             setupProfileForm(); // Setup only profile-specific functionality
             loadUserProfile();
             loadUserBookings();
+            setupAvatarUpload();
+            setupChangePassword();
         });
 
         function checkAuthentication() {
@@ -335,17 +401,46 @@
                     const data = await response.json();
                     const user = data.user;
 
+                    // Store user ID globally for avatar functionality
+                    currentUserId = user.id;
+
                     // Update UI with user data
-                    document.getElementById('profile-name').textContent = user.name || 'Utilizator';
+                    document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
                     document.getElementById('profile-email').textContent = user.email;
-                    document.getElementById('user-name').textContent = user.name || 'Profil';
 
                     // Populate form fields
-                    const nameParts = (user.name || '').split(' ');
-                    document.getElementById('first-name').value = nameParts[0] || '';
-                    document.getElementById('last-name').value = nameParts.slice(1).join(' ') || '';
                     document.getElementById('email').value = user.email;
                     document.getElementById('phone').value = user.phone || '';
+
+                    // Load avatar - prioritize PocketBase, fallback to localStorage
+                    const avatarImg = document.getElementById('avatar-img');
+                    const avatarIcon = document.getElementById('avatar-icon');
+
+                    if (user.avatar && user.avatar.trim() !== '') {
+                        // Use avatar from PocketBase (preferred)
+                        avatarImg.src = user.avatar;
+                        avatarImg.classList.remove('hidden');
+                        avatarIcon.classList.add('hidden');
+                        console.log('✅ Avatar loaded from PocketBase:', user.avatar);
+
+                        // Clear localStorage since we have it in PocketBase
+                        localStorage.removeItem(`avatar_${user.id}`);
+                    } else {
+                        // Fallback to localStorage if PocketBase doesn't have avatar
+                        const localAvatar = localStorage.getItem(`avatar_${user.id}`);
+
+                        if (localAvatar) {
+                            avatarImg.src = localAvatar;
+                            avatarImg.classList.remove('hidden');
+                            avatarIcon.classList.add('hidden');
+                            console.log('⚠️ Avatar loaded from localStorage (fallback)');
+                        } else {
+                            // No avatar - show default icon
+                            avatarImg.classList.add('hidden');
+                            avatarIcon.classList.remove('hidden');
+                            console.log('ℹ️ No avatar found, showing default icon');
+                        }
+                    }
                 } else if (response.status === 401 || response.status === 403) {
                     // Token invalid, redirect to login
                     logout();
@@ -601,8 +696,6 @@
         async function updateProfile(e) {
             e.preventDefault();
 
-            const firstName = document.getElementById('first-name').value;
-            const lastName = document.getElementById('last-name').value;
             const phone = document.getElementById('phone').value;
 
             try {
@@ -614,7 +707,6 @@
                         'Authorization': `Bearer ${token}`
                     },
                     body: JSON.stringify({
-                        name: `${firstName} ${lastName}`.trim(),
                         phone
                     })
                 });
@@ -640,6 +732,191 @@
                 console.error('Error updating profile:', error);
                 alert('Eroare la actualizarea profilului. Încercați din nou.');
             }
+        }
+
+        // Avatar Upload Functionality
+        function setupAvatarUpload() {
+            const avatarUpload = document.getElementById('avatar-upload');
+            avatarUpload.addEventListener('change', async function(e) {
+                const file = e.target.files[0];
+                if (!file) return;
+
+                // Validate file type
+                if (!file.type.startsWith('image/')) {
+                    alert('Te rugăm să încarci o imagine validă.');
+                    return;
+                }
+
+                // Validate file size (max 5MB)
+                if (file.size > 5 * 1024 * 1024) {
+                    alert('Imaginea este prea mare. Dimensiunea maximă este 5MB.');
+                    return;
+                }
+
+                // Preview image immediately
+                const reader = new FileReader();
+                reader.onload = function(event) {
+                    const avatarImg = document.getElementById('avatar-img');
+                    const avatarIcon = document.getElementById('avatar-icon');
+                    const avatarDataUrl = event.target.result;
+
+                    // Display avatar
+                    avatarImg.src = avatarDataUrl;
+                    avatarImg.classList.remove('hidden');
+                    avatarIcon.classList.add('hidden');
+
+                    // Save to localStorage as fallback (in case upload fails)
+                    if (currentUserId) {
+                        localStorage.setItem(`avatar_${currentUserId}`, avatarDataUrl);
+                        console.log('✅ Avatar preview saved to localStorage');
+                    }
+                };
+                reader.readAsDataURL(file);
+
+                // Upload to PocketBase via backend
+                try {
+                    const formData = new FormData();
+                    formData.append('avatar', file);
+
+                    const token = sessionStorage.getItem('auth_token');
+                    const response = await fetch('/api/user/avatar', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        const data = await response.json();
+                        console.log('✅ Avatar uploaded to PocketBase:', data);
+
+                        // Update avatar with PocketBase URL
+                        if (data.avatarUrl) {
+                            const avatarImg = document.getElementById('avatar-img');
+                            avatarImg.src = data.avatarUrl;
+
+                            // Clear localStorage since we have it in PocketBase now
+                            if (currentUserId) {
+                                localStorage.removeItem(`avatar_${currentUserId}`);
+                                console.log('🗑️ Removed localStorage avatar (now in PocketBase)');
+                            }
+                        }
+
+                        showNotification('Avatar actualizat cu succes!', 'success');
+                    } else {
+                        const errorData = await response.json();
+                        throw new Error(errorData.error || 'Eroare la încărcarea avatar-ului');
+                    }
+                } catch (error) {
+                    console.error('❌ Error uploading avatar:', error);
+                    showNotification('Eroare la salvarea în server: ' + error.message + '. Avatar salvat local.', 'warning');
+                }
+            });
+        }
+
+        // Change Password Functionality
+        function setupChangePassword() {
+            const changePasswordBtn = document.getElementById('change-password-btn');
+            const passwordModal = document.getElementById('password-modal');
+            const closeModalBtn = document.getElementById('close-password-modal');
+            const passwordForm = document.getElementById('password-form');
+
+            changePasswordBtn.addEventListener('click', function() {
+                passwordModal.classList.remove('hidden');
+            });
+
+            closeModalBtn.addEventListener('click', function() {
+                passwordModal.classList.add('hidden');
+                passwordForm.reset();
+                document.getElementById('password-error').classList.add('hidden');
+            });
+
+            // Close modal on outside click
+            passwordModal.addEventListener('click', function(e) {
+                if (e.target === passwordModal) {
+                    passwordModal.classList.add('hidden');
+                    passwordForm.reset();
+                    document.getElementById('password-error').classList.add('hidden');
+                }
+            });
+
+            passwordForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+
+                const currentPassword = document.getElementById('current-password').value;
+                const newPassword = document.getElementById('new-password').value;
+                const confirmPassword = document.getElementById('confirm-password').value;
+                const errorDiv = document.getElementById('password-error');
+                const errorMessage = document.getElementById('password-error-message');
+
+                // Reset error
+                errorDiv.classList.add('hidden');
+
+                // Validate passwords match
+                if (newPassword !== confirmPassword) {
+                    errorMessage.textContent = 'Parolele noi nu se potrivesc.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                // Validate password length
+                if (newPassword.length < 8) {
+                    errorMessage.textContent = 'Parola nouă trebuie să aibă cel puțin 8 caractere.';
+                    errorDiv.classList.remove('hidden');
+                    return;
+                }
+
+                try {
+                    const token = sessionStorage.getItem('auth_token');
+                    const response = await fetch('/api/user/change-password', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: JSON.stringify({
+                            currentPassword,
+                            newPassword
+                        })
+                    });
+
+                    if (response.ok) {
+                        // Success - close modal and show notification
+                        passwordModal.classList.add('hidden');
+                        passwordForm.reset();
+                        showNotification('Parola a fost schimbată cu succes!', 'success');
+                    } else {
+                        const data = await response.json();
+                        throw new Error(data.error || 'Eroare la schimbarea parolei');
+                    }
+                } catch (error) {
+                    console.error('Error changing password:', error);
+                    errorMessage.textContent = error.message;
+                    errorDiv.classList.remove('hidden');
+                }
+            });
+        }
+
+        // Helper function to show notifications
+        function showNotification(message, type = 'success') {
+            const notification = document.createElement('div');
+            notification.className = `fixed top-20 right-4 z-50 px-6 py-4 rounded-lg shadow-lg transition-all duration-300 ${
+                type === 'success' ? 'bg-green-500' : type === 'warning' ? 'bg-yellow-500' : 'bg-red-500'
+            } text-white`;
+            notification.innerHTML = `
+                <div class="flex items-center gap-3">
+                    <i class="fas fa-${type === 'success' ? 'check-circle' : type === 'warning' ? 'exclamation-triangle' : 'times-circle'} text-xl"></i>
+                    <span class="font-medium">${message}</span>
+                </div>
+            `;
+            document.body.appendChild(notification);
+
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                notification.style.transform = 'translateX(100%)';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
         }
     </script>
 </body>

@@ -3,7 +3,8 @@
     "version": "1.0.0",
     "type": "module",
     "scripts": {
-        "start": "node index.js"
+        "start": "node index.js",
+        "test-whatsapp": "node test-whatsapp.js"
     },
     "dependencies": {
         "bcryptjs": "^3.0.2",

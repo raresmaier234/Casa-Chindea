@@ -9,38 +9,72 @@ dotenv.config();
 const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
-let pbAdminLoginPromise;
+
+// Authenticate using a service account or skip auth if collection rules allow public access
 const ensurePbAdminAuth = async () => {
     if (pb.authStore.isValid) return;
-    if (!pbAdminLoginPromise) {
-        pbAdminLoginPromise = pb.admins.authWithPassword(
-            process.env.POCKETBASE_ADMIN_EMAIL,
-            process.env.POCKETBASE_ADMIN_PASSWORD
-        ).catch(err => {
-            pbAdminLoginPromise = null;
-            console.error('PocketBase admin auth failed:', err?.message || err);
-            throw err;
-        });
+
+    // Try to authenticate with admin email/password if provided
+    // For PocketBase 0.22+, collections can have public API rules
+    // so we might not need authentication for all operations
+    try {
+        if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
+            // Try authenticating as a user (superuser)
+            await pb.collection('users').authWithPassword(
+                process.env.POCKETBASE_ADMIN_EMAIL,
+                process.env.POCKETBASE_ADMIN_PASSWORD
+            );
+            console.log('✅ PocketBase authenticated as user');
+        }
+    } catch (err) {
+        // If auth fails, log it but continue - collection rules might allow public access
+        console.log('⚠️ PocketBase auth skipped (will use public API rules):', err?.message);
     }
-    await pbAdminLoginPromise;
 };
 
 router.get('/booking-availability', async (req, res) => {
     try {
         await ensurePbAdminAuth();
+
+        // Get all confirmed bookings
         const bookings = await pb.collection('booking').getFullList(
-            200, // batch size maxim, poți pune și mai mic dacă vrei
+            200,
             {
                 sort: 'checkin',
                 filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`,
-                $autoCancel: false // opțional, previne auto-cancel dacă faci mai multe request-uri simultan
+                $autoCancel: false
             }
         );
 
-        const unavailableDates = bookings.map(booking => ({
-            start: booking.checkin,
-            end: booking.checkout
-        }));
+        // Get all calendar blocks (administrative blocks)
+        let calendarBlocks = [];
+        try {
+            calendarBlocks = await pb.collection('calendar_blocks').getFullList(
+                200,
+                {
+                    sort: 'startDate',
+                    filter: `startDate >= "${new Date().toISOString().split('T')[0]}"`,
+                    $autoCancel: false
+                }
+            );
+        } catch (blockErr) {
+            console.log('⚠️ Could not fetch calendar blocks (might not exist yet):', blockErr.message);
+        }
+
+        // Combine bookings and calendar blocks into unavailable dates
+        const unavailableDates = [
+            ...bookings.map(booking => ({
+                start: booking.checkin,
+                end: booking.checkout,
+                type: 'booking'
+            })),
+            ...calendarBlocks.map(block => ({
+                start: block.startDate,
+                end: block.endDate,
+                type: 'block',
+                reason: block.reason
+            }))
+        ];
 
         res.json({
             success: true,
@@ -60,6 +94,8 @@ router.post(`/`, async (req, res) => {
     }
 
     try {
+        await ensurePbAdminAuth();
+
         // Check if dates overlap with existing bookings
         const existingBookings = await pb.collection('booking').getFullList(
             200,
@@ -87,22 +123,41 @@ router.post(`/`, async (req, res) => {
             message
         });
 
+        console.log('✅ Rezervare creată în PocketBase:', pbResult.id);
+
+        // Send WhatsApp message
         const roomTypeDisplay = roomType === 'entire'
             ? 'Casa Întreagă'
             : `${numberOfRooms || 1} ${(numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`;
 
-        await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
-            name,
-            phone,
-            guests,
-            checkin,
-            checkout,
-            roomType: roomTypeDisplay,
-            message
+        try {
+            await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
+                name,
+                phone,
+                guests,
+                checkin,
+                checkout,
+                roomType: roomTypeDisplay,
+                message: message || 'Niciun mesaj adițional'
+            });
+            console.log('✅ Mesaj WhatsApp trimis cu succes');
+        } catch (whatsappError) {
+            console.error('⚠️ Eroare la trimiterea mesajului WhatsApp:', whatsappError.message);
+            // Nu blocăm rezervarea dacă WhatsApp eșuează
+        }
+
+        return res.json({
+            success: true,
+            message: 'Rezervare realizată cu succes!',
+            booking: {
+                id: pbResult.id,
+                name: pbResult.name,
+                checkin: pbResult.checkin,
+                checkout: pbResult.checkout
+            }
         });
-        return pbResult;
     } catch (err) {
-        console.error('Eroare:', err);
+        console.error('❌ Eroare la rezervare:', err);
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
     }
 });
