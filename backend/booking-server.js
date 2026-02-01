@@ -3,7 +3,7 @@ import express from 'express';
 import cors from 'cors';
 import dotenv from 'dotenv';
 import PocketBase from 'pocketbase';
-import { sendWhatsAppMessage } from './whatsapp.js';
+import { sendWhatsAppMessage, sendWhatsAppConfirmationToClient } from './whatsapp.js';
 dotenv.config();
 
 const router = express.Router();
@@ -130,20 +130,36 @@ router.post(`/`, async (req, res) => {
             ? 'Casa Întreagă'
             : `${numberOfRooms || 1} ${(numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`;
 
+        const bookingData = {
+            name,
+            phone,
+            guests,
+            checkin,
+            checkout,
+            roomType: roomTypeDisplay,
+            message: message || 'Niciun mesaj adițional'
+        };
+
+        // Send WhatsApp to property owner
         try {
-            await sendWhatsAppMessage(process.env.CONTACT_PHONE, {
-                name,
-                phone,
-                guests,
-                checkin,
-                checkout,
-                roomType: roomTypeDisplay,
-                message: message || 'Niciun mesaj adițional'
-            });
-            console.log('✅ Mesaj WhatsApp trimis cu succes');
+            await sendWhatsAppMessage(process.env.CONTACT_PHONE, bookingData);
+            console.log('✅ Mesaj WhatsApp trimis către proprietar:', process.env.CONTACT_PHONE);
         } catch (whatsappError) {
-            console.error('⚠️ Eroare la trimiterea mesajului WhatsApp:', whatsappError.message);
-            // Nu blocăm rezervarea dacă WhatsApp eșuează
+            console.error('⚠️ Eroare la trimiterea mesajului WhatsApp către proprietar:', whatsappError.message);
+        }
+
+        // Send WhatsApp confirmation to client
+        try {
+            // Remove country code prefix if exists and format properly
+            let clientPhone = phone.replace(/\s+/g, '').replace(/^(\+|00)/, '');
+            if (!clientPhone.startsWith('40')) {
+                clientPhone = '40' + clientPhone.replace(/^0/, '');
+            }
+
+            await sendWhatsAppConfirmationToClient(clientPhone, bookingData);
+            console.log('✅ Mesaj WhatsApp de confirmare trimis către client:', clientPhone);
+        } catch (whatsappError) {
+            console.error('⚠️ Eroare la trimiterea confirmării WhatsApp către client:', whatsappError.message);
         }
 
         return res.json({
