@@ -208,15 +208,44 @@
     </footer>
     <script>
         let unavailableDateRanges = [];
+        let selectedOffer = null; // Ofertă selectată din URL
+
+        // Prețuri încărcate din admin (cu valori implicite)
+        let prices = {
+            priceRoom: 150,
+            priceEntire: 500,
+            priceBreakfast: 35,
+            priceBreakfastChild: 20,
+            surchargeWeekend: 0,
+            surchargeHoliday: 0
+        };
 
         // Ensure DOM is loaded before initializing
         document.addEventListener('DOMContentLoaded', function () {
-            // Handle URL parameters from rooms page
+            // Încarcă prețurile din API
+            loadPrices();
+
+            // Handle URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const rentalType = urlParams.get('type');
             const numRooms = urlParams.get('rooms');
+            const offerId = urlParams.get('offer');
 
-            if (rentalType) {
+            // Check if this is a special offer booking
+            if (offerId) {
+                selectedOffer = {
+                    id: offerId,
+                    type: urlParams.get('type'),
+                    startDate: urlParams.get('start'),
+                    endDate: urlParams.get('end'),
+                    nights: parseInt(urlParams.get('nights')) || 1,
+                    totalPrice: parseInt(urlParams.get('price')) || 0,
+                    roomPrice: parseInt(urlParams.get('roomPrice')) || 0,
+                    title: decodeURIComponent(urlParams.get('title') || 'Ofertă Specială')
+                };
+
+                applySpecialOffer();
+            } else if (rentalType) {
                 document.getElementById('rental-type').value = rentalType;
                 toggleRoomCountSection();
 
@@ -227,6 +256,10 @@
 
             // Add event listener for rental type change
             document.getElementById('rental-type').addEventListener('change', function() {
+                // Clear offer if user changes rental type manually
+                if (selectedOffer) {
+                    clearSpecialOffer();
+                }
                 toggleRoomCountSection();
                 updateBookingSummary();
             });
@@ -235,6 +268,102 @@
 
             fetchAvailabilityAndInitCalendar();
         });
+
+        function applySpecialOffer() {
+            if (!selectedOffer) return;
+
+            console.log('🎁 Applying special offer:', selectedOffer);
+
+            // Show offer banner
+            showOfferBanner();
+
+            // Set rental type to entire (offers are usually for entire cottage)
+            document.getElementById('rental-type').value = 'entire';
+            toggleRoomCountSection();
+
+            // Set dates after calendar initializes
+            setTimeout(() => {
+                if (selectedOffer.startDate && selectedOffer.endDate) {
+                    document.getElementById('checkin').value = selectedOffer.startDate;
+                    document.getElementById('checkout').value = selectedOffer.endDate;
+
+                    // Update the date range display
+                    const startFormatted = formatDateDMY(selectedOffer.startDate);
+                    const endFormatted = formatDateDMY(selectedOffer.endDate);
+                    document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
+
+                    // Lock the date picker for offer bookings
+                    document.getElementById('date-range').disabled = true;
+                    document.getElementById('date-range').classList.add('bg-gray-100');
+                }
+
+                updateBookingSummary();
+            }, 500);
+        }
+
+        function showOfferBanner() {
+            const formContainer = document.querySelector('#booking-form').parentElement;
+            const existingBanner = document.getElementById('offer-banner');
+            if (existingBanner) existingBanner.remove();
+
+            const banner = document.createElement('div');
+            banner.id = 'offer-banner';
+            banner.className = 'bg-gradient-to-r from-primary to-secondary text-white p-6 rounded-2xl mb-8 shadow-lg';
+            banner.innerHTML = `
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center">
+                        <span class="text-4xl mr-4">🎁</span>
+                        <div>
+                            <h3 class="text-xl font-bold">${selectedOffer.title}</h3>
+                            <p class="opacity-90">${selectedOffer.nights} nopți • ${formatDateDMY(selectedOffer.startDate)} - ${formatDateDMY(selectedOffer.endDate)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold">${selectedOffer.totalPrice} RON</div>
+                        <p class="text-sm opacity-90">preț total pachet</p>
+                    </div>
+                </div>
+                <button onclick="clearSpecialOffer()" class="mt-4 text-sm underline opacity-80 hover:opacity-100">
+                    <i class="fas fa-times mr-1"></i>Renunță la ofertă și alege alte date
+                </button>
+            `;
+            formContainer.insertBefore(banner, formContainer.firstChild);
+        }
+
+        function clearSpecialOffer() {
+            selectedOffer = null;
+
+            // Remove banner
+            const banner = document.getElementById('offer-banner');
+            if (banner) banner.remove();
+
+            // Reset form
+            document.getElementById('date-range').disabled = false;
+            document.getElementById('date-range').classList.remove('bg-gray-100');
+            document.getElementById('date-range').value = '';
+            document.getElementById('checkin').value = '';
+            document.getElementById('checkout').value = '';
+            document.getElementById('rental-type').value = '';
+
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            updateBookingSummary();
+        }
+
+        // Încarcă prețurile din API
+        async function loadPrices() {
+            try {
+                const response = await fetch('/api/prices');
+                const data = await response.json();
+                if (data.success && data.prices) {
+                    prices = { ...prices, ...data.prices };
+                    updateBookingSummary(); // Actualizează summary-ul cu noile prețuri
+                }
+            } catch (err) {
+                console.warn('⚠️ Nu s-au putut încărca prețurile, se folosesc valorile implicite:', err);
+            }
+        }
 
         function toggleRoomCountSection() {
             const rentalType = document.getElementById('rental-type').value;
@@ -352,6 +481,30 @@
             const rentalType = document.getElementById('rental-type').value;
             const roomCount = document.getElementById('room-count').value;
 
+            // If special offer is selected, show offer summary
+            if (selectedOffer && checkin && checkout && guests) {
+                const summary = `
+                    <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/30">
+                        <div class="flex items-center mb-3">
+                            <span class="text-2xl mr-2">🎁</span>
+                            <span class="font-bold text-primary">Ofertă Specială Aplicată</span>
+                        </div>
+                        <p><strong>Pachet:</strong> ${selectedOffer.title}</p>
+                        <p><strong>Check-in:</strong> ${formatDateDMY(checkin)}</p>
+                        <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
+                        <p><strong>Număr nopți:</strong> ${selectedOffer.nights}</p>
+                        <p><strong>Număr persoane:</strong> ${guests}</p>
+                        <p><strong>Tip închiriere:</strong> Casa întreagă (4 camere)</p>
+                        <p class="text-xl font-bold text-primary mt-3 pt-3 border-t border-primary/30">
+                            <strong>Total pachet:</strong> ${selectedOffer.totalPrice} RON
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Prețul include tot ce este menționat în ofertă</p>
+                    </div>
+                `;
+                document.getElementById('booking-summary').innerHTML = summary;
+                return;
+            }
+
             if (checkin && checkout && guests && rentalType) {
                 const nights = Math.round((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
                 let pricePerNight = 0;
@@ -359,24 +512,46 @@
 
                 if (rentalType === 'room') {
                     const numRooms = parseInt(roomCount) || 1;
-                    pricePerNight = 150 * numRooms; // 150 RON per room per night
+                    pricePerNight = prices.priceRoom * numRooms; // Preț din admin per cameră
                     rentalDescription = `${numRooms} ${numRooms === 1 ? 'cameră' : 'camere'}`;
                 } else if (rentalType === 'entire') {
-                    pricePerNight = 500; // Price for entire cottage per night
-                    rentalDescription = 'Casa intreaga(4 camere)';
+                    pricePerNight = prices.priceEntire; // Preț din admin pentru cabana întreagă
+                    rentalDescription = 'Casa intreaga (4 camere)';
                 }
 
-                const totalPrice = nights * pricePerNight;
+                // Calculează suprataxă weekend dacă este cazul
+                let weekendNights = 0;
+                if (prices.surchargeWeekend > 0) {
+                    const startDate = new Date(checkin);
+                    for (let i = 0; i < nights; i++) {
+                        const day = new Date(startDate);
+                        day.setDate(day.getDate() + i);
+                        const dayOfWeek = day.getDay();
+                        if (dayOfWeek === 5 || dayOfWeek === 6) { // Vineri sau Sâmbătă
+                            weekendNights++;
+                        }
+                    }
+                }
 
-                const summary = `
+                const basePrice = nights * pricePerNight;
+                const weekendSurcharge = weekendNights > 0 ? Math.round((pricePerNight * weekendNights * prices.surchargeWeekend) / 100) : 0;
+                const totalPrice = basePrice + weekendSurcharge;
+
+                let summary = `
                     <p><strong>Check-in:</strong> ${formatDateDMY(checkin)}</p>
                     <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
                     <p><strong>Număr nopți:</strong> ${nights}</p>
                     <p><strong>Număr persoane:</strong> ${guests}</p>
                     <p><strong>Tip închiriere:</strong> ${rentalDescription}</p>
                     <p><strong>Preț pe noapte:</strong> ${pricePerNight} RON</p>
-                    <p class="text-lg font-bold text-primary"><strong>Total:</strong> ${totalPrice} RON</p>
                 `;
+
+                if (weekendSurcharge > 0) {
+                    summary += `<p><strong>Suprataxă weekend (${prices.surchargeWeekend}%):</strong> +${weekendSurcharge} RON</p>`;
+                }
+
+                summary += `<p class="text-lg font-bold text-primary mt-2"><strong>Total estimat:</strong> ${totalPrice} RON</p>`;
+
                 document.getElementById('booking-summary').innerHTML = summary;
             }
         }
@@ -395,25 +570,41 @@
             const checkout = document.getElementById('checkout').value;
             const rentalType = document.getElementById('rental-type').value;
             const numberOfRooms = rentalType === 'room' ? parseInt(document.getElementById('room-count').value) : 4;
-            const message = document.getElementById('message').value;
+            let message = document.getElementById('message').value;
 
             // Create roomType value for backward compatibility
             const roomType = rentalType === 'entire' ? 'entire' : 'room';
 
+            // Add offer info to message if special offer is selected
+            if (selectedOffer) {
+                const offerInfo = `\n\n🎁 OFERTĂ SPECIALĂ: ${selectedOffer.title}\nPreț pachet: ${selectedOffer.totalPrice} RON\nNopți: ${selectedOffer.nights}`;
+                message = message ? message + offerInfo : offerInfo;
+            }
+
+            // Prepare booking data
+            const bookingData = {
+                name,
+                email,
+                phone,
+                guests,
+                checkin,
+                checkout,
+                roomType,
+                numberOfRooms,
+                message
+            };
+
+            // Add offer data if present
+            if (selectedOffer) {
+                bookingData.offerId = selectedOffer.id;
+                bookingData.offerTitle = selectedOffer.title;
+                bookingData.offerPrice = selectedOffer.totalPrice;
+            }
+
             fetch('/api/booking', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({
-                    name,
-                    email,
-                    phone,
-                    guests,
-                    checkin,
-                    checkout,
-                    roomType,
-                    numberOfRooms,
-                    message
-                })
+                body: JSON.stringify(bookingData)
             })
                 .then(res => res.json())
                 .then(data => {
@@ -421,7 +612,10 @@
                         alert('Rezervarea a fost trimisă cu succes! Vei primi confirmarea pe WhatsApp.');
                         document.getElementById('booking-form').reset();
                         document.getElementById('booking-summary').innerHTML = '<p>Completează formularul pentru a vedea rezumatul</p>';
-                        // Clear URL parameters
+                        // Clear offer and URL parameters
+                        selectedOffer = null;
+                        const banner = document.getElementById('offer-banner');
+                        if (banner) banner.remove();
                         window.history.replaceState({}, document.title, window.location.pathname);
                     } else {
                         alert('Eroare la trimitere: ' + (data.error || 'necunoscută'));

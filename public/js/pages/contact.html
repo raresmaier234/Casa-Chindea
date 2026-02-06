@@ -22,6 +22,7 @@
             }
         }
     </script>
+    <!-- reCAPTCHA v2 checkbox -->
     <script src="https://www.google.com/recaptcha/api.js" async defer></script>
 </head>
 
@@ -175,13 +176,14 @@
                             <textarea rows="6" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
                         </div>
-                        <div id="recaptcha-container" style="display:none;">
-                            <div class="g-recaptcha" data-sitekey="6LfSx2grAAAAABj9FRhR5TKWvAOVflOwS8di8HxJ"></div>
-                        </div>
-                        <button type="submit"
+                        <!-- reCAPTCHA v2 checkbox -->
+                        <div class="g-recaptcha" data-sitekey="6Lf5q2EsAAAAANqj4XjcqAq3O7CfQ1K_q1nDv5Jp"></div>
+                        <button type="submit" id="submit-btn"
                             class="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300">
                             Trimite Mesajul
                         </button>
+                        <!-- Success/Error message container -->
+                        <div id="form-message" class="hidden mt-4 p-4 rounded-lg text-center"></div>
                     </form>
                 </div>
             </div>
@@ -235,64 +237,115 @@
         </div>
     </footer>
     <script>
-        function sendMail() {
-            const now = Date.now();
-            const windowMs = 60 * 1000; // 1 minut
-            const maxTries = 1; // după prima trimitere, cere reCAPTCHA
-            let tries = JSON.parse(localStorage.getItem('contactTries') || '[]');
-            tries = tries.filter(ts => now - ts < windowMs);
-            const recaptchaDiv = document.getElementById('recaptcha-container');
-            const form = document.getElementById('contact-form');
-            const name = form.querySelector('input[type="text"]').value;
-            const email = form.querySelector('input[type="email"]').value;
-            const subject = form.querySelectorAll('input[type="text"]')[1].value;
-            const message = form.querySelector('textarea').value;
+        // Spam prevention: max 3 messages per 5 minutes
+        const SPAM_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
+        const MAX_MESSAGES_TOTAL = 3; // Max 3 messages per window
 
-            if (tries.length >= maxTries) {
-                // Afișează reCAPTCHA dacă nu e deja vizibil
-                if (recaptchaDiv.style.display === 'none') {
-                    recaptchaDiv.style.display = 'block';
-                    alert('Te rugăm să completezi reCAPTCHA pentru a preveni spamul.');
-                    return;
-                }
-                // Verifică dacă reCAPTCHA a fost completat
-                const recaptchaToken = grecaptcha.getResponse();
-                if (!recaptchaToken) {
-                    alert('Te rugăm să completezi reCAPTCHA!');
-                    return;
-                }
-                // Resetăm tries doar dacă reCAPTCHA a fost completat
-                tries = [];
-                localStorage.setItem('contactTries', JSON.stringify(tries));
-                // Ascunde reCAPTCHA după trimitere
-                setTimeout(() => {
-                    grecaptcha.reset();
-                    recaptchaDiv.style.display = 'none';
-                }, 1000);
-            } else {
-                // Prima trimitere: nu trimite token reCAPTCHA
-                var recaptchaToken = undefined;
+        function showMessage(type, text) {
+            const msgDiv = document.getElementById('form-message');
+            msgDiv.className = 'mt-4 p-4 rounded-lg text-center';
+            if (type === 'success') {
+                msgDiv.classList.add('bg-green-100', 'text-green-800', 'border', 'border-green-300');
+            } else if (type === 'error') {
+                msgDiv.classList.add('bg-red-100', 'text-red-800', 'border', 'border-red-300');
+            } else if (type === 'warning') {
+                msgDiv.classList.add('bg-yellow-100', 'text-yellow-800', 'border', 'border-yellow-300');
             }
-            tries.push(now);
-            localStorage.setItem('contactTries', JSON.stringify(tries));
+            msgDiv.textContent = text;
+            msgDiv.classList.remove('hidden');
 
-            fetch(`/api/contact`, {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ name, email, subject, message, recaptchaToken })
-            })
-                .then(res => res.json())
-                .then(data => {
-                    if (data.success) {
-                        alert('Mesajul a fost trimis cu succes!');
-                        form.reset();
-                    } else {
-                        alert('Eroare la trimitere: ' + (data.error || 'necunoscută'));
-                    }
-                })
-                .catch(err => {
-                    alert('Eroare la trimitere: ' + err);
+            // Auto-hide success messages after 5 seconds
+            if (type === 'success') {
+                setTimeout(() => {
+                    msgDiv.classList.add('hidden');
+                }, 5000);
+            }
+        }
+
+        function hideMessage() {
+            document.getElementById('form-message').classList.add('hidden');
+        }
+
+        function setButtonLoading(loading) {
+            const btn = document.getElementById('submit-btn');
+            if (loading) {
+                btn.disabled = true;
+                btn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se trimite...';
+                btn.classList.add('opacity-75', 'cursor-not-allowed');
+            } else {
+                btn.disabled = false;
+                btn.innerHTML = 'Trimite Mesajul';
+                btn.classList.remove('opacity-75', 'cursor-not-allowed');
+            }
+        }
+
+        async function sendMail() {
+            hideMessage();
+            const now = Date.now();
+            let tries = JSON.parse(localStorage.getItem('contactTries') || '[]');
+            tries = tries.filter(ts => now - ts < SPAM_WINDOW_MS);
+
+            // Check if user has exceeded total limit
+            if (tries.length >= MAX_MESSAGES_TOTAL) {
+                const waitTime = Math.ceil((SPAM_WINDOW_MS - (now - tries[0])) / 60000);
+                showMessage('error', `Ai trimis prea multe mesaje. Încearcă din nou în ${waitTime} minute.`);
+                return;
+            }
+
+            const form = document.getElementById('contact-form');
+            const name = form.querySelector('input[type="text"]').value.trim();
+            const email = form.querySelector('input[type="email"]').value.trim();
+            const subject = form.querySelectorAll('input[type="text"]')[1].value.trim();
+            const message = form.querySelector('textarea').value.trim();
+
+            // Basic validation
+            if (!name || !email || !subject || !message) {
+                showMessage('error', 'Te rugăm să completezi toate câmpurile.');
+                return;
+            }
+
+            // Email validation
+            const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+            if (!emailRegex.test(email)) {
+                showMessage('error', 'Te rugăm să introduci o adresă de email validă.');
+                return;
+            }
+
+            // reCAPTCHA validation
+            const recaptchaToken = grecaptcha.getResponse();
+            if (!recaptchaToken) {
+                showMessage('warning', 'Te rugăm să bifezi căsuța "Nu sunt robot".');
+                return;
+            }
+
+            // Set loading state
+            setButtonLoading(true);
+
+            try {
+                const response = await fetch('/api/contact', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, subject, message, recaptchaToken })
                 });
+
+                const data = await response.json();
+                setButtonLoading(false);
+
+                if (data.success) {
+                    showMessage('success', '✅ Mesajul a fost trimis cu succes! Te vom contacta în curând.');
+                    form.reset();
+                    grecaptcha.reset(); // Reset reCAPTCHA after successful submission
+                    tries.push(now);
+                    localStorage.setItem('contactTries', JSON.stringify(tries));
+                } else {
+                    showMessage('error', data.error || 'A apărut o eroare. Te rugăm să încerci din nou.');
+                    grecaptcha.reset(); // Reset reCAPTCHA on error
+                }
+            } catch (err) {
+                setButtonLoading(false);
+                grecaptcha.reset(); // Reset reCAPTCHA on error
+                showMessage('error', 'Eroare de conexiune. Te rugăm să verifici conexiunea la internet și să încerci din nou.');
+            }
         }
     </script>
 </body>

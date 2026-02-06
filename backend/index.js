@@ -41,5 +41,97 @@ app.use(contactRouter);
 app.use(galleryRouter);
 app.use('/api/admin', adminRouter);
 
+// Public prices endpoint
+app.get('/api/prices', async (req, res) => {
+    const defaultPrices = {
+        priceRoom: 150,
+        priceEntire: 500,
+        priceBreakfast: 35,
+        priceBreakfastChild: 20,
+        surchargeWeekend: 0,
+        surchargeHoliday: 0
+    };
+
+    // Try to read from JSON file first (most reliable)
+    const pricesFilePath = join(__dirname, 'prices.json');
+    try {
+        const fs = await import('fs');
+        if (fs.existsSync(pricesFilePath)) {
+            const fileData = fs.readFileSync(pricesFilePath, 'utf8');
+            const prices = JSON.parse(fileData);
+            return res.json({ success: true, prices });
+        }
+    } catch (fileErr) {
+        console.log('No prices.json file, trying PocketBase...');
+    }
+
+    // Fallback to PocketBase
+    try {
+        const PocketBase = (await import('pocketbase')).default;
+        const pb = new PocketBase(process.env.POCKET_BASE_URL);
+
+        const records = await pb.collection('prices').getFullList({
+            sort: '-created',
+            $autoCancel: false
+        });
+
+        if (records.length > 0) {
+            const prices = records[0];
+            res.json({
+                success: true,
+                prices: {
+                    priceRoom: prices.priceRoom,
+                    priceEntire: prices.priceEntire,
+                    priceBreakfast: prices.priceBreakfast,
+                    priceBreakfastChild: prices.priceBreakfastChild,
+                    surchargeWeekend: prices.surchargeWeekend,
+                    surchargeHoliday: prices.surchargeHoliday
+                }
+            });
+        } else {
+            res.json({ success: true, prices: defaultPrices });
+        }
+    } catch (err) {
+        console.error('Error fetching prices:', err.message);
+        res.json({ success: true, prices: defaultPrices });
+    }
+});
+
+// Public offers endpoint
+app.get('/api/offers', async (req, res) => {
+    const offersFilePath = join(__dirname, 'offers.json');
+
+    // Try to read from JSON file first
+    try {
+        const fs = await import('fs');
+        if (fs.existsSync(offersFilePath)) {
+            const fileData = fs.readFileSync(offersFilePath, 'utf8');
+            const offers = JSON.parse(fileData);
+            const activeOffers = offers.filter(o => o.active && new Date(o.endDate) >= new Date());
+            return res.json({ success: true, offers: activeOffers });
+        }
+    } catch (fileErr) {
+        console.log('No offers.json file, trying PocketBase...');
+    }
+
+    // Fallback to PocketBase
+    try {
+        const PocketBase = (await import('pocketbase')).default;
+        const pb = new PocketBase(process.env.POCKET_BASE_URL);
+
+        const records = await pb.collection('offers').getFullList({
+            filter: 'active = true',
+            sort: 'startDate',
+            $autoCancel: false
+        });
+
+        const activeOffers = records.filter(o => new Date(o.endDate) >= new Date());
+        res.json({ success: true, offers: activeOffers });
+    } catch (err) {
+        console.error('Error fetching offers:', err.message);
+        res.json({ success: true, offers: [] });
+    }
+});
+
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => console.log('Server running on port', PORT));

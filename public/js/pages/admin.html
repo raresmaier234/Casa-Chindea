@@ -94,6 +94,14 @@
                             class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
                             <i class="fas fa-ban mr-2"></i>Blocări Calendar
                         </button>
+                        <button id="tab-prices"
+                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-euro-sign mr-2"></i>Prețuri
+                        </button>
+                        <button id="tab-offers"
+                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
+                            <i class="fas fa-gift mr-2"></i>Oferte Speciale
+                        </button>
                     </nav>
                 </div>
 
@@ -225,6 +233,264 @@
                         <!-- Blocks will be loaded here -->
                     </div>
                 </div>
+
+                <!-- Prices Tab Content -->
+                <div id="content-prices" class="tab-content p-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">Gestionare Prețuri</h2>
+                        <button id="save-prices-btn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-save mr-2"></i>Salvează Prețurile
+                        </button>
+                    </div>
+
+                    <!-- Prices Form -->
+                    <form id="prices-form" class="space-y-8">
+                        <!-- Room Prices -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-bed mr-2 text-primary"></i>Prețuri Camere
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț per cameră / noapte (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-room" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="150">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru o singură cameră pe noapte</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț casa întreagă / noapte (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-entire" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="500">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru toată cabana (4 camere) pe noapte</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Breakfast Prices -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-utensils mr-2 text-primary"></i>Prețuri Mic Dejun
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț mic dejun / persoană (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-breakfast" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="35">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru mic dejun per persoană</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț mic dejun copii (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-breakfast-child" min="0" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="20">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Preț redus pentru copii sub 12 ani (opțional)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weekend/Holiday Surcharge -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-percentage mr-2 text-primary"></i>Suprataxe Weekend / Sărbători
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Suprataxă weekend (%)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="surcharge-weekend" min="0" max="100" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="0">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Procent suplimentar pentru weekend (Vineri-Duminică)</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Suprataxă sărbători (%)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="surcharge-holiday" min="0" max="100" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="0">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Procent suplimentar pentru sărbători legale</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Summary -->
+                        <div class="bg-primary bg-opacity-10 p-6 rounded-lg border border-primary border-opacity-30">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-calculator mr-2 text-primary"></i>Sumar Prețuri
+                            </h3>
+                            <div id="price-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-room">0</div>
+                                    <div class="text-sm text-gray-600">RON/cameră/noapte</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-entire">0</div>
+                                    <div class="text-sm text-gray-600">RON/cabană/noapte</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-breakfast">0</div>
+                                    <div class="text-sm text-gray-600">RON/mic dejun</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-weekend">0%</div>
+                                    <div class="text-sm text-gray-600">suprataxă weekend</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Last Updated Info -->
+                    <div id="prices-last-updated" class="mt-4 text-sm text-gray-500 text-center hidden">
+                        Ultima actualizare: <span id="prices-updated-date">-</span>
+                    </div>
+                </div>
+
+                <!-- Offers Tab Content -->
+                <div id="content-offers" class="tab-content p-8 hidden">
+                    <div class="flex justify-between items-center mb-6">
+                        <h2 class="text-xl font-bold text-gray-900">Oferte Speciale</h2>
+                        <button id="add-offer-btn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            <i class="fas fa-plus mr-2"></i>Adaugă Ofertă
+                        </button>
+                    </div>
+
+                    <!-- Add/Edit Offer Form -->
+                    <div id="offer-form-container" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4" id="offer-form-title">Adaugă Ofertă Nouă</h3>
+                        <form id="offer-form" class="space-y-4">
+                            <input type="hidden" id="offer-id">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tip Ofertă</label>
+                                    <select id="offer-type" required
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <option value="">Selectează tipul</option>
+                                        <option value="revelion">🎉 Revelion</option>
+                                        <option value="craciun">🎄 Crăciun</option>
+                                        <option value="paste">🐣 Paște</option>
+                                        <option value="1mai">🌸 1 Mai</option>
+                                        <option value="vara">☀️ Ofertă de Vară</option>
+                                        <option value="custom">📌 Ofertă Personalizată</option>
+                                    </select>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Titlu Ofertă</label>
+                                    <input type="text" id="offer-title" required placeholder="ex: Revelion 2026 la Casa Chindea"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Început</label>
+                                    <input type="date" id="offer-start-date" required
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
+                                    <input type="date" id="offer-end-date" required
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Preț Total Pachet (RON)</label>
+                                    <div class="relative">
+                                        <input type="number" id="offer-total-price" min="0" required placeholder="2500"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Preț pentru întreaga unitate</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Preț per Cameră (RON)</label>
+                                    <div class="relative">
+                                        <input type="number" id="offer-room-price" min="0" placeholder="700"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Opțional - pentru rezervări individuale</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Număr Nopți</label>
+                                    <input type="number" id="offer-nights" min="1" required placeholder="3"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Detalii Ofertă</label>
+                                <textarea id="offer-details" rows="4" required
+                                    placeholder="Descrieți ce include oferta: mese festive, activități, facilități incluse..."
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ce este inclus (unul pe linie)</label>
+                                <textarea id="offer-includes" rows="4"
+                                    placeholder="Cazare 3 nopți&#10;Masă festivă de Revelion&#10;Mic dejun inclus&#10;Foc de artificii"
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="offer-active" checked
+                                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                <label for="offer-active" class="ml-2 text-sm text-gray-700">Ofertă activă (vizibilă pe site)</label>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button type="submit" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg">
+                                    <i class="fas fa-save mr-2"></i>Salvează Oferta
+                                </button>
+                                <button type="button" id="cancel-offer" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Offers List -->
+                    <div id="offers-list" class="space-y-4">
+                        <!-- Loading state -->
+                        <div id="offers-loading" class="text-center py-8">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p class="text-gray-600">Se încarcă ofertele...</p>
+                        </div>
+                    </div>
+                </div>
             </div>
         </div>
     </main>
@@ -316,6 +582,8 @@
                     if (tabId === 'bookings') loadBookings();
                     else if (tabId === 'gallery') loadGallery();
                     else if (tabId === 'calendar') loadCalendarBlocks();
+                    else if (tabId === 'prices') loadPrices();
+                    else if (tabId === 'offers') loadOffers();
                 });
             });
         }
@@ -350,6 +618,29 @@
             });
 
             document.getElementById('calendar-block-form').addEventListener('submit', addCalendarBlock);
+
+            // Prices
+            document.getElementById('save-prices-btn').addEventListener('click', savePrices);
+
+            // Update price summary on input change
+            ['price-room', 'price-entire', 'price-breakfast', 'surcharge-weekend'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updatePriceSummary);
+            });
+
+            // Offers
+            document.getElementById('add-offer-btn').addEventListener('click', () => {
+                document.getElementById('offer-form-container').classList.remove('hidden');
+                document.getElementById('offer-form-title').textContent = 'Adaugă Ofertă Nouă';
+                document.getElementById('offer-form').reset();
+                document.getElementById('offer-id').value = '';
+            });
+
+            document.getElementById('cancel-offer').addEventListener('click', () => {
+                document.getElementById('offer-form-container').classList.add('hidden');
+                document.getElementById('offer-form').reset();
+            });
+
+            document.getElementById('offer-form').addEventListener('submit', saveOffer);
 
             // Modal events
             document.getElementById('modal-cancel').addEventListener('click', closeModal);
@@ -961,6 +1252,317 @@
                 console.error('Error refreshing token:', err);
                 showToast(`Network error: ${err.message}`, 'error');
             }
+        }
+
+        // ===== PRICES MANAGEMENT =====
+
+        async function loadPrices() {
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/prices', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success && data.prices) {
+                        // Populate form fields
+                        document.getElementById('price-room').value = data.prices.priceRoom || '';
+                        document.getElementById('price-entire').value = data.prices.priceEntire || '';
+                        document.getElementById('price-breakfast').value = data.prices.priceBreakfast || '';
+                        document.getElementById('price-breakfast-child').value = data.prices.priceBreakfastChild || '';
+                        document.getElementById('surcharge-weekend').value = data.prices.surchargeWeekend || '';
+                        document.getElementById('surcharge-holiday').value = data.prices.surchargeHoliday || '';
+
+                        // Update summary
+                        updatePriceSummary();
+
+                        // Show last updated
+                        if (data.prices.updated) {
+                            document.getElementById('prices-last-updated').classList.remove('hidden');
+                            document.getElementById('prices-updated-date').textContent =
+                                new Date(data.prices.updated).toLocaleString('ro-RO');
+                        }
+                    }
+                } else {
+                    console.log('No prices found, using defaults');
+                }
+            } catch (error) {
+                console.error('Error loading prices:', error);
+                showToast('Eroare la încărcarea prețurilor', 'error');
+            }
+        }
+
+        function updatePriceSummary() {
+            const priceRoom = document.getElementById('price-room').value || 0;
+            const priceEntire = document.getElementById('price-entire').value || 0;
+            const priceBreakfast = document.getElementById('price-breakfast').value || 0;
+            const surchargeWeekend = document.getElementById('surcharge-weekend').value || 0;
+
+            document.getElementById('summary-room').textContent = priceRoom;
+            document.getElementById('summary-entire').textContent = priceEntire;
+            document.getElementById('summary-breakfast').textContent = priceBreakfast;
+            document.getElementById('summary-weekend').textContent = surchargeWeekend + '%';
+        }
+
+        async function savePrices() {
+            const pricesData = {
+                priceRoom: parseInt(document.getElementById('price-room').value) || 0,
+                priceEntire: parseInt(document.getElementById('price-entire').value) || 0,
+                priceBreakfast: parseInt(document.getElementById('price-breakfast').value) || 0,
+                priceBreakfastChild: parseInt(document.getElementById('price-breakfast-child').value) || 0,
+                surchargeWeekend: parseInt(document.getElementById('surcharge-weekend').value) || 0,
+                surchargeHoliday: parseInt(document.getElementById('surcharge-holiday').value) || 0
+            };
+
+            // Validate required fields
+            if (pricesData.priceRoom <= 0 || pricesData.priceEntire <= 0) {
+                showToast('Te rugăm să completezi prețurile pentru cameră și cabană', 'warning');
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/prices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(pricesData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast('Prețurile au fost salvate cu succes!', 'success');
+
+                    // Update last updated date
+                    document.getElementById('prices-last-updated').classList.remove('hidden');
+                    document.getElementById('prices-updated-date').textContent =
+                        new Date().toLocaleString('ro-RO');
+                } else {
+                    throw new Error(data.error || 'Eroare la salvarea prețurilor');
+                }
+            } catch (error) {
+                console.error('Error saving prices:', error);
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        // ===== OFFERS MANAGEMENT =====
+
+        const offerTypeLabels = {
+            'revelion': '🎉 Revelion',
+            'craciun': '🎄 Crăciun',
+            'paste': '🐣 Paște',
+            '1mai': '🌸 1 Mai',
+            'vara': '☀️ Ofertă de Vară',
+            'custom': '📌 Ofertă Personalizată'
+        };
+
+        async function loadOffers() {
+            const listEl = document.getElementById('offers-list');
+            const loadingEl = document.getElementById('offers-loading');
+
+            if (loadingEl) loadingEl.classList.remove('hidden');
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/offers', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (loadingEl) loadingEl.classList.add('hidden');
+
+                if (data.success && data.offers && data.offers.length > 0) {
+                    listEl.innerHTML = data.offers.map(offer => {
+                        const isActive = offer.active;
+                        const isPast = new Date(offer.endDate) < new Date();
+
+                        return `
+                            <div class="border ${isActive && !isPast ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div>
+                                        <div class="flex items-center gap-2 mb-2">
+                                            <span class="text-2xl">${offerTypeLabels[offer.type]?.split(' ')[0] || '📌'}</span>
+                                            <h3 class="text-xl font-bold text-gray-900">${offer.title}</h3>
+                                            ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Activă</span>' : ''}
+                                            ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Expirată</span>' : ''}
+                                        </div>
+                                        <p class="text-gray-600">${offerTypeLabels[offer.type] || offer.type}</p>
+                                    </div>
+                                    <div class="flex space-x-2">
+                                        <button onclick="editOffer('${offer.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                                            <i class="fas fa-edit mr-1"></i>Editează
+                                        </button>
+                                        <button onclick="deleteOffer('${offer.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                            <i class="fas fa-trash mr-1"></i>Șterge
+                                        </button>
+                                    </div>
+                                </div>
+                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                    <div>
+                                        <span class="text-sm text-gray-500">Perioada</span>
+                                        <p class="font-semibold">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-500">Număr nopți</span>
+                                        <p class="font-semibold">${offer.nights} nopți</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-500">Preț total (casă)</span>
+                                        <p class="font-semibold text-primary">${offer.totalPrice} RON</p>
+                                    </div>
+                                    <div>
+                                        <span class="text-sm text-gray-500">Preț per cameră</span>
+                                        <p class="font-semibold">${offer.roomPrice || '-'} RON</p>
+                                    </div>
+                                </div>
+                                <div class="border-t pt-4">
+                                    <p class="text-gray-700">${offer.details}</p>
+                                    ${offer.includes ? `
+                                        <div class="mt-3">
+                                            <span class="text-sm font-medium text-gray-700">Include:</span>
+                                            <ul class="list-disc list-inside text-gray-600 mt-1">
+                                                ${offer.includes.split('\n').filter(i => i.trim()).map(item => `<li>${item}</li>`).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+                } else {
+                    listEl.innerHTML = `
+                        <div class="text-center py-12">
+                            <i class="fas fa-gift text-gray-400 text-6xl mb-4"></i>
+                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există oferte speciale</h3>
+                            <p class="text-gray-600">Adaugă prima ofertă folosind butonul de mai sus.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                console.error('Error loading offers:', error);
+                if (loadingEl) loadingEl.classList.add('hidden');
+                listEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-gift text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există oferte speciale</h3>
+                        <p class="text-gray-600">Adaugă prima ofertă folosind butonul de mai sus.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function saveOffer(e) {
+            e.preventDefault();
+
+            const offerId = document.getElementById('offer-id').value;
+            const offerData = {
+                type: document.getElementById('offer-type').value,
+                title: document.getElementById('offer-title').value,
+                startDate: document.getElementById('offer-start-date').value,
+                endDate: document.getElementById('offer-end-date').value,
+                totalPrice: parseInt(document.getElementById('offer-total-price').value) || 0,
+                roomPrice: parseInt(document.getElementById('offer-room-price').value) || 0,
+                nights: parseInt(document.getElementById('offer-nights').value) || 1,
+                details: document.getElementById('offer-details').value,
+                includes: document.getElementById('offer-includes').value,
+                active: document.getElementById('offer-active').checked
+            };
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const url = offerId ? `/api/admin/offers/${offerId}` : '/api/admin/offers';
+                const method = offerId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(offerData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(offerId ? 'Oferta a fost actualizată!' : 'Oferta a fost adăugată!', 'success');
+                    document.getElementById('offer-form-container').classList.add('hidden');
+                    document.getElementById('offer-form').reset();
+                    loadOffers();
+                } else {
+                    throw new Error(data.error || 'Eroare la salvarea ofertei');
+                }
+            } catch (error) {
+                console.error('Error saving offer:', error);
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function editOffer(offerId) {
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch(`/api/admin/offers/${offerId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.offer) {
+                    const offer = data.offer;
+                    document.getElementById('offer-id').value = offer.id;
+                    document.getElementById('offer-type').value = offer.type;
+                    document.getElementById('offer-title').value = offer.title;
+                    document.getElementById('offer-start-date').value = offer.startDate?.split('T')[0] || '';
+                    document.getElementById('offer-end-date').value = offer.endDate?.split('T')[0] || '';
+                    document.getElementById('offer-total-price').value = offer.totalPrice;
+                    document.getElementById('offer-room-price').value = offer.roomPrice || '';
+                    document.getElementById('offer-nights').value = offer.nights;
+                    document.getElementById('offer-details').value = offer.details;
+                    document.getElementById('offer-includes').value = offer.includes || '';
+                    document.getElementById('offer-active').checked = offer.active;
+
+                    document.getElementById('offer-form-title').textContent = 'Editează Oferta';
+                    document.getElementById('offer-form-container').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading offer:', error);
+                showToast('Eroare la încărcarea ofertei', 'error');
+            }
+        }
+
+        async function deleteOffer(offerId) {
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această ofertă?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/offers/${offerId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (response.ok) {
+                            showToast('Oferta a fost ștearsă!', 'success');
+                            loadOffers();
+                        } else {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Eroare la ștergerea ofertei');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting offer:', error);
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
         }
     </script>
 </body>
