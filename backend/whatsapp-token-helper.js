@@ -27,12 +27,10 @@ export async function refreshWhatsAppToken() {
     const data = await res.json();
 
     if (!res.ok) {
-        console.error('Eroare la reîmprospătarea token-ului:', data);
         throw new Error(data.error?.message || 'Nu s-a putut reîmprospăta token-ul');
     }
 
     const newToken = data.access_token;
-    console.log('✅ Token WhatsApp actualizat:', newToken);
 
     // Opțional: salvăm token-ul în .env
     const envPath = '.env';

@@ -334,17 +334,23 @@
                     loginForm.classList.add('hidden');
                     loginSuccess.classList.remove('hidden');
 
-                    // Redirect to profile after showing success message
+                    // Check for redirect parameter
+                    const urlParams = new URLSearchParams(window.location.search);
+                    const redirect = urlParams.get('redirect');
+
+                    // Redirect to specified page or default to profile
                     setTimeout(() => {
-                        window.location.href = '/js/pages/profile.html';
+                        if (redirect) {
+                            window.location.href = redirect;
+                        } else {
+                            window.location.href = '/js/pages/profile.html';
+                        }
                     }, 2000);
                 } else {
                     throw new Error(data.error || 'Eroare la autentificare.');
                 }
             } catch (err) {
-                console.error('Login error:', err);
-
-                // Show error state
+                // Show error state in UI instead of console
                 errorMessage.textContent = err.message || 'Eroare de conexiune la server.';
                 errorDiv.classList.remove('hidden');
 
@@ -401,7 +407,7 @@
                     // Verifică dacă utilizatorul a devenit admin între timp
                     checkAndRefreshAdminToken();
                 } catch (err) {
-                    console.error('Error parsing user info:', err);
+                    // Clear invalid session data silently
                     sessionStorage.removeItem('auth_token');
                     sessionStorage.removeItem('user_info');
                 }
@@ -487,8 +493,7 @@
 
                     document.getElementById('auth0-btn').onclick = () => auth0.loginWithRedirect();
                 } catch (err) {
-                    console.error('Auth0 configuration error:', err);
-                    // Ascunde opțiunea Auth0 dacă nu este configurată
+                    // Hide Auth0 option if not configured properly
                     document.getElementById('auth0-section').style.display = 'none';
                 }
             } else {

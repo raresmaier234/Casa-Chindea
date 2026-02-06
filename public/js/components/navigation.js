@@ -21,7 +21,7 @@ class CasaChindeaNav {
                 // Verifică dacă utilizatorul a devenit admin între timp
                 this.checkAndRefreshAdminToken();
             } catch (err) {
-                console.error('Error parsing user info:', err);
+                // Clear invalid session data silently
                 this.clearAuthData();
             }
         }

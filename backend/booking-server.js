@@ -1,22 +1,18 @@
 // backend/booking-server.js
 import express from 'express';
-import cors from 'cors';
 import dotenv from 'dotenv';
 import PocketBase from 'pocketbase';
-import { sendWhatsAppMessage, sendWhatsAppConfirmationToClient } from './whatsapp.js';
+import { sendWhatsAppMessage } from './whatsapp.js';
+import { authenticateToken } from './auth-server.js';
 dotenv.config();
 
 const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-// Authenticate using a service account or skip auth if collection rules allow public access
 const ensurePbAdminAuth = async () => {
     if (pb.authStore.isValid) return;
 
-    // Try to authenticate with admin email/password if provided
-    // For PocketBase 0.22+, collections can have public API rules
-    // so we might not need authentication for all operations
     try {
         if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
             // Try authenticating as a user (superuser)
@@ -81,13 +77,12 @@ router.get('/booking-availability', async (req, res) => {
             unavailableDates
         });
     } catch (err) {
-        console.error('Error fetching availability:', err);
         res.status(500).json({ error: 'Error checking availability: ' + err.message });
     }
 });
 
-// Booking endpoint
-router.post(`/`, async (req, res) => {
+// Booking endpoint - requires authentication
+router.post(`/`, authenticateToken, async (req, res) => {
     const { name, email, phone, guests, checkin, checkout, roomType, numberOfRooms, message, offerId, offerTitle, offerPrice } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
@@ -135,7 +130,6 @@ router.post(`/`, async (req, res) => {
 
         const pbResult = await pb.collection('booking').create(bookingData);
 
-        console.log('✅ Rezervare creată în PocketBase:', pbResult.id);
 
         // Send WhatsApp message
         const roomTypeDisplay = roomType === 'entire'
@@ -152,27 +146,13 @@ router.post(`/`, async (req, res) => {
             message: message || 'Niciun mesaj adițional'
         };
 
-        // Send WhatsApp to property owner
+        // Send WhatsApp to property owner only
         try {
             await sendWhatsAppMessage(process.env.CONTACT_PHONE, whatsappData);
-            console.log('✅ Mesaj WhatsApp trimis către proprietar:', process.env.CONTACT_PHONE);
         } catch (whatsappError) {
-            console.error('⚠️ Eroare la trimiterea mesajului WhatsApp către proprietar:', whatsappError.message);
+            // Log WhatsApp error silently, don't show to user
         }
 
-        // Send WhatsApp confirmation to client
-        try {
-            // Remove country code prefix if exists and format properly
-            let clientPhone = phone.replace(/\s+/g, '').replace(/^(\+|00)/, '');
-            if (!clientPhone.startsWith('40')) {
-                clientPhone = '40' + clientPhone.replace(/^0/, '');
-            }
-
-            await sendWhatsAppConfirmationToClient(clientPhone, whatsappData);
-            console.log('✅ Mesaj WhatsApp de confirmare trimis către client:', clientPhone);
-        } catch (whatsappError) {
-            console.error('⚠️ Eroare la trimiterea confirmării WhatsApp către client:', whatsappError.message);
-        }
 
         return res.json({
             success: true,
@@ -185,7 +165,6 @@ router.post(`/`, async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('❌ Eroare la rezervare:', err);
         res.status(500).json({ error: 'Eroare la rezervare: ' + err.message });
     }
 });

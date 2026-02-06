@@ -100,9 +100,6 @@
                     return desc.includes('about');
                 });
 
-                console.log('📸 Total photos from PocketBase:', allPhotos.length);
-                console.log('📸 Found about photos:', aboutPhotos.length);
-
                 if (aboutPhotos.length > 0) {
                     const photoGrid = document.getElementById('story-photo-grid');
                     // Use the first 4 about photos to maintain the grid layout
@@ -118,11 +115,57 @@
                         `;
                     }).join('');
                 } else {
-                    console.log('ℹ️ No photos found with description "about", keeping placeholder images');
+                    // Keep placeholder images if no about photos found
                 }
             } catch (error) {
-                console.error('Error loading about photos:', error);
+                // Show user-friendly notification instead of console error
+                showNotification('Nu s-au putut încărca pozele. Se folosesc pozele implicite.', 'warning');
             }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notification if any
+            const existing = document.getElementById('notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${
+                            type === 'success' ? 'fa-check-circle' :
+                            type === 'error' ? 'fa-exclamation-circle' :
+                            type === 'warning' ? 'fa-exclamation-triangle' :
+                            'fa-info-circle'
+                        } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
         }
     </script>
 

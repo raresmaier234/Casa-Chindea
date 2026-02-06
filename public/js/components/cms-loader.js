@@ -47,7 +47,7 @@ async function loadCMSContent(pageName) {
             });
         }
     } catch (error) {
-        console.error('Error loading CMS content:', error);
+        // CMS content loading failed, use default content silently
     }
 }
 
