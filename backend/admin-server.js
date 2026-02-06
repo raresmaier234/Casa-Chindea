@@ -4,6 +4,7 @@ import cors from 'cors';
 import multer from 'multer';
 import path from 'path';
 import fs from 'fs';
+import { fileURLToPath } from 'url';
 import PocketBase from 'pocketbase';
 import { authenticateToken } from './auth-server.js';
 import dotenv from 'dotenv';
@@ -680,6 +681,462 @@ router.delete('/cms/sections/:id', authenticateToken, requireAdmin, async (req, 
             success: false,
             error: 'Eroare la ștergerea secțiunii: ' + err.message
         });
+    }
+});
+
+// **PREȚURI ADMIN**
+
+// Fallback: Store prices in a local JSON file if PocketBase collection doesn't exist
+const PRICES_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'prices.json');
+
+function loadPricesFromFile() {
+    try {
+        if (fs.existsSync(PRICES_FILE)) {
+            const data = fs.readFileSync(PRICES_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error reading prices file:', err);
+    }
+    return null;
+}
+
+function savePricesToFile(prices) {
+    try {
+        fs.writeFileSync(PRICES_FILE, JSON.stringify(prices, null, 2));
+        return true;
+    } catch (err) {
+        console.error('Error writing prices file:', err);
+        return false;
+    }
+}
+
+// Obține prețurile curente
+router.get('/prices', authenticateToken, requireAdmin, async (req, res) => {
+    const defaultPrices = {
+        priceRoom: 150,
+        priceEntire: 500,
+        priceBreakfast: 35,
+        priceBreakfastChild: 20,
+        surchargeWeekend: 0,
+        surchargeHoliday: 0,
+        updated: null
+    };
+
+    try {
+        // Încearcă să obțină prețurile din colecția 'prices'
+        const records = await pb.collection('prices').getFullList({
+            sort: '-created',
+            $autoCancel: false
+        });
+
+        if (records.length > 0) {
+            const prices = records[0];
+            res.json({
+                success: true,
+                prices: {
+                    priceRoom: prices.priceRoom,
+                    priceEntire: prices.priceEntire,
+                    priceBreakfast: prices.priceBreakfast,
+                    priceBreakfastChild: prices.priceBreakfastChild,
+                    surchargeWeekend: prices.surchargeWeekend,
+                    surchargeHoliday: prices.surchargeHoliday,
+                    updated: prices.updated
+                }
+            });
+        } else {
+            // Returnează valori implicite dacă nu există prețuri în PocketBase
+            const filePrices = loadPricesFromFile();
+            res.json({
+                success: true,
+                prices: filePrices || defaultPrices
+            });
+        }
+    } catch (err) {
+        console.error('Error fetching prices from PocketBase:', err.message);
+
+        // Dacă colecția nu există, încearcă să citească din fișier
+        const filePrices = loadPricesFromFile();
+        res.json({
+            success: true,
+            prices: filePrices || defaultPrices
+        });
+    }
+});
+
+// Salvează/actualizează prețurile
+router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const {
+            priceRoom,
+            priceEntire,
+            priceBreakfast,
+            priceBreakfastChild,
+            surchargeWeekend,
+            surchargeHoliday
+        } = req.body;
+
+        console.log('💰 Saving prices:', req.body);
+
+        // Validare
+        if (!priceRoom || priceRoom <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prețul per cameră este obligatoriu și trebuie să fie mai mare ca 0.'
+            });
+        }
+
+        if (!priceEntire || priceEntire <= 0) {
+            return res.status(400).json({
+                success: false,
+                error: 'Prețul pentru cabana întreagă este obligatoriu și trebuie să fie mai mare ca 0.'
+            });
+        }
+
+        const pricesData = {
+            priceRoom: parseInt(priceRoom),
+            priceEntire: parseInt(priceEntire),
+            priceBreakfast: parseInt(priceBreakfast) || 0,
+            priceBreakfastChild: parseInt(priceBreakfastChild) || 0,
+            surchargeWeekend: parseInt(surchargeWeekend) || 0,
+            surchargeHoliday: parseInt(surchargeHoliday) || 0,
+            updated: new Date().toISOString()
+        };
+
+        // Încearcă să salveze în PocketBase
+        let savedInPocketBase = false;
+        try {
+            const existingRecords = await pb.collection('prices').getFullList({
+                $autoCancel: false
+            });
+
+            let result;
+            if (existingRecords.length > 0) {
+                result = await pb.collection('prices').update(existingRecords[0].id, pricesData);
+                console.log('✅ Prices updated in PocketBase:', result.id);
+            } else {
+                result = await pb.collection('prices').create(pricesData);
+                console.log('✅ Prices created in PocketBase:', result.id);
+            }
+            savedInPocketBase = true;
+            pricesData.updated = result.updated;
+        } catch (pbErr) {
+            console.warn('⚠️ PocketBase save failed, using JSON file fallback:', pbErr.message);
+        }
+
+        // Salvează și în fișier JSON ca backup
+        const fileSaved = savePricesToFile(pricesData);
+
+        if (savedInPocketBase || fileSaved) {
+            console.log('✅ Prices saved successfully');
+            res.json({
+                success: true,
+                message: 'Prețurile au fost salvate cu succes!',
+                prices: pricesData
+            });
+        } else {
+            throw new Error('Nu s-a putut salva în nicio destinație');
+        }
+    } catch (err) {
+        console.error('Error saving prices:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare la salvarea prețurilor: ' + err.message
+        });
+    }
+});
+
+// Endpoint public pentru a obține prețurile (fără autentificare)
+router.get('/public/prices', async (req, res) => {
+    try {
+        const records = await pb.collection('prices').getFullList({
+            sort: '-created',
+            $autoCancel: false
+        });
+
+        if (records.length > 0) {
+            const prices = records[0];
+            res.json({
+                success: true,
+                prices: {
+                    priceRoom: prices.priceRoom,
+                    priceEntire: prices.priceEntire,
+                    priceBreakfast: prices.priceBreakfast,
+                    priceBreakfastChild: prices.priceBreakfastChild,
+                    surchargeWeekend: prices.surchargeWeekend,
+                    surchargeHoliday: prices.surchargeHoliday
+                }
+            });
+        } else {
+            res.json({
+                success: true,
+                prices: {
+                    priceRoom: 150,
+                    priceEntire: 500,
+                    priceBreakfast: 35,
+                    priceBreakfastChild: 20,
+                    surchargeWeekend: 0,
+                    surchargeHoliday: 0
+                }
+            });
+        }
+    } catch (err) {
+        console.error('Error fetching public prices:', err);
+        res.json({
+            success: true,
+            prices: {
+                priceRoom: 150,
+                priceEntire: 500,
+                priceBreakfast: 35,
+                priceBreakfastChild: 20,
+                surchargeWeekend: 0,
+                surchargeHoliday: 0
+            }
+        });
+    }
+});
+
+// **OFERTE SPECIALE**
+
+// Fallback: Store offers in a local JSON file
+const OFFERS_FILE = path.join(path.dirname(fileURLToPath(import.meta.url)), 'offers.json');
+
+function loadOffersFromFile() {
+    try {
+        if (fs.existsSync(OFFERS_FILE)) {
+            const data = fs.readFileSync(OFFERS_FILE, 'utf8');
+            return JSON.parse(data);
+        }
+    } catch (err) {
+        console.error('Error reading offers file:', err);
+    }
+    return [];
+}
+
+function saveOffersToFile(offers) {
+    try {
+        fs.writeFileSync(OFFERS_FILE, JSON.stringify(offers, null, 2));
+        return true;
+    } catch (err) {
+        console.error('Error writing offers file:', err);
+        return false;
+    }
+}
+
+// Obține toate ofertele
+router.get('/offers', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        // Încearcă să obțină ofertele din PocketBase
+        const records = await pb.collection('offers').getFullList({
+            sort: '-startDate',
+            $autoCancel: false
+        });
+
+        res.json({
+            success: true,
+            offers: records.map(offer => ({
+                id: offer.id,
+                type: offer.type,
+                title: offer.title,
+                startDate: offer.startDate,
+                endDate: offer.endDate,
+                totalPrice: offer.totalPrice,
+                roomPrice: offer.roomPrice,
+                nights: offer.nights,
+                details: offer.details,
+                includes: offer.includes,
+                active: offer.active
+            }))
+        });
+    } catch (err) {
+        console.error('Error fetching offers from PocketBase:', err.message);
+
+        // Fallback la fișier JSON
+        const offers = loadOffersFromFile();
+        res.json({ success: true, offers });
+    }
+});
+
+// Obține o singură ofertă
+router.get('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        // Încearcă PocketBase
+        try {
+            const offer = await pb.collection('offers').getOne(id, { $autoCancel: false });
+            return res.json({ success: true, offer });
+        } catch (pbErr) {
+            // Fallback la fișier JSON
+            const offers = loadOffersFromFile();
+            const offer = offers.find(o => o.id === id);
+            if (offer) {
+                return res.json({ success: true, offer });
+            }
+            return res.status(404).json({ success: false, error: 'Oferta nu a fost găsită' });
+        }
+    } catch (err) {
+        console.error('Error fetching offer:', err);
+        res.status(500).json({ success: false, error: 'Eroare la obținerea ofertei' });
+    }
+});
+
+// Creează o ofertă nouă
+router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
+
+        console.log('🎁 Creating new offer:', { type, title, startDate, endDate });
+
+        const offerData = {
+            type,
+            title,
+            startDate,
+            endDate,
+            totalPrice: parseInt(totalPrice) || 0,
+            roomPrice: parseInt(roomPrice) || 0,
+            nights: parseInt(nights) || 1,
+            details,
+            includes,
+            active: active !== false
+        };
+
+        // Încearcă să salveze în PocketBase
+        let savedInPocketBase = false;
+        let result = null;
+
+        try {
+            result = await pb.collection('offers').create(offerData);
+            savedInPocketBase = true;
+            console.log('✅ Offer created in PocketBase:', result.id);
+        } catch (pbErr) {
+            console.warn('⚠️ PocketBase save failed, using JSON file:', pbErr.message);
+        }
+
+        // Salvează și în fișier JSON ca backup
+        if (!savedInPocketBase) {
+            const offers = loadOffersFromFile();
+            offerData.id = 'offer_' + Date.now();
+            offerData.created = new Date().toISOString();
+            offers.push(offerData);
+            saveOffersToFile(offers);
+            result = offerData;
+        }
+
+        res.json({
+            success: true,
+            message: 'Oferta a fost creată cu succes!',
+            offer: result
+        });
+    } catch (err) {
+        console.error('Error creating offer:', err);
+        res.status(500).json({ success: false, error: 'Eroare la crearea ofertei: ' + err.message });
+    }
+});
+
+// Actualizează o ofertă
+router.put('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
+
+        console.log('🎁 Updating offer:', id);
+
+        const offerData = {
+            type,
+            title,
+            startDate,
+            endDate,
+            totalPrice: parseInt(totalPrice) || 0,
+            roomPrice: parseInt(roomPrice) || 0,
+            nights: parseInt(nights) || 1,
+            details,
+            includes,
+            active: active !== false
+        };
+
+        // Încearcă PocketBase
+        try {
+            const result = await pb.collection('offers').update(id, offerData);
+            console.log('✅ Offer updated in PocketBase:', result.id);
+            return res.json({ success: true, message: 'Oferta a fost actualizată!', offer: result });
+        } catch (pbErr) {
+            console.warn('⚠️ PocketBase update failed, using JSON file:', pbErr.message);
+        }
+
+        // Fallback la fișier JSON
+        const offers = loadOffersFromFile();
+        const index = offers.findIndex(o => o.id === id);
+        if (index !== -1) {
+            offers[index] = { ...offers[index], ...offerData };
+            saveOffersToFile(offers);
+            return res.json({ success: true, message: 'Oferta a fost actualizată!', offer: offers[index] });
+        }
+
+        res.status(404).json({ success: false, error: 'Oferta nu a fost găsită' });
+    } catch (err) {
+        console.error('Error updating offer:', err);
+        res.status(500).json({ success: false, error: 'Eroare la actualizarea ofertei: ' + err.message });
+    }
+});
+
+// Șterge o ofertă
+router.delete('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        console.log('🗑️ Deleting offer:', id);
+
+        // Încearcă PocketBase
+        try {
+            await pb.collection('offers').delete(id);
+            console.log('✅ Offer deleted from PocketBase');
+            return res.json({ success: true, message: 'Oferta a fost ștearsă!' });
+        } catch (pbErr) {
+            console.warn('⚠️ PocketBase delete failed, using JSON file:', pbErr.message);
+        }
+
+        // Fallback la fișier JSON
+        const offers = loadOffersFromFile();
+        const filteredOffers = offers.filter(o => o.id !== id);
+        if (filteredOffers.length < offers.length) {
+            saveOffersToFile(filteredOffers);
+            return res.json({ success: true, message: 'Oferta a fost ștearsă!' });
+        }
+
+        res.status(404).json({ success: false, error: 'Oferta nu a fost găsită' });
+    } catch (err) {
+        console.error('Error deleting offer:', err);
+        res.status(500).json({ success: false, error: 'Eroare la ștergerea ofertei: ' + err.message });
+    }
+});
+
+// Endpoint public pentru oferte active
+router.get('/public/offers', async (req, res) => {
+    try {
+        // Încearcă PocketBase
+        try {
+            const records = await pb.collection('offers').getFullList({
+                filter: 'active = true',
+                sort: 'startDate',
+                $autoCancel: false
+            });
+
+            return res.json({
+                success: true,
+                offers: records.filter(o => new Date(o.endDate) >= new Date())
+            });
+        } catch (pbErr) {
+            console.warn('⚠️ PocketBase fetch failed, using JSON file');
+        }
+
+        // Fallback la fișier JSON
+        const offers = loadOffersFromFile();
+        const activeOffers = offers.filter(o => o.active && new Date(o.endDate) >= new Date());
+        res.json({ success: true, offers: activeOffers });
+    } catch (err) {
+        console.error('Error fetching public offers:', err);
+        res.json({ success: true, offers: [] });
     }
 });
 

@@ -88,7 +88,7 @@ router.get('/booking-availability', async (req, res) => {
 
 // Booking endpoint
 router.post(`/`, async (req, res) => {
-    const { name, email, phone, guests, checkin, checkout, roomType, numberOfRooms, message } = req.body;
+    const { name, email, phone, guests, checkin, checkout, roomType, numberOfRooms, message, offerId, offerTitle, offerPrice } = req.body;
     if (!name || !email || !phone || !guests || !checkin || !checkout || !roomType) {
         return res.status(400).json({ error: 'Toate câmpurile obligatorii trebuie completate.' });
     }
@@ -111,7 +111,8 @@ router.post(`/`, async (req, res) => {
             });
         }
 
-        const pbResult = await pb.collection('booking').create({
+        // Prepare booking data
+        const bookingData = {
             name,
             email,
             phone,
@@ -119,9 +120,20 @@ router.post(`/`, async (req, res) => {
             checkin,
             checkout,
             roomType,
+            status: 'pending',
             numberOfRooms: numberOfRooms || (roomType === 'entire' ? 4 : 1),
             message
-        });
+        };
+
+        // Add offer info if present
+        if (offerId) {
+            bookingData.offerId = offerId;
+            bookingData.offerTitle = offerTitle || '';
+            bookingData.offerPrice = offerPrice || 0;
+            console.log('🎁 Booking with special offer:', offerTitle);
+        }
+
+        const pbResult = await pb.collection('booking').create(bookingData);
 
         console.log('✅ Rezervare creată în PocketBase:', pbResult.id);
 
@@ -130,7 +142,7 @@ router.post(`/`, async (req, res) => {
             ? 'Casa Întreagă'
             : `${numberOfRooms || 1} ${(numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`;
 
-        const bookingData = {
+        const whatsappData = {
             name,
             phone,
             guests,
@@ -142,7 +154,7 @@ router.post(`/`, async (req, res) => {
 
         // Send WhatsApp to property owner
         try {
-            await sendWhatsAppMessage(process.env.CONTACT_PHONE, bookingData);
+            await sendWhatsAppMessage(process.env.CONTACT_PHONE, whatsappData);
             console.log('✅ Mesaj WhatsApp trimis către proprietar:', process.env.CONTACT_PHONE);
         } catch (whatsappError) {
             console.error('⚠️ Eroare la trimiterea mesajului WhatsApp către proprietar:', whatsappError.message);
@@ -156,7 +168,7 @@ router.post(`/`, async (req, res) => {
                 clientPhone = '40' + clientPhone.replace(/^0/, '');
             }
 
-            await sendWhatsAppConfirmationToClient(clientPhone, bookingData);
+            await sendWhatsAppConfirmationToClient(clientPhone, whatsappData);
             console.log('✅ Mesaj WhatsApp de confirmare trimis către client:', clientPhone);
         } catch (whatsappError) {
             console.error('⚠️ Eroare la trimiterea confirmării WhatsApp către client:', whatsappError.message);

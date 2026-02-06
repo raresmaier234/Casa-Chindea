@@ -188,16 +188,214 @@
         .group:nth-child(2) {
             animation-delay: 0.1s;
         }
+
+        /* Mobile responsive styles */
+        @media (max-width: 640px) {
+            .tab-btn {
+                font-size: 14px !important;
+                padding: 10px 12px !important;
+            }
+
+            .tab-btn i {
+                margin-right: 6px !important;
+            }
+
+            #offers-badge {
+                margin-left: 6px !important;
+                padding: 2px 6px !important;
+                font-size: 10px !important;
+            }
+
+            .group {
+                margin: 0 -8px;
+            }
+
+            .room-counter {
+                gap: 1rem;
+            }
+
+            .room-counter .count {
+                font-size: 2rem;
+            }
+
+            .room-counter button {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                font-size: 12px !important;
+                padding: 8px 10px !important;
+            }
+        }
     </style>
 
     <script>
         let roomPhotos = [];
         let cottagePhotos = [];
 
+        const offerTypeIcons = {
+            'revelion': '🎉',
+            'craciun': '🎄',
+            'paste': '🐣',
+            '1mai': '🌸',
+            'vara': '☀️',
+            'custom': '📌'
+        };
+
+        const offerTypeLabels = {
+            'revelion': 'Revelion',
+            'craciun': 'Crăciun',
+            'paste': 'Paște',
+            '1mai': '1 Mai',
+            'vara': 'Ofertă de Vară',
+            'custom': 'Ofertă Specială'
+        };
+
         document.addEventListener('DOMContentLoaded', () => {
             loadCMSContent('offers');
             loadRoomPhotos();
+            loadSpecialOffers();
         });
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabOffers = document.getElementById('tab-offers');
+            const tabCazare = document.getElementById('tab-cazare');
+
+            const activeClass = 'tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gradient-to-r from-primary to-secondary text-white shadow';
+            const inactiveClass = 'tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200';
+
+            if (tabName === 'offers') {
+                tabOffers.className = activeClass;
+                tabCazare.className = inactiveClass;
+            } else {
+                tabCazare.className = activeClass;
+                tabOffers.className = inactiveClass;
+            }
+
+            // Update content visibility
+            document.getElementById('content-offers').classList.toggle('hidden', tabName !== 'offers');
+            document.getElementById('content-cazare').classList.toggle('hidden', tabName !== 'cazare');
+        }
+
+        async function loadSpecialOffers() {
+            const loadingEl = document.getElementById('offers-loading');
+            const gridEl = document.getElementById('offers-grid');
+            const noOffersEl = document.getElementById('no-offers');
+            const sectionEl = document.getElementById('special-offers-section');
+
+            try {
+                const response = await fetch('/api/offers');
+                const data = await response.json();
+
+                loadingEl.classList.add('hidden');
+
+                if (data.success && data.offers && data.offers.length > 0) {
+                    gridEl.innerHTML = data.offers.map(offer => {
+                        const icon = offerTypeIcons[offer.type] || '🎁';
+                        const label = offerTypeLabels[offer.type] || 'Ofertă Specială';
+                        const startDate = new Date(offer.startDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+                        const endDate = new Date(offer.endDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                        return `
+                            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-primary/20 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 relative">
+                                <!-- Ribbon -->
+                                <div class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                                    <i class="fas fa-fire mr-1"></i>OFERTĂ
+                                </div>
+
+                                <!-- Header with icon and type -->
+                                <div class="bg-gradient-to-r from-primary to-secondary p-6 text-white text-center">
+                                    <div class="text-5xl mb-3">${icon}</div>
+                                    <span class="text-sm uppercase tracking-wider opacity-90">${label}</span>
+                                </div>
+
+                                <div class="p-6">
+                                    <h3 class="text-2xl font-bold text-gray-900 mb-3 text-center">${offer.title}</h3>
+
+                                    <!-- Dates -->
+                                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-center text-gray-700 mb-2 gap-1 sm:gap-0">
+                                            <div class="flex items-center justify-center">
+                                                <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                                                <span class="font-medium text-sm sm:text-base">${startDate}</span>
+                                            </div>
+                                            <span class="hidden sm:inline mx-2">→</span>
+                                            <div class="flex items-center justify-center sm:justify-start">
+                                                <span class="font-medium text-sm sm:text-base">${endDate}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-center text-gray-600">
+                                            <i class="fas fa-moon text-primary mr-1"></i>
+                                            ${offer.nights} ${offer.nights === 1 ? 'noapte' : 'nopți'}
+                                        </div>
+                                    </div>
+
+                                    <!-- Prices -->
+                                    <div class="grid grid-cols-${offer.roomPrice ? '2' : '1'} gap-3 mb-4">
+                                        <div class="bg-primary/10 rounded-lg p-3 text-center">
+                                            <div class="text-xl sm:text-2xl font-bold text-primary">${offer.totalPrice}</div>
+                                            <div class="text-xs text-gray-600">RON / casă întreagă</div>
+                                        </div>
+                                        ${offer.roomPrice ? `
+                                            <div class="bg-secondary/10 rounded-lg p-3 text-center">
+                                                <div class="text-xl sm:text-2xl font-bold text-secondary">${offer.roomPrice}</div>
+                                                <div class="text-xs text-gray-600">RON / cameră</div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+
+                                    <!-- Details -->
+                                    <p class="text-gray-600 mb-4 text-sm">${offer.details}</p>
+
+                                    <!-- Includes -->
+                                    ${offer.includes ? `
+                                        <div class="border-t pt-4">
+                                            <h4 class="font-semibold text-gray-900 mb-2 text-sm">
+                                                <i class="fas fa-check-circle text-primary mr-1"></i>Include:
+                                            </h4>
+                                            <ul class="text-sm text-gray-600 space-y-1">
+                                                ${offer.includes.split('\n').filter(i => i.trim()).map(item =>
+                                                    `<li class="flex items-start">
+                                                        <i class="fas fa-check text-primary mr-2 mt-1 text-xs"></i>
+                                                        <span>${item}</span>
+                                                    </li>`
+                                                ).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+
+                                    <!-- CTA Button -->
+                                    <a href="/js/pages/booking.html?offer=${offer.id}&type=${offer.type}&start=${offer.startDate}&end=${offer.endDate}&nights=${offer.nights}&price=${offer.totalPrice}&roomPrice=${offer.roomPrice || 0}&title=${encodeURIComponent(offer.title)}"
+                                       class="block w-full mt-6 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base">
+                                        <i class="fas fa-calendar-check mr-2"></i>Rezervă Această Ofertă
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    gridEl.classList.remove('hidden');
+
+                    // Show badge with offer count
+                    const badge = document.getElementById('offers-badge');
+                    badge.textContent = data.offers.length;
+                    badge.classList.remove('hidden');
+                } else {
+                    // No offers - show the no-offers message
+                    noOffersEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading offers:', error);
+                loadingEl.classList.add('hidden');
+                // Show no offers message on error
+                noOffersEl.classList.remove('hidden');
+            }
+        }
 
         async function loadRoomPhotos() {
             try {
@@ -206,35 +404,40 @@
                 const data = await response.json();
                 const allPhotos = data.items || [];
 
-                // Define specific photo identifiers to use
-                const cottagePhotoId = '499130917';
-                const roomPhotoIds = ['470544860', '499932112', '480554957'];
+                console.log('📸 Total photos from PocketBase:', allPhotos.length);
 
-                // Filter cottage photo
+                // Filter photos by description or use all if no specific ones found
                 cottagePhotos = allPhotos.filter(photo => {
-                    const img = (photo.image || '').toLowerCase();
                     const desc = (photo.description || '').toLowerCase();
-                    return img.includes(cottagePhotoId.toLowerCase()) || desc === 'cabana';
+                    return desc.includes('cabana') || desc.includes('casa') || desc.includes('exterior');
                 });
 
-                // Filter room photos
                 roomPhotos = allPhotos.filter(photo => {
-                    const img = (photo.image || '').toLowerCase();
                     const desc = (photo.description || '').toLowerCase();
-                    return roomPhotoIds.some(id => img.includes(id.toLowerCase())) ||
-                           (desc === 'camera' && !img.includes(cottagePhotoId.toLowerCase()));
+                    return desc.includes('camera') || desc.includes('dormitor') || desc.includes('room');
                 });
 
-                // Fallback to placeholder images if photos not found
+                // If no specific photos found, use all photos for both carousels
+                if (cottagePhotos.length === 0 && allPhotos.length > 0) {
+                    console.log('ℹ️ No cottage photos with description, using first half of all photos');
+                    cottagePhotos = allPhotos.slice(0, Math.ceil(allPhotos.length / 2));
+                }
+
+                if (roomPhotos.length === 0 && allPhotos.length > 0) {
+                    console.log('ℹ️ No room photos with description, using second half of all photos');
+                    roomPhotos = allPhotos.slice(Math.floor(allPhotos.length / 2));
+                }
+
+                // Fallback to placeholder images if no photos at all
                 if (cottagePhotos.length === 0) {
-                    console.warn('⚠️  Cottage photo not found in PocketBase, using placeholder');
+                    console.warn('⚠️ No cottage photos found, using placeholder');
                     cottagePhotos = [{
                         imageUrl: 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800'
                     }];
                 }
 
                 if (roomPhotos.length === 0) {
-                    console.warn('⚠️  Room photos not found in PocketBase, using placeholder');
+                    console.warn('⚠️ No room photos found, using placeholder');
                     roomPhotos = [{
                         imageUrl: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800'
                     }];
@@ -268,11 +471,21 @@
             const carousel = document.getElementById(carouselId);
             if (!carousel || photos.length === 0) return;
 
+            console.log(`🖼️ Initializing ${carouselId} with ${photos.length} photos:`, photos);
+
             let currentIndex = 0;
-            const imagesHtml = photos.map((photo, idx) =>
-                `<img src="${photo.imageUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}"
-                      loading="lazy" style="object-fit: cover;">`
-            ).join('');
+            const imagesHtml = photos.map((photo, idx) => {
+                // Handle different URL formats - imageUrl (constructed) or build from PocketBase fields
+                const imgUrl = photo.imageUrl || photo.url ||
+                    (photo.collectionId && photo.id && photo.image ?
+                        `/api/files/${photo.collectionId}/${photo.id}/${photo.image}` :
+                        photo.image);
+
+                console.log(`  Photo ${idx}: ${imgUrl}`);
+
+                return `<img src="${imgUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}"
+                      loading="lazy" style="object-fit: cover;">`;
+            }).join('');
 
             const dotsHtml = photos.length > 1 ? `<div class="carousel-dots">${photos.map((_, idx) =>
                 `<div class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></div>`
@@ -329,12 +542,73 @@
         }
     </script>
 
-    <section class="py-12 bg-gradient-to-b from-gray-50 to-white mt-16 min-h-screen">
+    <section class="pt-20 pb-12 bg-gradient-to-b from-gray-50 to-white min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <!-- Simplified header - subtle -->
 
-            <!-- Main Cards - Full Focus -->
-            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+            <!-- Tab Navigation - Responsive -->
+            <div class="flex justify-center mb-6 md:mb-8">
+                <div class="bg-white rounded-xl shadow-md p-1 sm:p-1.5 inline-flex gap-1 w-full sm:w-auto">
+                    <button id="tab-cazare" onclick="switchTab('cazare')"
+                        class="tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gradient-to-r from-primary to-secondary text-white shadow">
+                        <i class="fas fa-bed mr-1.5 sm:mr-2"></i>Cazare
+                    </button>
+                    <button id="tab-offers" onclick="switchTab('offers')"
+                        class="tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fas fa-gift mr-1.5 sm:mr-2"></i><span class="hidden xs:inline">Oferte </span>Speciale
+                        <span id="offers-badge" class="hidden ml-1 sm:ml-2 bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 rounded-full animate-pulse">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Special Offers -->
+            <div id="content-offers" class="tab-content hidden">
+                <div id="special-offers-section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <span class="bg-gradient-to-r from-primary to-secondary text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-star mr-1"></i>LIMITATE
+                                </span>
+                                <h2 class="text-2xl font-bold text-gray-900">Pachete Sărbători</h2>
+                            </div>
+                            <p class="text-gray-600 text-sm mt-1">Oferte exclusive pentru Revelion, Crăciun, Paște</p>
+                        </div>
+                    </div>
+
+                    <!-- Offers Loading -->
+                    <div id="offers-loading" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-600">Se încarcă ofertele...</p>
+                    </div>
+
+                    <!-- Offers Grid -->
+                    <div id="offers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+                        <!-- Offers will be loaded here -->
+                    </div>
+
+                    <!-- No Offers Message -->
+                    <div id="no-offers" class="hidden text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
+                        <div class="text-5xl mb-4">🎁</div>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Nu avem oferte speciale active</h3>
+                        <p class="text-gray-500 mb-6 text-sm max-w-md mx-auto">Revino în curând pentru pachete de sărbători!</p>
+                        <button onclick="switchTab('cazare')" class="inline-flex items-center bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow">
+                            <i class="fas fa-bed mr-2"></i>Vezi Cazarea
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Classic Accommodation -->
+            <div id="content-cazare" class="tab-content">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Opțiuni de Cazare</h2>
+                        <p class="text-gray-600 text-sm mt-1">Închiriază camere individuale sau întreaga cabană</p>
+                    </div>
+                </div>
+
+                <!-- Main Cards - Full Focus -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
                 <!-- Rent Rooms Option -->
                 <div class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
                     <div class="photo-carousel h-96" id="room-carousel">
@@ -445,36 +719,38 @@
                 </div>
             </div>
 
-            <!-- Amenities Section - Minimal, at bottom -->
-            <div class="mt-16 pt-12 border-t border-gray-200">
-                <h2 class="text-2xl font-bold text-center text-gray-800 mb-8">Incluse în Toate Opțiunile</h2>
-                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
-                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fas fa-wifi text-2xl"></i>
+                <!-- Amenities Section -->
+                <div class="mt-16 pt-12 border-t border-gray-200">
+                    <h3 class="text-2xl font-bold text-center text-gray-800 mb-8">Incluse în Toate Opțiunile</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-wifi text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Wi-Fi Gratuit</h4>
                         </div>
-                        <h4 class="font-semibold text-gray-800">Wi-Fi Gratuit</h4>
-                    </div>
-                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fas fa-tv text-2xl"></i>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-tv text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">TV LED</h4>
                         </div>
-                        <h4 class="font-semibold text-gray-800">TV LED</h4>
-                    </div>
-                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fas fa-bath text-2xl"></i>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-bath text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Băi Private</h4>
                         </div>
-                        <h4 class="font-semibold text-gray-800">Băi Private</h4>
-                    </div>
-                    <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
-                        <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
-                            <i class="fas fa-car text-2xl"></i>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-car text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Parcare</h4>
                         </div>
-                        <h4 class="font-semibold text-gray-800">Parcare</h4>
                     </div>
                 </div>
-            </div>
+            </div> <!-- End content-cazare -->
+
         </div>
     </section>
     <footer class="bg-gray-800 text-white py-12 mt-20">

@@ -4,7 +4,6 @@ import cors from 'cors';
 import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
-import fetch from 'node-fetch';
 
 dotenv.config();
 
@@ -24,16 +23,26 @@ router.post('/api/contact', async (req, res) => {
 
     console.log('📧 New contact form submission:', { name, email, subject });
 
-    if (!name || !email || !subject || !message || !recaptchaToken) {
+    if (!name || !email || !subject || !message) {
         console.error('❌ Missing required fields');
         return res.status(400).json({
             success: false,
-            error: 'Toate câmpurile sunt obligatorii, inclusiv reCAPTCHA.'
+            error: 'Toate câmpurile sunt obligatorii.'
         });
     }
 
+    // Require reCAPTCHA token
+    if (!recaptchaToken) {
+        console.error('❌ No reCAPTCHA token provided');
+        return res.status(400).json({
+            success: false,
+            error: 'Te rugăm să bifezi căsuța "Nu sunt robot".'
+        });
+    }
+
+    // Verify reCAPTCHA v2 token
     try {
-        console.log('🔍 Verifying reCAPTCHA...');
+        console.log('🔍 Verifying reCAPTCHA v2...');
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
         const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
@@ -42,15 +51,18 @@ router.post('/api/contact', async (req, res) => {
         });
         const recaptchaData = await recaptchaRes.json();
 
+        console.log('🔍 reCAPTCHA response:', { success: recaptchaData.success });
+
         if (!recaptchaData.success) {
-            console.error('❌ reCAPTCHA verification failed');
+            console.error('❌ reCAPTCHA verification failed:', recaptchaData['error-codes']);
             return res.status(400).json({
                 success: false,
                 error: 'Verificarea reCAPTCHA a eșuat. Încearcă din nou.'
             });
         }
 
-        console.log('✅ reCAPTCHA verified');
+        console.log('✅ reCAPTCHA verified successfully');
+
     } catch (err) {
         console.error('❌ reCAPTCHA error:', err);
         return res.status(500).json({
@@ -61,7 +73,7 @@ router.post('/api/contact', async (req, res) => {
 
     try {
         console.log('📤 Sending email...');
-        const transporter = nodemailer.createTransporter({
+        const transporter = nodemailer.createTransport({
             host: 'smtp.elasticemail.com',
             port: 2525,
             auth: {
