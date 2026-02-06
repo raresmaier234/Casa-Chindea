@@ -37,12 +37,14 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
                 {
                     type: 'body',
                     parameters: [
-                        { type: 'text', text: bookingData.name },                    // {{1}} - name
-                        { type: 'text', text: formatDate(bookingData.checkin) },     // {{2}} - check-in
-                        { type: 'text', text: formatDate(bookingData.checkout) },    // {{3}} - check-out
-                        { type: 'text', text: String(nights) },                      // {{4}} - nights
-                        { type: 'text', text: bookingData.roomType },                // {{5}} - room type
-                        { type: 'text', text: String(bookingData.guests) }           // {{6}} - guests
+                        { type: 'text', text: bookingData.name },                    // {{1}} - nume client
+                        { type: 'text', text: bookingData.phone },                   // {{2}} - telefon
+                        { type: 'text', text: String(bookingData.guests) },          // {{3}} - număr persoane
+                        { type: 'text', text: bookingData.roomType },                // {{4}} - tip cameră
+                        { type: 'text', text: String(nights) },                      // {{5}} - număr nopți
+                        { type: 'text', text: formatDate(bookingData.checkin) },     // {{6}} - check-in
+                        { type: 'text', text: formatDate(bookingData.checkout) },    // {{7}} - check-out
+                        { type: 'text', text: bookingData.message || 'Niciun mesaj adițional' } // {{8}} - mesaj
                     ]
                 }
             ]
@@ -60,7 +62,6 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
 
     const data = await res.json();
     if (!res.ok) {
-        console.error('WhatsApp API error:', data);
         throw new Error(data.error?.message || 'Eroare la trimitere WhatsApp');
     }
 
@@ -105,12 +106,14 @@ export async function sendWhatsAppConfirmationToClient(toPhone, bookingData) {
                 {
                     type: 'body',
                     parameters: [
-                        { type: 'text', text: bookingData.name },
-                        { type: 'text', text: formatDate(bookingData.checkin) },
-                        { type: 'text', text: formatDate(bookingData.checkout) },
-                        { type: 'text', text: String(nights) },
-                        { type: 'text', text: bookingData.roomType },
-                        { type: 'text', text: String(bookingData.guests) }
+                        { type: 'text', text: bookingData.name },                    // {{1}} - nume client
+                        { type: 'text', text: bookingData.phone },                   // {{2}} - telefon
+                        { type: 'text', text: String(bookingData.guests) },          // {{3}} - număr persoane
+                        { type: 'text', text: bookingData.roomType },                // {{4}} - tip cameră
+                        { type: 'text', text: String(nights) },                      // {{5}} - număr nopți
+                        { type: 'text', text: formatDate(bookingData.checkin) },     // {{6}} - check-in
+                        { type: 'text', text: formatDate(bookingData.checkout) },    // {{7}} - check-out
+                        { type: 'text', text: bookingData.message || 'Niciun mesaj adițional' } // {{8}} - mesaj
                     ]
                 }
             ]
@@ -121,9 +124,13 @@ export async function sendWhatsAppConfirmationToClient(toPhone, bookingData) {
         to: toPhone,
         template: 'booking_confirmation_casa_chindea',
         name: bookingData.name,
+        phone: bookingData.phone,
+        guests: bookingData.guests,
+        roomType: bookingData.roomType,
+        nights: nights,
         checkin: formatDate(bookingData.checkin),
         checkout: formatDate(bookingData.checkout),
-        nights: nights
+        message: bookingData.message
     });
 
     const res = await fetch(url, {
@@ -137,10 +144,8 @@ export async function sendWhatsAppConfirmationToClient(toPhone, bookingData) {
 
     const data = await res.json();
     if (!res.ok) {
-        console.error('WhatsApp API error for client:', data);
         throw new Error(data.error?.message || 'Eroare la trimitere WhatsApp către client');
     }
 
     return data;
 }
-

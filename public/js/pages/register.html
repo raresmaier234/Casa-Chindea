@@ -362,9 +362,7 @@
                     throw new Error(data.error || 'Eroare la înregistrare.');
                 }
             } catch (err) {
-                console.error('Register error:', err);
-
-                // Show error state
+                // Show error state in UI instead of console
                 errorMessage.textContent = err.message || 'Eroare de conexiune la server.';
                 errorDiv.classList.remove('hidden');
 

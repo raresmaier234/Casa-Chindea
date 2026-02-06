@@ -169,11 +169,53 @@
                     `;
                 }
             } catch (error) {
-                console.error('Error loading gallery photos:', error);
+                showNotification('Nu s-au putut încărca pozele din galerie.', 'error');
                 const gallery = document.getElementById('full-gallery');
-                gallery.innerHTML = `<div class='col-span-full text-center py-12 text-red-400'>Eroare la încărcarea pozelor: ${error.message}<br><pre>${error.stack}</pre></div>`;
+                gallery.innerHTML = `<div class='col-span-full text-center py-12 text-gray-500'><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><br>Nu s-au putut încărca pozele din galerie.</div>`;
             }
         }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const existing = document.getElementById('notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
+                type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                type === 'warning' ? 'bg-yellow-500 text-white' :
+                'bg-blue-500 text-white'
+            }`;
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${
+                            type === 'success' ? 'fa-check-circle' :
+                            type === 'error' ? 'fa-exclamation-circle' :
+                            type === 'warning' ? 'fa-exclamation-triangle' :
+                            'fa-info-circle'
+                        } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
         document.addEventListener('DOMContentLoaded', () => {
             loadCMSContent('gallery');
             loadGalleryPhotos();

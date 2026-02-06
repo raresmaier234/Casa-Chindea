@@ -390,7 +390,7 @@
                     noOffersEl.classList.remove('hidden');
                 }
             } catch (error) {
-                console.error('Error loading offers:', error);
+                showNotification('Nu s-au putut încărca ofertele.', 'error');
                 loadingEl.classList.add('hidden');
                 // Show no offers message on error
                 noOffersEl.classList.remove('hidden');
@@ -430,23 +430,20 @@
 
                 // Fallback to placeholder images if no photos at all
                 if (cottagePhotos.length === 0) {
-                    console.warn('⚠️ No cottage photos found, using placeholder');
                     cottagePhotos = [{
                         imageUrl: 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800'
                     }];
                 }
 
                 if (roomPhotos.length === 0) {
-                    console.warn('⚠️ No room photos found, using placeholder');
                     roomPhotos = [{
                         imageUrl: 'https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800'
                     }];
                 }
 
-                console.log(`✅ Loaded ${cottagePhotos.length} cottage photo(s) and ${roomPhotos.length} room photo(s)`);
                 initializeCarousels();
             } catch (error) {
-                console.error('❌ Error loading photos:', error);
+                showNotification('Nu s-au putut încărca pozele. Se folosesc pozele implicite.', 'warning');
                 // Use placeholders on error
                 cottagePhotos = [{
                     imageUrl: 'https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800'

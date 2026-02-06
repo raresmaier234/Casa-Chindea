@@ -135,7 +135,7 @@
                     heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
                 }
             } catch (e) {
-                console.error('HERO ERROR:', e);
+                // Use default hero image if loading fails
                 document.getElementById('hero-bg').innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
             }
         }
@@ -215,9 +215,9 @@
                 `).join('');
                 }
             } catch (error) {
-                console.error('Error loading home gallery:', error);
+                // Show user-friendly message if gallery fails to load
                 const gallery = document.getElementById('photo-gallery');
-                gallery.innerHTML = `<div class='col-span-full text-center py-12 text-red-400'>Eroare la încărcarea pozelor: ${error.message}<br><pre>${error.stack}</pre></div>`;
+                gallery.innerHTML = `<div class='col-span-full text-center py-12 text-gray-500'><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><br>Nu s-au putut încărca pozele din galerie.</div>`;
             }
         }
 

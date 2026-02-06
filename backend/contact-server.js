@@ -24,7 +24,6 @@ router.post('/api/contact', async (req, res) => {
     console.log('📧 New contact form submission:', { name, email, subject });
 
     if (!name || !email || !subject || !message) {
-        console.error('❌ Missing required fields');
         return res.status(400).json({
             success: false,
             error: 'Toate câmpurile sunt obligatorii.'
@@ -33,7 +32,6 @@ router.post('/api/contact', async (req, res) => {
 
     // Require reCAPTCHA token
     if (!recaptchaToken) {
-        console.error('❌ No reCAPTCHA token provided');
         return res.status(400).json({
             success: false,
             error: 'Te rugăm să bifezi căsuța "Nu sunt robot".'
@@ -54,7 +52,6 @@ router.post('/api/contact', async (req, res) => {
         console.log('🔍 reCAPTCHA response:', { success: recaptchaData.success });
 
         if (!recaptchaData.success) {
-            console.error('❌ reCAPTCHA verification failed:', recaptchaData['error-codes']);
             return res.status(400).json({
                 success: false,
                 error: 'Verificarea reCAPTCHA a eșuat. Încearcă din nou.'
@@ -64,7 +61,6 @@ router.post('/api/contact', async (req, res) => {
         console.log('✅ reCAPTCHA verified successfully');
 
     } catch (err) {
-        console.error('❌ reCAPTCHA error:', err);
         return res.status(500).json({
             success: false,
             error: 'Eroare la verificarea reCAPTCHA.'
@@ -101,7 +97,6 @@ router.post('/api/contact', async (req, res) => {
             message: 'Mesajul a fost trimis cu succes!'
         });
     } catch (err) {
-        console.error('❌ Email error:', err);
         res.status(500).json({
             success: false,
             error: 'Eroare la trimitere: ' + err.message
