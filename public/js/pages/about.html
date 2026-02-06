@@ -90,23 +90,36 @@
         // Load about photos from PocketBase
         async function loadAboutPhotos() {
             try {
-                const response = await fetch('/api/admin/about-photos?section=story');
+                const response = await fetch('/api/photos?limit=500');
                 const data = await response.json();
+                const allPhotos = data.items || [];
 
-                if (data.success && data.photos.length > 0) {
+                // Filter photos by description "about"
+                const aboutPhotos = allPhotos.filter(photo => {
+                    const desc = (photo.description || '').toLowerCase();
+                    return desc.includes('about');
+                });
+
+                console.log('📸 Total photos from PocketBase:', allPhotos.length);
+                console.log('📸 Found about photos:', aboutPhotos.length);
+
+                if (aboutPhotos.length > 0) {
                     const photoGrid = document.getElementById('story-photo-grid');
-                    // Only update if we have photos, otherwise keep the editable placeholders
-                    photoGrid.innerHTML = data.photos.map((photo, idx) => {
+                    // Use the first 4 about photos to maintain the grid layout
+                    const photosToShow = aboutPhotos.slice(0, 4);
+
+                    photoGrid.innerHTML = photosToShow.map((photo, idx) => {
                         const marginClass = idx === 1 ? 'mt-8' : idx === 2 ? '-mt-8' : '';
                         return `
                             <img id="cms-about-story-image-${idx + 1}" src="${photo.imageUrl}"
                                 alt="${photo.description || 'Casa Chindea'}"
-                                class="rounded-lg shadow-lg ${marginClass}"
+                                class="w-64 h-48 object-cover rounded-lg shadow-lg ${marginClass}"
                                 loading="lazy">
                         `;
                     }).join('');
+                } else {
+                    console.log('ℹ️ No photos found with description "about", keeping placeholder images');
                 }
-                // If no photos from API, keep the default images with CMS IDs for editing
             } catch (error) {
                 console.error('Error loading about photos:', error);
             }
@@ -141,15 +154,15 @@
                         </p>
                     </div>
                 </div>
-                <div class="grid grid-cols-2 gap-4" id="story-photo-grid">
+                <div class="grid grid-cols-2 gap-2" id="story-photo-grid">
                     <img id="cms-about-story-image-1" src="https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=400"
-                        alt="Casa Chindea exterior" class="rounded-lg shadow-lg">
+                        alt="Casa Chindea exterior" class="w-64 h-48 object-cover rounded-lg shadow-lg">
                     <img id="cms-about-story-image-2" src="https://images.pexels.com/photos/1029599/pexels-photo-1029599.jpeg?auto=compress&cs=tinysrgb&w=400"
-                        alt="Peisaj montan" class="rounded-lg shadow-lg mt-8">
+                        alt="Peisaj montan" class="w-64 h-48 object-cover rounded-lg shadow-lg mt-8">
                     <img id="cms-about-story-image-3" src="https://images.pexels.com/photos/164595/pexels-photo-164595.jpeg?auto=compress&cs=tinysrgb&w=400"
-                        alt="Interior confortabil" class="rounded-lg shadow-lg -mt-8">
+                        alt="Interior confortabil" class="w-64 h-48 object-cover rounded-lg shadow-lg -mt-8">
                     <img id="cms-about-story-image-4" src="https://images.pexels.com/photos/1134176/pexels-photo-1134176.jpeg?auto=compress&cs=tinysrgb&w=400"
-                        alt="Terasă cu priveliște" class="rounded-lg shadow-lg">
+                        alt="Terasă cu priveliște" class="w-64 h-48 object-cover rounded-lg shadow-lg">
                 </div>
             </div>
             <!-- Facilities -->
