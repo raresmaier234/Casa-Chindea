@@ -30,7 +30,6 @@ const requireAdmin = async (req, res, next) => {
         }
 
         if (req.user.admin === true) {
-            console.log('✅ User is admin (from token)');
             return next();
         }
 
@@ -62,14 +61,12 @@ const requireAdmin = async (req, res, next) => {
 
             // Verifică dacă utilizatorul are câmpul admin setat pe true
             if (!user.admin) {
-                console.log('❌ User is not admin');
                 return res.status(403).json({
                     success: false,
                     error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
                 });
             }
 
-            console.log('✅ User is admin (from DB)');
             next();
         } catch (dbError) {
             // Dacă DB lookup eșuează, dar avem admin în token, permitem accesul
@@ -145,7 +142,6 @@ router.get('/booking', authenticateToken, requireAdmin, async (req, res) => {
 
         if (status !== "") {
             filter = `status = "${status}"`;
-            console.log('🔍 Using filter:', filter);
         }
 
         const bookings = await pb.collection('booking').getFullList(500, {
@@ -384,7 +380,6 @@ router.post('/calendar-blocks', authenticateToken, requireAdmin, async (req, res
             reason: reason || 'Blocare administrativă'
         };
 
-        console.log('Creating calendar block:', blockData);
         const block = await pb.collection('calendar_blocks').create(blockData);
 
         res.json({
@@ -762,8 +757,6 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             surchargeHoliday
         } = req.body;
 
-        console.log('💰 Saving prices:', req.body);
-
         // Validare
         if (!priceRoom || priceRoom <= 0) {
             return res.status(400).json({
@@ -799,10 +792,8 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             let result;
             if (existingRecords.length > 0) {
                 result = await pb.collection('prices').update(existingRecords[0].id, pricesData);
-                console.log('✅ Prices updated in PocketBase:', result.id);
             } else {
                 result = await pb.collection('prices').create(pricesData);
-                console.log('✅ Prices created in PocketBase:', result.id);
             }
             savedInPocketBase = true;
             pricesData.updated = result.updated;
@@ -814,7 +805,6 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
         const fileSaved = savePricesToFile(pricesData);
 
         if (savedInPocketBase || fileSaved) {
-            console.log('✅ Prices saved successfully');
             res.json({
                 success: true,
                 message: 'Prețurile au fost salvate cu succes!',
@@ -972,8 +962,6 @@ router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
 
-        console.log('🎁 Creating new offer:', { type, title, startDate, endDate });
-
         const offerData = {
             type,
             title,
@@ -994,7 +982,6 @@ router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
         try {
             result = await pb.collection('offers').create(offerData);
             savedInPocketBase = true;
-            console.log('✅ Offer created in PocketBase:', result.id);
         } catch (pbErr) {
             console.warn('⚠️ PocketBase save failed, using JSON file:', pbErr.message);
         }
@@ -1026,8 +1013,6 @@ router.put('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
         const { id } = req.params;
         const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
 
-        console.log('🎁 Updating offer:', id);
-
         const offerData = {
             type,
             title,
@@ -1044,7 +1029,6 @@ router.put('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
         // Încearcă PocketBase
         try {
             const result = await pb.collection('offers').update(id, offerData);
-            console.log('✅ Offer updated in PocketBase:', result.id);
             return res.json({ success: true, message: 'Oferta a fost actualizată!', offer: result });
         } catch (pbErr) {
             console.warn('⚠️ PocketBase update failed, using JSON file:', pbErr.message);
@@ -1071,12 +1055,9 @@ router.delete('/offers/:id', authenticateToken, requireAdmin, async (req, res) =
     try {
         const { id } = req.params;
 
-        console.log('🗑️ Deleting offer:', id);
-
         // Încearcă PocketBase
         try {
             await pb.collection('offers').delete(id);
-            console.log('✅ Offer deleted from PocketBase');
             return res.json({ success: true, message: 'Oferta a fost ștearsă!' });
         } catch (pbErr) {
             console.warn('⚠️ PocketBase delete failed, using JSON file:', pbErr.message);

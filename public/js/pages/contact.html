@@ -245,7 +245,6 @@
 
                 if (config.recaptcha && config.recaptcha.siteKey) {
                     recaptchaSiteKey = config.recaptcha.siteKey;
-                    console.log('reCAPTCHA v3 site key loaded:', recaptchaSiteKey);
 
                     // Dynamically load reCAPTCHA script with the correct site key
                     const script = document.getElementById('recaptcha-script');
@@ -355,8 +354,6 @@
                         });
                     });
                 });
-
-                console.log('reCAPTCHA v3 token obtained');
 
                 // Submit form with reCAPTCHA token
                 const response = await fetch('/api/contact', {

@@ -258,7 +258,6 @@
                     auth0Config.clientId = config.auth0.clientId;
                 }
             } catch (err) {
-                console.log('Using default config, backend not available:', err.message);
             }
         }
         let auth0 = null;
@@ -428,16 +427,13 @@
 
                 if (response.ok) {
                     const statusData = await response.json();
-                    console.log('Admin status check:', statusData);
 
                     // Dacă utilizatorul este admin în DB dar nu în token, refreshează token-ul
                     if (statusData.user.admin && !statusData.user.tokenAdmin) {
-                        console.log('🔄 User is admin in DB but not in token, refreshing...');
                         await refreshTokenWithAdminPermissions();
                     }
                 }
             } catch (err) {
-                console.log('Could not check admin status:', err.message);
             }
         }
 
@@ -456,14 +452,12 @@
 
                 if (response.ok) {
                     const data = await response.json();
-                    console.log('Token refreshed with admin permissions:', data);
 
                     // Actualizează token-ul și informațiile utilizatorului
                     sessionStorage.setItem('auth_token', data.token);
                     sessionStorage.setItem('user_info', JSON.stringify(data.user));
                 }
             } catch (err) {
-                console.log('Could not refresh token:', err.message);
             }
         }
 
@@ -498,7 +492,6 @@
                 }
             } else {
                 // Ascunde opțiunea Auth0 dacă nu este configurată
-                console.log('Auth0 not configured - using placeholder credentials');
                 document.getElementById('auth0-section').style.display = 'none';
             }
         };

@@ -42,8 +42,6 @@ const photos = [
 async function uploadPhotos() {
     try {
         // Authenticate as admin
-        console.log('🔐 Authenticating with PocketBase...');
-        console.log('URL:', PB_URL);
 
         const authResponse = await fetch(`${PB_URL}/api/collections/_superusers/auth-with-password`, {
             method: 'POST',
@@ -63,7 +61,6 @@ async function uploadPhotos() {
 
         const authData = await authResponse.json();
         const token = authData.token;
-        console.log('✅ Authenticated successfully!');
 
         // Get existing photos
         const listResponse = await fetch(`${PB_URL}/api/collections/photos/records`, {
@@ -82,7 +79,6 @@ async function uploadPhotos() {
                     existingPhoto.image && existingPhoto.image.includes(p.filename.replace('.jpg', ''))
                 );
                 if (isSpecificPhoto) {
-                    console.log(`🗑️  Deleting existing photo: ${existingPhoto.id}`);
                     await fetch(`${PB_URL}/api/collections/photos/records/${existingPhoto.id}`, {
                         method: 'DELETE',
                         headers: {
@@ -98,11 +94,8 @@ async function uploadPhotos() {
             const filePath = path.join(__dirname, photoInfo.filename);
 
             if (!fs.existsSync(filePath)) {
-                console.log(`⚠️  File not found: ${photoInfo.filename}`);
                 continue;
             }
-
-            console.log(`📤 Uploading ${photoInfo.filename}...`);
 
             const formData = new FormData();
             formData.append('image', fs.createReadStream(filePath));
@@ -121,14 +114,11 @@ async function uploadPhotos() {
 
             if (uploadResponse.ok) {
                 const record = await uploadResponse.json();
-                console.log(`✅ Uploaded ${photoInfo.filename} - ID: ${record.id}`);
             } else {
                 const error = await uploadResponse.text();
                 console.error(`❌ Error uploading ${photoInfo.filename}:`, error);
             }
         }
-
-        console.log('\n🎉 Photo upload complete!');
 
     } catch (error) {
         console.error('❌ Error:', error.message);
