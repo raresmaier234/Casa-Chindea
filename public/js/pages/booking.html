@@ -208,6 +208,63 @@
     </footer>
     <script>
         let unavailableDateRanges = [];
+        let unavailableDateRangesNormalized = []; // [{start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', type, reason}]
+
+        function pad(n){ return String(n).padStart(2, '0'); }
+
+        // Convert an ISO/UTC date string from server into local YYYY-MM-DD
+        function toLocalDateStringFromISO(isoOrDateStr) {
+            const d = new Date(isoOrDateStr);
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
+
+        function normalizeUnavailableRanges() {
+            // Convert server-provided ranges (which are in UTC) into local date strings
+            unavailableDateRangesNormalized = (unavailableDateRanges || []).map(range => {
+                const start = toLocalDateStringFromISO(range.start);
+
+                // Handle end: if server returns end at midnight (exclusive check-out), convert to previous day
+                let endDateObj = new Date(range.end);
+                if (endDateObj.getUTCHours() === 0 && endDateObj.getUTCMinutes() === 0 && endDateObj.getUTCSeconds() === 0) {
+                    // subtract 1 millisecond to move to previous local day
+                    endDateObj = new Date(endDateObj.getTime() - 1);
+                }
+                const end = toLocalDateStringFromISO(endDateObj.toISOString());
+
+                return { start, end, type: range.type, reason: range.reason };
+            });
+        }
+
+        function isDateUnavailable(date) {
+            // Use local date parts (year-month-day) to compare with normalized local ranges
+            const dLocal = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+            return unavailableDateRangesNormalized.some(range => (dLocal >= range.start && dLocal <= range.end));
+        }
+
+        function fetchAvailabilityAndInitCalendar() {
+            // Fetch unavailable dates from the backend
+            fetch('/api/booking/booking-availability')
+                .then(res => {
+                    if (!res.ok) {
+                        throw new Error(`HTTP error! status: ${res.status}`);
+                    }
+                    return res.json();
+                })
+                .then(data => {
+                    if (data.success) {
+                        unavailableDateRanges = data.unavailableDates;
+                        normalizeUnavailableRanges();
+                    }
+                    initCalendar();
+                })
+                .catch(err => {
+                    // In case of error, ensure normalized array is empty and initialize calendar
+                    unavailableDateRanges = [];
+                    unavailableDateRangesNormalized = [];
+                    initCalendar(); // Initialize anyway but without blocked dates
+                });
+        }
+
         let selectedOffer = null; // Ofertă selectată din URL
 
         // Prețuri încărcate din admin (cu valori implicite)
@@ -376,36 +433,8 @@
             }
         }
 
-        function fetchAvailabilityAndInitCalendar() {
-            // Fetch unavailable dates from the backend
-            fetch('/api/booking/booking-availability')
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        unavailableDateRanges = data.unavailableDates;
-                    }
-                    initCalendar();
-                })
-                .catch(err => {
-                    initCalendar(); // Initialize anyway but without blocked dates
-                });
-        }
-
-        function isDateUnavailable(date) {
-            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
-            return unavailableDateRanges.some(range => {
-                const startStr = range.start; // Already in YYYY-MM-DD format
-                const endStr = range.end; // Already in YYYY-MM-DD format
-
-                // Simple string comparison for date ranges (inclusive)
-                return dateStr >= startStr && dateStr <= endStr;
-            });
-        }
+        // Note: date availability helper functions are defined earlier and normalized to UTC.
+        // The duplicate implementations were removed to avoid conflicts.
 
         function formatDateDMY(dateStr) {
             if (!dateStr) return '';
@@ -453,7 +482,8 @@
                 altInput: false,
                 allowInput: false,
                 clickOpens: true,
-                disable: unavailableDateRanges.length > 0 ? [isDateUnavailable] : [],
+                // Use normalized ranges presence to enable disable function
+                disable: unavailableDateRangesNormalized.length > 0 ? [isDateUnavailable] : [],
                 onChange: function (selectedDates, dateStr, instance) {
                     if (selectedDates.length === 2) {
                         const [start, end] = selectedDates;
@@ -483,6 +513,7 @@
                 }
             }, 1000);
         }
+
 
         function updateBookingSummary() {
             const checkin = document.getElementById('checkin').value;
@@ -637,7 +668,7 @@
                 body: JSON.stringify(bookingData)
             })
                 .then(res => res.json())
-                .then(data => {
+                .then data => {
                     // Reset button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
