@@ -31,7 +31,7 @@ export async function sendWhatsAppMessage(toPhone, bookingData) {
         to: toPhone,
         type: 'template',
         template: {
-            name: 'booking_confirmation_casa_chindea',
+            name: 'booking_casa_chindea',
             language: { code: 'ro' },
             components: [
                 {
@@ -100,7 +100,7 @@ export async function sendWhatsAppConfirmationToClient(toPhone, bookingData) {
         to: toPhone,
         type: 'template',
         template: {
-            name: 'booking_confirmation_casa_chindea',
+            name: 'booking_casa_chindea',
             language: { code: 'ro' },
             components: [
                 {
@@ -119,19 +119,6 @@ export async function sendWhatsAppConfirmationToClient(toPhone, bookingData) {
             ]
         }
     };
-
-    console.log('📱 Sending WhatsApp confirmation to client:', {
-        to: toPhone,
-        template: 'booking_confirmation_casa_chindea',
-        name: bookingData.name,
-        phone: bookingData.phone,
-        guests: bookingData.guests,
-        roomType: bookingData.roomType,
-        nights: nights,
-        checkin: formatDate(bookingData.checkin),
-        checkout: formatDate(bookingData.checkout),
-        message: bookingData.message
-    });
 
     const res = await fetch(url, {
         method: 'POST',
