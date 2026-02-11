@@ -1,3 +1,7 @@
 .env.local
 node_modules
 .env
+start.sh
+stop.sh
+fly.toml
+javascript.svg
