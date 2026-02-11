@@ -132,8 +132,6 @@ const upload = multer({
     }
 });
 
-// **REZERVĂRI ADMIN**
-
 // Obține toate rezervările pentru admin
 router.get('/booking', authenticateToken, requireAdmin, async (req, res) => {
     try {
