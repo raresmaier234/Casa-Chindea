@@ -22,6 +22,8 @@ const upload = multer({
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+console.log(process.env.RECAPTCHA_SITE_KEY)
+
 // Auth0 configuration using express-openid-connect
 const auth0Config = {
     authRequired: false,

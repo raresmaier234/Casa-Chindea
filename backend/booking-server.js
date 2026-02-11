@@ -32,12 +32,12 @@ router.get('/booking-availability', async (req, res) => {
     try {
         await ensurePbAdminAuth();
 
-        // Get all confirmed bookings
+        // Get only confirmed bookings (not pending)
         const bookings = await pb.collection('booking').getFullList(
             200,
             {
                 sort: 'checkin',
-                filter: `checkin >= "${new Date().toISOString().split('T')[0]}"`,
+                filter: `checkin >= "${new Date().toISOString().split('T')[0]}" && status = "confirmed"`,
                 $autoCancel: false
             }
         );
@@ -91,11 +91,11 @@ router.post(`/`, authenticateToken, async (req, res) => {
     try {
         await ensurePbAdminAuth();
 
-        // Check if dates overlap with existing bookings
+        // Check if dates overlap with existing CONFIRMED bookings only
         const existingBookings = await pb.collection('booking').getFullList(
             200,
             {
-                filter: `(checkin <= "${checkout}" && checkout >= "${checkin}")`,
+                filter: `(checkin <= "${checkout}" && checkout >= "${checkin}") && status = "confirmed"`,
                 $autoCancel: false
             }
         );

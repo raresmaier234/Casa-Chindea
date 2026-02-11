@@ -397,15 +397,13 @@
         }
 
         function isDateUnavailable(date) {
-            const dateStr = date.toISOString().split('T')[0];
+            const dateStr = date.toISOString().split('T')[0]; // YYYY-MM-DD format
             return unavailableDateRanges.some(range => {
-                const start = new Date(range.start);
-                const end = new Date(range.end);
-                // Set time to avoid timezone issues
-                start.setHours(0, 0, 0, 0);
-                end.setHours(23, 59, 59, 999);
-                date.setHours(12, 0, 0, 0); // Set to noon to avoid timezone issues
-                return date >= start && date <= end;
+                const startStr = range.start; // Already in YYYY-MM-DD format
+                const endStr = range.end; // Already in YYYY-MM-DD format
+
+                // Simple string comparison for date ranges (inclusive)
+                return dateStr >= startStr && dateStr <= endStr;
             });
         }
 
@@ -420,15 +418,27 @@
 
         function setDateRangeInput(start, end) {
             if (start && end) {
-                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
-                const endFormatted = formatDateDMY(end.toISOString ? end.toISOString().split('T')[0] : end);
+                // Use local date methods to avoid timezone issues
+                const startFormatted = formatDateDMY(getLocalDateString(start));
+                const endFormatted = formatDateDMY(getLocalDateString(end));
                 document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
             } else if (start) {
-                const startFormatted = formatDateDMY(start.toISOString ? start.toISOString().split('T')[0] : start);
+                const startFormatted = formatDateDMY(getLocalDateString(start));
                 document.getElementById('date-range').value = startFormatted;
             } else {
                 document.getElementById('date-range').value = '';
             }
+        }
+
+        // Helper function to get local date string without timezone issues
+        function getLocalDateString(date) {
+            if (typeof date === 'string') return date;
+            if (!date || !date.getFullYear) return '';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
         }
 
         function initCalendar() {
@@ -447,13 +457,13 @@
                 onChange: function (selectedDates, dateStr, instance) {
                     if (selectedDates.length === 2) {
                         const [start, end] = selectedDates;
-                        document.getElementById('checkin').value = start.toISOString().split('T')[0];
-                        document.getElementById('checkout').value = end.toISOString().split('T')[0];
+                        document.getElementById('checkin').value = getLocalDateString(start);
+                        document.getElementById('checkout').value = getLocalDateString(end);
                         setDateRangeInput(start, end);
                         updateBookingSummary();
                     } else if (selectedDates.length === 1) {
                         setDateRangeInput(selectedDates[0]);
-                        document.getElementById('checkin').value = selectedDates[0].toISOString().split('T')[0];
+                        document.getElementById('checkin').value = getLocalDateString(selectedDates[0]);
                         document.getElementById('checkout').value = '';
                     } else {
                         setDateRangeInput();
