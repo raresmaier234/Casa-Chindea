@@ -23,14 +23,12 @@ const requireAdmin = async (req, res, next) => {
     try {
         // Verifică dacă userId există în token
         if (!req.user || !req.user.userId) {
-            console.error('❌ No userId found in token');
             return res.status(401).json({
                 success: false,
                 error: 'Token invalid - lipsește userId.'
             });
         }
 
-        // Verifică dacă utilizatorul este admin direct din token (PRIORITATE)
         if (req.user.admin === true) {
             console.log('✅ User is admin (from token)');
             return next();
@@ -40,10 +38,8 @@ const requireAdmin = async (req, res, next) => {
         const cached = adminCache.get(req.user.userId);
         if (cached && (Date.now() - cached.timestamp) < CACHE_TTL) {
             if (cached.isAdmin) {
-                console.log('✅ User is admin (from cache)');
                 return next();
             } else {
-                console.log('❌ User is not admin (from cache)');
                 return res.status(403).json({
                     success: false,
                     error: 'Acces restricționat. Doar administratorii pot accesa această resursă.'
@@ -57,8 +53,6 @@ const requireAdmin = async (req, res, next) => {
                 // Prevent auto-cancellation
                 $autoCancel: false
             });
-
-            console.log('👤 User from DB:', { id: user.id, email: user.email, admin: user.admin });
 
             // Cache rezultatul
             adminCache.set(req.user.userId, {
@@ -78,17 +72,13 @@ const requireAdmin = async (req, res, next) => {
             console.log('✅ User is admin (from DB)');
             next();
         } catch (dbError) {
-            console.log('⚠️ Database lookup error:', dbError.message, 'Status:', dbError.status);
-
             // Dacă DB lookup eșuează, dar avem admin în token, permitem accesul
             if (req.user.admin === true) {
-                console.log('✅ DB check failed but admin in token, allowing access');
                 return next();
             }
 
             // Dacă utilizatorul nu există (404) sau altă eroare, și nu e admin în token
             if (dbError.status === 404) {
-                console.log('❌ User not found in database and not admin in token');
                 return res.status(401).json({
                     success: false,
                     error: 'Utilizatorul nu există. Te rugăm să te autentifici din nou.'
@@ -96,18 +86,14 @@ const requireAdmin = async (req, res, next) => {
             }
 
             // Pentru alte erori
-            console.error('❌ Unexpected error in admin check:', dbError);
             return res.status(500).json({
                 success: false,
                 error: 'Eroare la verificarea statusului de admin. Te rugăm să încerci din nou.'
             });
         }
     } catch (err) {
-        console.error('❌ Unexpected error in requireAdmin middleware:', err);
-
         // În caz de eroare neprevăzută, verifică dacă utilizatorul este admin în token
         if (req.user && req.user.admin === true) {
-            console.log('⚠️ Unexpected error but admin in token, allowing access');
             return next();
         }
 
