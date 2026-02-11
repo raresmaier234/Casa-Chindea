@@ -536,8 +536,6 @@
                     return;
                 }
 
-                console.log('📋 Loading user bookings...');
-
                 const response = await fetch('/api/user/booking', {
                     headers: {
                         'Authorization': `Bearer ${token}`,

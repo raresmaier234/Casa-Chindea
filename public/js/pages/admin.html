@@ -1232,7 +1232,6 @@
                 });
 
                 const data = await response.json();
-                console.log('Token refresh response:', data);
 
                 if (response.ok) {
                     // Actualizează token-ul și informațiile utilizatorului
@@ -1287,7 +1286,6 @@
                         }
                     }
                 } else {
-                    console.log('No prices found, using defaults');
                 }
             } catch (error) {
                 console.error('Error loading prices:', error);

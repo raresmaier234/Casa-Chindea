@@ -41,16 +41,13 @@ class CasaChindeaNav {
 
             if (response.ok) {
                 const statusData = await response.json();
-                console.log('Admin status check:', statusData);
 
                 // Dacă utilizatorul este admin în DB dar nu în token, refreshează token-ul
                 if (statusData.user.admin && !statusData.user.tokenAdmin) {
-                    console.log('🔄 User is admin in DB but not in token, refreshing...');
                     await this.refreshTokenWithAdminPermissions();
                 }
             }
         } catch (err) {
-            console.log('Could not check admin status:', err.message);
         }
     }
 
@@ -69,7 +66,6 @@ class CasaChindeaNav {
 
             if (response.ok) {
                 const data = await response.json();
-                console.log('Token refreshed with admin permissions:', data);
 
                 // Actualizează token-ul și informațiile utilizatorului
                 sessionStorage.setItem('auth_token', data.token);
@@ -80,7 +76,6 @@ class CasaChindeaNav {
                 this.updateNavigation();
             }
         } catch (err) {
-            console.log('Could not refresh token:', err.message);
         }
     }
 
@@ -295,24 +290,9 @@ class CasaChindeaNav {
 document.addEventListener('DOMContentLoaded', function () {
     window.casaChindeaNav = new CasaChindeaNav();
 
-    // Debug function - accessible from browser console
-    window.debugAuth = function () {
-        const userInfo = sessionStorage.getItem('user_info');
-        const token = sessionStorage.getItem('auth_token');
-        console.log('=== AUTH DEBUG ===');
-        console.log('Token exists:', !!token);
-        console.log('User info:', userInfo ? JSON.parse(userInfo) : null);
-        console.log('Current user in nav:', window.casaChindeaNav.currentUser);
-        if (window.casaChindeaNav.currentUser) {
-            console.log('Is admin?', window.casaChindeaNav.currentUser.admin === true);
-        }
-        console.log('==================');
-    };
-
     // Function to force navigation refresh
     window.refreshNavigation = function () {
         window.casaChindeaNav.refreshNavigation();
-        console.log('Navigation refreshed');
     };
 });
 

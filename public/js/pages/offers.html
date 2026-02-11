@@ -404,8 +404,6 @@
                 const data = await response.json();
                 const allPhotos = data.items || [];
 
-                console.log('📸 Total photos from PocketBase:', allPhotos.length);
-
                 // Filter photos by description or use all if no specific ones found
                 cottagePhotos = allPhotos.filter(photo => {
                     const desc = (photo.description || '').toLowerCase();
@@ -419,12 +417,10 @@
 
                 // If no specific photos found, use all photos for both carousels
                 if (cottagePhotos.length === 0 && allPhotos.length > 0) {
-                    console.log('ℹ️ No cottage photos with description, using first half of all photos');
                     cottagePhotos = allPhotos.slice(0, Math.ceil(allPhotos.length / 2));
                 }
 
                 if (roomPhotos.length === 0 && allPhotos.length > 0) {
-                    console.log('ℹ️ No room photos with description, using second half of all photos');
                     roomPhotos = allPhotos.slice(Math.floor(allPhotos.length / 2));
                 }
 
@@ -468,8 +464,6 @@
             const carousel = document.getElementById(carouselId);
             if (!carousel || photos.length === 0) return;
 
-            console.log(`🖼️ Initializing ${carouselId} with ${photos.length} photos:`, photos);
-
             let currentIndex = 0;
             const imagesHtml = photos.map((photo, idx) => {
                 // Handle different URL formats - imageUrl (constructed) or build from PocketBase fields
@@ -478,7 +472,6 @@
                         `/api/files/${photo.collectionId}/${photo.id}/${photo.image}` :
                         photo.image);
 
-                console.log(`  Photo ${idx}: ${imgUrl}`);
 
                 return `<img src="${imgUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}"
                       loading="lazy" style="object-fit: cover;">`;

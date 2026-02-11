@@ -22,7 +22,6 @@ const upload = multer({
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-console.log(process.env.RECAPTCHA_SITE_KEY)
 
 // Auth0 configuration using express-openid-connect
 const auth0Config = {
@@ -36,7 +35,6 @@ const auth0Config = {
 
 // Only enable Auth0 if credentials are provided
 if (process.env.AUTH0_CLIENT_ID && (process.env.AUTH0_ISSUER_BASE_URL || process.env.AUTH0_DOMAIN)) {
-    console.log('✅ Auth0 configured, enabling authentication routes');
     app.use(auth(auth0Config));
 
     // Auth0 protected route example
@@ -64,7 +62,6 @@ if (process.env.AUTH0_CLIENT_ID && (process.env.AUTH0_ISSUER_BASE_URL || process
         });
     });
 } else {
-    console.log('⚠️ Auth0 not configured, Auth0 routes disabled');
 }
 
 // JWT Secret pentru semnarea token-urilor
@@ -82,9 +79,6 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     try {
-        console.log('Attempting login for:', email);
-
-        // Încearcă autentificarea cu PocketBase
         const authData = await pb.collection('users').authWithPassword(email, password);
 
         if (authData.token && authData.record) {
@@ -99,8 +93,6 @@ app.post('/api/auth/login', async (req, res) => {
                 },
                 JWT_SECRET
             );
-
-            console.log('Login successful for:', email);
 
             res.json({
                 success: true,
@@ -146,8 +138,6 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     try {
-        console.log('Attempting registration for:', email);
-
         // Creează utilizator nou în PocketBase
         const userData = {
             email,
@@ -160,8 +150,6 @@ app.post('/api/auth/register', async (req, res) => {
 
         // Trimite email de verificare (opțional)
         await pb.collection('users').requestVerification(email);
-
-        console.log('Registration successful for:', email);
 
         res.json({
             success: true,
@@ -307,9 +295,6 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 // User bookings endpoint
 app.get('/api/user/booking', authenticateToken, async (req, res) => {
     try {
-        console.log('🔍 Fetching bookings for user:', req.user.email, 'User ID:', req.user.userId);
-        console.log('🏗️ PocketBase URL:', process.env.POCKET_BASE_URL);
-
         // Caută rezervările utilizatorului curent în PocketBase
         // Remove sort to avoid issues with system fields
         const bookings = await pb.collection('booking').getFullList(500, {
@@ -317,24 +302,12 @@ app.get('/api/user/booking', authenticateToken, async (req, res) => {
             $autoCancel: false
         });
 
-        console.log(`📋 Found ${bookings.length} bookings for ${req.user.email}`);
-
         // Sort bookings in JavaScript by created date (descending)
         const sortedBookings = bookings.sort((a, b) => {
             const dateA = new Date(a.created || a.id);
             const dateB = new Date(b.created || b.id);
             return dateB - dateA;
         });
-
-        // Log first booking for debugging if exists
-        if (sortedBookings.length > 0) {
-            console.log('📝 Sample booking:', {
-                id: sortedBookings[0].id,
-                email: sortedBookings[0].email,
-                checkin: sortedBookings[0].checkin,
-                created: sortedBookings[0].created
-            });
-        }
 
         res.json({
             success: true,
@@ -378,13 +351,6 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
             });
         }
 
-        console.log('📸 Avatar upload request for user:', req.user.email);
-        console.log('📦 File details:', {
-            originalname: req.file.originalname,
-            mimetype: req.file.mimetype,
-            size: req.file.size
-        });
-
         // Create FormData for PocketBase
         const formData = new FormData();
 
@@ -398,7 +364,6 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
         // Get the avatar URL using correct PocketBase method
         const avatarUrl = pb.getFileUrl(updatedUser, updatedUser.avatar);
 
-        console.log('✅ Avatar saved to PocketBase:', avatarUrl);
 
         res.json({
             success: true,
@@ -438,8 +403,6 @@ app.post('/api/user/change-password', authenticateToken, async (req, res) => {
             });
         }
 
-        console.log('🔐 Password change request for user:', req.user.email);
-
         // Verify current password by attempting to authenticate
         try {
             await pb.collection('users').authWithPassword(req.user.email, currentPassword);
@@ -455,8 +418,6 @@ app.post('/api/user/change-password', authenticateToken, async (req, res) => {
             password: newPassword,
             passwordConfirm: newPassword
         });
-
-        console.log('✅ Password changed successfully for:', req.user.email);
 
         res.json({
             success: true,
@@ -481,8 +442,6 @@ app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
             admin: true
         });
 
-        console.log('✅ User set as admin:', updatedUser.email);
-
         res.json({
             success: true,
             message: 'Utilizatorul a fost setat ca administrator.',
@@ -505,7 +464,6 @@ app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
 app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
     try {
         const { userId } = req.user;
-        console.log(userId)
         // Obține utilizatorul din PocketBase
         const user = await pb.collection('users').getOne(userId);
 
@@ -547,8 +505,6 @@ app.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
             },
             JWT_SECRET
         );
-
-        console.log('🔄 Token refreshed for user:', user.email, 'Admin:', user.admin);
 
         res.json({
             success: true,

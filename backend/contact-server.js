@@ -9,8 +9,6 @@ dotenv.config();
 
 const router = express.Router();
 
-console.log('📧 Contact server initialized');
-
 const limiter = rateLimit({
     windowMs: 60 * 1000,
     max: 5,
@@ -20,8 +18,6 @@ const limiter = rateLimit({
 router.use('/api/contact', limiter);
 router.post('/api/contact', async (req, res) => {
     const { name, email, subject, message, recaptchaToken } = req.body;
-
-    console.log('📧 New contact form submission:', { name, email, subject });
 
     if (!name || !email || !subject || !message) {
         return res.status(400).json({
@@ -40,7 +36,6 @@ router.post('/api/contact', async (req, res) => {
 
     // Verify reCAPTCHA v3 token
     try {
-        console.log('🔍 Verifying reCAPTCHA v3...');
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
         const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
@@ -48,12 +43,6 @@ router.post('/api/contact', async (req, res) => {
             body: `secret=${recaptchaSecret}&response=${recaptchaToken}`
         });
         const recaptchaData = await recaptchaRes.json();
-
-        console.log('🔍 reCAPTCHA response:', {
-            success: recaptchaData.success,
-            score: recaptchaData.score,
-            action: recaptchaData.action
-        });
 
         if (!recaptchaData.success) {
             return res.status(400).json({
@@ -73,14 +62,11 @@ router.post('/api/contact', async (req, res) => {
         // Check if the score is above our threshold (0.5 is a common threshold)
         const minScore = 0.5;
         if (recaptchaData.score < minScore) {
-            console.log(`🚫 reCAPTCHA score too low: ${recaptchaData.score} < ${minScore}`);
             return res.status(400).json({
                 success: false,
                 error: 'Verificarea reCAPTCHA a eșuat. Este posibil să fi fost detectată activitate suspicioasă.'
             });
         }
-
-        console.log('✅ reCAPTCHA verified successfully with score:', recaptchaData.score);
 
     } catch (err) {
         return res.status(500).json({
@@ -90,7 +76,6 @@ router.post('/api/contact', async (req, res) => {
     }
 
     try {
-        console.log('📤 Sending email...');
         const transporter = nodemailer.createTransport({
             host: 'smtp.elasticemail.com',
             port: 2525,
@@ -113,7 +98,6 @@ router.post('/api/contact', async (req, res) => {
             `
         });
 
-        console.log('✅ Email sent successfully');
         res.json({
             success: true,
             message: 'Mesajul a fost trimis cu succes!'

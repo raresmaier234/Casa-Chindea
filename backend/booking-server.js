@@ -20,11 +20,9 @@ const ensurePbAdminAuth = async () => {
                 process.env.POCKETBASE_ADMIN_EMAIL,
                 process.env.POCKETBASE_ADMIN_PASSWORD
             );
-            console.log('✅ PocketBase authenticated as user');
         }
     } catch (err) {
         // If auth fails, log it but continue - collection rules might allow public access
-        console.log('⚠️ PocketBase auth skipped (will use public API rules):', err?.message);
     }
 };
 
@@ -54,7 +52,6 @@ router.get('/booking-availability', async (req, res) => {
                 }
             );
         } catch (blockErr) {
-            console.log('⚠️ Could not fetch calendar blocks (might not exist yet):', blockErr.message);
         }
 
         // Combine bookings and calendar blocks into unavailable dates
@@ -125,7 +122,6 @@ router.post(`/`, authenticateToken, async (req, res) => {
             bookingData.offerId = offerId;
             bookingData.offerTitle = offerTitle || '';
             bookingData.offerPrice = offerPrice || 0;
-            console.log('🎁 Booking with special offer:', offerTitle);
         }
 
         const pbResult = await pb.collection('booking').create(bookingData);

@@ -62,7 +62,6 @@ app.get('/api/prices', async (req, res) => {
             return res.json({ success: true, prices });
         }
     } catch (fileErr) {
-        console.log('No prices.json file, trying PocketBase...');
     }
 
     // Fallback to PocketBase
@@ -111,7 +110,6 @@ app.get('/api/offers', async (req, res) => {
             return res.json({ success: true, offers: activeOffers });
         }
     } catch (fileErr) {
-        console.log('No offers.json file, trying PocketBase...');
     }
 
     // Fallback to PocketBase
