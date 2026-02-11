@@ -34,13 +34,13 @@ router.post('/api/contact', async (req, res) => {
     if (!recaptchaToken) {
         return res.status(400).json({
             success: false,
-            error: 'Te rugăm să bifezi căsuța "Nu sunt robot".'
+            error: 'reCAPTCHA token is missing.'
         });
     }
 
-    // Verify reCAPTCHA v2 token
+    // Verify reCAPTCHA v3 token
     try {
-        console.log('🔍 Verifying reCAPTCHA v2...');
+        console.log('🔍 Verifying reCAPTCHA v3...');
         const recaptchaSecret = process.env.RECAPTCHA_SECRET;
         const recaptchaRes = await fetch('https://www.google.com/recaptcha/api/siteverify', {
             method: 'POST',
@@ -49,7 +49,11 @@ router.post('/api/contact', async (req, res) => {
         });
         const recaptchaData = await recaptchaRes.json();
 
-        console.log('🔍 reCAPTCHA response:', { success: recaptchaData.success });
+        console.log('🔍 reCAPTCHA response:', {
+            success: recaptchaData.success,
+            score: recaptchaData.score,
+            action: recaptchaData.action
+        });
 
         if (!recaptchaData.success) {
             return res.status(400).json({
@@ -58,7 +62,25 @@ router.post('/api/contact', async (req, res) => {
             });
         }
 
-        console.log('✅ reCAPTCHA verified successfully');
+        // Check if the action matches what we expect
+        if (recaptchaData.action !== 'submit') {
+            return res.status(400).json({
+                success: false,
+                error: 'reCAPTCHA action mismatch.'
+            });
+        }
+
+        // Check if the score is above our threshold (0.5 is a common threshold)
+        const minScore = 0.5;
+        if (recaptchaData.score < minScore) {
+            console.log(`🚫 reCAPTCHA score too low: ${recaptchaData.score} < ${minScore}`);
+            return res.status(400).json({
+                success: false,
+                error: 'Verificarea reCAPTCHA a eșuat. Este posibil să fi fost detectată activitate suspicioasă.'
+            });
+        }
+
+        console.log('✅ reCAPTCHA verified successfully with score:', recaptchaData.score);
 
     } catch (err) {
         return res.status(500).json({

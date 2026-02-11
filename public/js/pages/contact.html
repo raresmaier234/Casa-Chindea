@@ -22,8 +22,8 @@
             }
         }
     </script>
-    <!-- reCAPTCHA v2 checkbox -->
-    <script src="https://www.google.com/recaptcha/api.js" async defer></script>
+    <!-- reCAPTCHA v3 - will be loaded dynamically -->
+    <script id="recaptcha-script"></script>
 </head>
 
 <body class="bg-gray-50">
@@ -176,8 +176,6 @@
                             <textarea rows="6" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
                         </div>
-                        <!-- reCAPTCHA v2 checkbox -->
-                        <div class="g-recaptcha" data-sitekey="6Lf5q2EsAAAAANqj4XjcqAq3O7CfQ1K_q1nDv5Jp"></div>
                         <button type="submit" id="submit-btn"
                             class="w-full bg-primary hover:bg-green-700 text-white font-bold py-3 px-6 rounded-lg transition-colors duration-300">
                             Trimite Mesajul
@@ -237,6 +235,32 @@
         </div>
     </footer>
     <script>
+        let recaptchaSiteKey = null;
+
+        // Load configuration and get reCAPTCHA site key
+        async function loadConfig() {
+            try {
+                const response = await fetch('/api/config');
+                const config = await response.json();
+
+                if (config.recaptcha && config.recaptcha.siteKey) {
+                    recaptchaSiteKey = config.recaptcha.siteKey;
+                    console.log('reCAPTCHA v3 site key loaded:', recaptchaSiteKey);
+
+                    // Dynamically load reCAPTCHA script with the correct site key
+                    const script = document.getElementById('recaptcha-script');
+                    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
+                }
+            } catch (error) {
+                console.error('Failed to load configuration:', error);
+            }
+        }
+
+        // Initialize when page loads
+        document.addEventListener('DOMContentLoaded', function() {
+            loadConfig();
+        });
+
         // Spam prevention: max 3 messages per 5 minutes
         const SPAM_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
         const MAX_MESSAGES_TOTAL = 3; // Max 3 messages per window
@@ -311,10 +335,9 @@
                 return;
             }
 
-            // reCAPTCHA validation
-            const recaptchaToken = grecaptcha.getResponse();
-            if (!recaptchaToken) {
-                showMessage('warning', 'Te rugăm să bifezi căsuța "Nu sunt robot".');
+            // Check if site key is loaded
+            if (!recaptchaSiteKey) {
+                showMessage('error', 'reCAPTCHA nu s-a încărcat. Te rugăm să reîncarci pagina.');
                 return;
             }
 
@@ -322,6 +345,20 @@
             setButtonLoading(true);
 
             try {
+                // Execute reCAPTCHA v3
+                const recaptchaToken = await new Promise((resolve, reject) => {
+                    grecaptcha.ready(function() {
+                        grecaptcha.execute(recaptchaSiteKey, {action: 'submit'}).then(function(token) {
+                            resolve(token);
+                        }).catch(function(error) {
+                            reject(error);
+                        });
+                    });
+                });
+
+                console.log('reCAPTCHA v3 token obtained');
+
+                // Submit form with reCAPTCHA token
                 const response = await fetch('/api/contact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -334,17 +371,15 @@
                 if (data.success) {
                     showMessage('success', '✅ Mesajul a fost trimis cu succes! Te vom contacta în curând.');
                     form.reset();
-                    grecaptcha.reset(); // Reset reCAPTCHA after successful submission
                     tries.push(now);
                     localStorage.setItem('contactTries', JSON.stringify(tries));
                 } else {
                     showMessage('error', data.error || 'A apărut o eroare. Te rugăm să încerci din nou.');
-                    grecaptcha.reset(); // Reset reCAPTCHA on error
                 }
-            } catch (err) {
+            } catch (error) {
                 setButtonLoading(false);
-                grecaptcha.reset(); // Reset reCAPTCHA on error
-                showMessage('error', 'Eroare de conexiune. Te rugăm să verifici conexiunea la internet și să încerci din nou.');
+                console.error('Error submitting form:', error);
+                showMessage('error', 'Eroare de conexiune sau reCAPTCHA. Te rugăm să reîncarci pagina și să încerci din nou.');
             }
         }
     </script>
