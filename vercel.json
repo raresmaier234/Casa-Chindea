@@ -1,7 +1,6 @@
 {
     "version": 2,
     "public": true,
-    "buildCommand": "npm run optimize-html",
     "outputDirectory": "public",
     "rewrites": [
         {

@@ -17,12 +17,16 @@ npm-debug.log*
 .env.*
 !.env.example
 
-# Scripts
+# Development scripts (not needed - no build step)
 scripts/
 
-# Documentation
+# Documentation (keep only essential)
 *.md
 !README.md
+IMAGE_OPTIMIZATION_GUIDE.md
+IMPLEMENTATION_COMPLETE.md
+OPTIMIZATION_COMPLETE.md
+PERFORMANCE_OPTIMIZATION.md
 
 # Development files
 .DS_Store
@@ -30,10 +34,11 @@ scripts/
 *.swo
 *~
 
-# Build files (keep public)
-# dist/
-
 # Uploads
 uploads/
 backend/uploads/
+
+# Test files
+*.test.js
+*.spec.js
 
