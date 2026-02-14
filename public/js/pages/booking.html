@@ -278,6 +278,16 @@
 
         let selectedOffer = null; // Ofertă selectată din URL
 
+        // Holiday type images mapping
+        const holidayImages = {
+            'revelion': 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=100&h=100&fit=crop',
+            'craciun': 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=100&h=100&fit=crop',
+            'paste': 'https://images.unsplash.com/photo-1457301353672-324d6d14f471?w=100&h=100&fit=crop',
+            '1mai': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=100&h=100&fit=crop',
+            'vara': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=100&h=100&fit=crop',
+            'custom': 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=100&h=100&fit=crop'
+        };
+
         // Prețuri încărcate din admin (cu valori implicite)
         let prices = {
             priceRoom: 150,
@@ -301,17 +311,27 @@
 
             // Check if this is a special offer booking
             if (offerId) {
+                const rawStart = urlParams.get('start');
+                const rawEnd = urlParams.get('end');
+
+                // Normalize dates (remove time part if present)
+                const normalizeDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    return dateStr.split('T')[0]; // Keep only YYYY-MM-DD
+                };
+
                 selectedOffer = {
                     id: offerId,
                     type: urlParams.get('type'),
-                    startDate: urlParams.get('start'),
-                    endDate: urlParams.get('end'),
+                    startDate: normalizeDate(rawStart),
+                    endDate: normalizeDate(rawEnd),
                     nights: parseInt(urlParams.get('nights')) || 1,
                     totalPrice: parseInt(urlParams.get('price')) || 0,
                     roomPrice: parseInt(urlParams.get('roomPrice')) || 0,
                     title: decodeURIComponent(urlParams.get('title') || 'Ofertă Specială')
                 };
 
+                console.log('🎁 Special offer detected:', selectedOffer);
                 applySpecialOffer();
             } else if (rentalType) {
                 document.getElementById('rental-type').value = rentalType;
@@ -338,7 +358,12 @@
         });
 
         function applySpecialOffer() {
-            if (!selectedOffer) return;
+            if (!selectedOffer) {
+                console.log('❌ No selectedOffer to apply');
+                return;
+            }
+
+            console.log('✅ Applying special offer:', selectedOffer);
 
             // Show offer banner
             showOfferBanner();
@@ -350,6 +375,8 @@
             // Set dates after calendar initializes
             setTimeout(() => {
                 if (selectedOffer.startDate && selectedOffer.endDate) {
+                    console.log('📅 Setting dates:', selectedOffer.startDate, '-', selectedOffer.endDate);
+
                     document.getElementById('checkin').value = selectedOffer.startDate;
                     document.getElementById('checkout').value = selectedOffer.endDate;
 
@@ -358,9 +385,13 @@
                     const endFormatted = formatDateDMY(selectedOffer.endDate);
                     document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
 
+                    console.log('📅 Date range set to:', document.getElementById('date-range').value);
+
                     // Lock the date picker for offer bookings
                     document.getElementById('date-range').disabled = true;
                     document.getElementById('date-range').classList.add('bg-gray-100');
+                } else {
+                    console.log('❌ Missing dates in offer');
                 }
 
                 updateBookingSummary();
@@ -372,13 +403,15 @@
             const existingBanner = document.getElementById('offer-banner');
             if (existingBanner) existingBanner.remove();
 
+            const offerImage = holidayImages[selectedOffer.type] || holidayImages['custom'];
+
             const banner = document.createElement('div');
             banner.id = 'offer-banner';
             banner.className = 'bg-gradient-to-r from-primary to-secondary text-white p-6 rounded-2xl mb-8 shadow-lg';
             banner.innerHTML = `
                 <div class="flex items-center justify-between flex-wrap gap-4">
                     <div class="flex items-center">
-                        <span class="text-4xl mr-4">🎁</span>
+                        <img src="${offerImage}" alt="${selectedOffer.title}" class="w-16 h-16 rounded-xl object-cover mr-4 border-2 border-white/30 shadow-md">
                         <div>
                             <h3 class="text-xl font-bold">${selectedOffer.title}</h3>
                             <p class="opacity-90">${selectedOffer.nights} nopți • ${formatDateDMY(selectedOffer.startDate)} - ${formatDateDMY(selectedOffer.endDate)}</p>
@@ -533,10 +566,11 @@
 
             // If special offer is selected, show offer summary
             if (selectedOffer && checkin && checkout && guests) {
+                const offerImage = holidayImages[selectedOffer.type] || holidayImages['custom'];
                 const summary = `
                     <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/30">
                         <div class="flex items-center mb-3">
-                            <span class="text-2xl mr-2">🎁</span>
+                            <img src="${offerImage}" alt="${selectedOffer.title}" class="w-10 h-10 rounded-lg object-cover mr-3 border border-primary/30">
                             <span class="font-bold text-primary">Ofertă Specială Aplicată</span>
                         </div>
                         <p><strong>Pachet:</strong> ${selectedOffer.title}</p>
@@ -677,7 +711,7 @@
                 body: JSON.stringify(bookingData)
             })
                 .then(res => res.json())
-                .then data => {
+                .then(data => {
                     // Reset button state
                     submitBtn.innerHTML = originalText;
                     submitBtn.disabled = false;
