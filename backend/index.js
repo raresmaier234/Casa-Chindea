@@ -1,6 +1,7 @@
 // backend/index.js
 import express from 'express';
 import cors from 'cors';
+import compression from 'compression';
 import dotenv from 'dotenv';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
@@ -16,6 +17,17 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 
+// Enable Gzip/Brotli compression for all responses
+app.use(compression({
+    filter: (req, res) => {
+        if (req.headers['x-no-compression']) {
+            return false;
+        }
+        return compression.filter(req, res);
+    },
+    level: 6 // Compression level (0-9, 6 is balanced)
+}));
+
 // Configure CORS for Vercel frontend
 app.use(cors({
     origin: [
@@ -28,7 +40,23 @@ app.use(cors({
 }));
 app.use(express.json());
 
-app.use(express.static(join(__dirname, "js")));
+// Serve static files with cache headers
+app.use(express.static(join(__dirname, "js"), {
+    maxAge: '1d', // Cache for 1 day
+    etag: true,
+    lastModified: true
+}));
+
+// Add cache control headers for API responses
+app.use('/api', (req, res, next) => {
+    // Don't cache POST/PUT/DELETE requests
+    if (req.method === 'GET') {
+        res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+    } else {
+        res.set('Cache-Control', 'no-store');
+    }
+    next();
+});
 
 // Health check endpoint
 app.get('/api/health', (req, res) => {

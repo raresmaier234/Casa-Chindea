@@ -2,6 +2,12 @@
 <html lang="ro">
 
 <head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camere Casa Chindea</title>
@@ -602,7 +608,7 @@
                 <!-- Rent Rooms Option -->
                 <div class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
                     <div class="photo-carousel h-96" id="room-carousel">
-                        <img src="https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        <img loading="lazy" src="https://images.pexels.com/photos/271624/pexels-photo-271624.jpeg?auto=compress&cs=tinysrgb&w=800"
                             alt="Cameră" class="active">
                     </div>
                     <div class="p-8">
@@ -660,7 +666,7 @@
                 <!-- Rent Entire Cottage Option -->
                 <div class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-accent transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
                     <div class="photo-carousel h-96" id="cottage-carousel">
-                        <img src="https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800"
+                        <img loading="lazy" src="https://images.pexels.com/photos/271743/pexels-photo-271743.jpeg?auto=compress&cs=tinysrgb&w=800"
                             alt="Casa intreaga" class="active">
                     </div>
                     <div class="p-8">
