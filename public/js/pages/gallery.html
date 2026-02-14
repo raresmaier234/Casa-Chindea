@@ -2,13 +2,19 @@
 <html lang="ro">
 
 <head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galerie Casa Chindea</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
-    <script src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+    <script defer src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
     <script>
         tailwind.config = {
             theme: {
@@ -98,7 +104,7 @@
                     class="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
                 <button id="lightbox-prev"
                     class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8592;</button>
-                <img id="lightbox-img" src="" alt="Poza mărită" class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
+                <img loading="lazy" id="lightbox-img" src="" alt="Poza mărită" class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
                 <button id="lightbox-next"
                     class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8594;</button>
             </div>

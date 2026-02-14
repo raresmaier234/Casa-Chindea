@@ -2,6 +2,12 @@
 <html lang="ro">
 
 <head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilul Meu - Casa Chindea</title>
@@ -150,7 +156,7 @@
                     <div class="relative group">
                         <div id="profile-avatar" class="w-24 h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
                             <i class="fas fa-user text-white text-3xl" id="avatar-icon"></i>
-                            <img id="avatar-img" class="hidden w-full h-full object-cover" alt="Avatar">
+                            <img loading="lazy" id="avatar-img" class="hidden w-full h-full object-cover" alt="Avatar">
                         </div>
                         <label for="avatar-upload" class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
                             <i class="fas fa-camera text-sm"></i>
