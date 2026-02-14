@@ -47,6 +47,48 @@
                 word-break: break-word;
             }
         }
+
+        /* Holiday type selector with icons */
+        .offer-type-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        #offer-type-preview {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        #offer-type-icon {
+            transition: transform 0.2s;
+        }
+
+        #offer-type-icon:hover {
+            transform: scale(1.05);
+        }
+
+        /* Smooth animation for new/updated offers */
+        .animate-in {
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
     </style>
 </head>
 
@@ -173,13 +215,19 @@
                 <div id="content-gallery" class="tab-content p-4 sm:p-6 md:p-8 hidden">
                     <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
                         <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Galerie</h2>
-                        <button id="add-photo-btn"
-                            class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
-                            <i class="fas fa-plus mr-2"></i>Adaugă Poză
-                        </button>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <button id="add-photo-btn"
+                                class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-plus mr-2"></i>Adaugă Poză
+                            </button>
+                            <button id="add-folder-btn"
+                                class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-folder-plus mr-2"></i>Încarcă Folder
+                            </button>
+                        </div>
                     </div>
 
-                    <!-- Photo Upload Form -->
+                    <!-- Photo Upload Form (Single) -->
                     <div id="photo-upload-form" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
                         <form id="upload-form" enctype="multipart/form-data">
                             <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
@@ -201,6 +249,67 @@
                                     <i class="fas fa-upload mr-2"></i>Încarcă
                                 </button>
                                 <button type="button" id="cancel-upload"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Folder/Multiple Upload Form -->
+                    <div id="folder-upload-form" class="hidden mb-6 sm:mb-8 bg-blue-50 p-4 sm:p-6 rounded-lg border-2 border-dashed border-blue-300">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-cloud-upload-alt text-blue-500 text-4xl mb-2"></i>
+                            <h3 class="font-semibold text-gray-800">Încarcă Mai Multe Poze</h3>
+                            <p class="text-sm text-gray-600">Selectează un folder sau mai multe imagini deodată</p>
+                        </div>
+                        <form id="folder-upload-form-element" enctype="multipart/form-data">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-images mr-1"></i>Selectează Imagini (poți selecta mai multe)
+                                    </label>
+                                    <input type="file" id="folder-files" accept="image/*" multiple
+                                        class="hidden">
+                                    <div id="drop-zone"
+                                        class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                        <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                                        <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                                        <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                                        <p class="text-xs text-blue-500 mt-2">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Ține Ctrl/Cmd pentru selecție multiplă
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Selected files preview -->
+                                <div id="selected-files-preview" class="hidden">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Fișiere selectate: <span id="selected-files-count" class="text-blue-600 font-bold">0</span>
+                                    </label>
+                                    <div id="files-list" class="max-h-40 overflow-y-auto bg-white rounded-lg border p-2 text-sm space-y-1">
+                                        <!-- Files will be listed here -->
+                                    </div>
+                                </div>
+
+                                <!-- Upload progress -->
+                                <div id="upload-progress-container" class="hidden">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Progres încărcare: <span id="upload-progress-text">0/0</span>
+                                    </label>
+                                    <div class="w-full bg-gray-200 rounded-full h-4">
+                                        <div id="upload-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                    <p id="upload-status" class="text-sm text-gray-600 mt-1"></p>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                <button type="submit" id="upload-folder-btn"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    <i class="fas fa-upload mr-2"></i>Încarcă Toate
+                                </button>
+                                <button type="button" id="cancel-folder-upload"
                                     class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                     Anulează
                                 </button>
@@ -423,15 +532,20 @@
                                 <div>
                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tip Ofertă</label>
                                     <select id="offer-type" required
-                                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
+                                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base offer-type-select">
                                         <option value="">Selectează tipul</option>
-                                        <option value="revelion">🎉 Revelion</option>
-                                        <option value="craciun">🎄 Crăciun</option>
-                                        <option value="paste">🐣 Paște</option>
-                                        <option value="1mai">🌸 1 Mai</option>
-                                        <option value="vara">☀️ Ofertă de Vară</option>
-                                        <option value="custom">📌 Ofertă Personalizată</option>
+                                        <option value="revelion" data-icon="🎊">Revelion</option>
+                                        <option value="craciun" data-icon="🎄">Crăciun</option>
+                                        <option value="paste" data-icon="🥚">Paște</option>
+                                        <option value="1mai" data-icon="🌺">1 Mai</option>
+                                        <option value="vara" data-icon="🏖️">Ofertă de Vară</option>
+                                        <option value="custom" data-icon="⭐">Ofertă Personalizată</option>
                                     </select>
+                                    <!-- Preview icon -->
+                                    <div id="offer-type-preview" class="mt-2 hidden">
+                                        <img id="offer-type-icon" src="" alt="" class="w-12 h-12 rounded-lg object-cover border-2 border-primary">
+                                        <span id="offer-type-label" class="ml-2 text-sm font-medium text-gray-700"></span>
+                                    </div>
                                 </div>
                                 <div>
                                     <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Titlu Ofertă</label>
@@ -540,8 +654,67 @@
         </div>
     </div>
 
+    <!-- Edit Photo Modal -->
+    <div id="edit-photo-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-edit text-blue-500 mr-2"></i>Editează Poza
+                </h3>
+                <button onclick="closeEditPhotoModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <img id="edit-photo-preview" src="" alt="Preview" class="w-full h-48 object-cover rounded-lg mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descriere</label>
+                <textarea id="edit-photo-description" rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Introduceți descrierea pozei..."></textarea>
+            </div>
+            <input type="hidden" id="edit-photo-id">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeEditPhotoModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Anulează
+                </button>
+                <button onclick="savePhotoEdit()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Salvează
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Errors Modal -->
+    <div id="upload-errors-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>Rezultat Încărcare
+                </h3>
+                <button onclick="closeUploadErrorsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="upload-errors-summary" class="mb-4">
+                <!-- Summary will be inserted here -->
+            </div>
+            <div id="upload-errors-list" class="max-h-60 overflow-y-auto">
+                <!-- Errors will be listed here -->
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closeUploadErrorsModal()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>Am înțeles
+                </button>
+            </div>
+        </div>
+    </div>
+
     <!-- Toast Notifications -->
-    <div id="toast-container" class="fixed top-20 right-4 z-50 space-y-4">
+    <div id="toast-container" class="fixed top-24 right-4 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+        <!-- Toasts will appear here -->
+    </div>
         <!-- Toasts will be dynamically added here -->
     </div>
 
@@ -552,7 +725,49 @@
             initializeTabs();
             loadBookings();
             setupEventListeners();
+            setupOfferTypePreview();
         });
+
+        // Holiday type images mapping
+        const holidayImages = {
+            'revelion': 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=200&h=200&fit=crop',
+            'craciun': 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=200&h=200&fit=crop',
+            'paste': 'https://images.unsplash.com/photo-1457301353672-324d6d14f471?w=200&h=200&fit=crop',
+            '1mai': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200&h=200&fit=crop',
+            'vara': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=200&h=200&fit=crop',
+            'custom': 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=200&h=200&fit=crop'
+        };
+
+        const holidayLabels = {
+            'revelion': 'Revelion',
+            'craciun': 'Crăciun',
+            'paste': 'Paște',
+            '1mai': '1 Mai',
+            'vara': 'Ofertă de Vară',
+            'custom': 'Ofertă Personalizată'
+        };
+
+        function setupOfferTypePreview() {
+            const offerTypeSelect = document.getElementById('offer-type');
+            const previewDiv = document.getElementById('offer-type-preview');
+            const iconImg = document.getElementById('offer-type-icon');
+            const labelSpan = document.getElementById('offer-type-label');
+
+            if (offerTypeSelect) {
+                offerTypeSelect.addEventListener('change', function() {
+                    const selectedValue = this.value;
+
+                    if (selectedValue && holidayImages[selectedValue]) {
+                        iconImg.src = holidayImages[selectedValue];
+                        iconImg.alt = holidayLabels[selectedValue];
+                        labelSpan.textContent = holidayLabels[selectedValue];
+                        previewDiv.classList.remove('hidden');
+                    } else {
+                        previewDiv.classList.add('hidden');
+                    }
+                });
+            }
+        }
 
         function checkAdminAuth() {
             const token = sessionStorage.getItem('auth_token');
@@ -623,9 +838,10 @@
             // Filter bookings
             document.getElementById('filter-status').addEventListener('change', loadBookings);
 
-            // Photo upload
+            // Photo upload (single)
             document.getElementById('add-photo-btn').addEventListener('click', () => {
                 document.getElementById('photo-upload-form').classList.remove('hidden');
+                document.getElementById('folder-upload-form').classList.add('hidden');
             });
 
             document.getElementById('cancel-upload').addEventListener('click', () => {
@@ -634,6 +850,63 @@
             });
 
             document.getElementById('upload-form').addEventListener('submit', uploadPhoto);
+
+            // Folder/Multiple upload
+            document.getElementById('add-folder-btn').addEventListener('click', () => {
+                document.getElementById('folder-upload-form').classList.remove('hidden');
+                document.getElementById('photo-upload-form').classList.add('hidden');
+            });
+
+            document.getElementById('cancel-folder-upload').addEventListener('click', () => {
+                document.getElementById('folder-upload-form').classList.add('hidden');
+                document.getElementById('folder-upload-form-element').reset();
+                document.getElementById('selected-files-preview').classList.add('hidden');
+                document.getElementById('upload-progress-container').classList.add('hidden');
+                resetDropZone();
+            });
+
+            // Drop zone click to open file picker
+            const dropZone = document.getElementById('drop-zone');
+            const folderFilesInput = document.getElementById('folder-files');
+
+            dropZone.addEventListener('click', () => {
+                folderFilesInput.click();
+            });
+
+            // Drag and drop handlers
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    // Create a new DataTransfer to set files
+                    const dt = new DataTransfer();
+                    for (let i = 0; i < files.length; i++) {
+                        if (files[i].type.startsWith('image/')) {
+                            dt.items.add(files[i]);
+                        }
+                    }
+                    folderFilesInput.files = dt.files;
+                    previewSelectedFiles({ target: folderFilesInput });
+                }
+            });
+
+            // Preview selected files
+            document.getElementById('folder-files').addEventListener('change', previewSelectedFiles);
+
+            // Handle folder upload form submit
+            document.getElementById('folder-upload-form-element').addEventListener('submit', uploadMultiplePhotos);
 
             // Calendar blocks
             document.getElementById('add-block-btn').addEventListener('click', () => {
@@ -746,7 +1019,7 @@
                                 ${getStatusText(booking.status)}
                             </span>
                             ${booking.status === 'pending' ? `
-                                <button onclick="updateBookingStatus('${booking.id}', 'confirmed')" 
+                                <button onclick="updateBookingStatus('${booking.id}', 'confirmed')"
                                     class="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
                                     Confirmă
                                 </button>
@@ -905,10 +1178,13 @@
             const galleryEl = document.getElementById('admin-gallery');
 
             try {
-                // Request all photos with a high limit to ensure we get everything
-                const response = await fetch('/api/photos?limit=500');
+                // Request all photos with a high limit and cache buster to ensure fresh data
+                const cacheBuster = Date.now();
+                const response = await fetch(`/api/photos?limit=500&_=${cacheBuster}`);
                 const data = await response.json();
                 const photos = data.items || [];
+
+                console.log('📸 Loaded photos:', photos.length);
 
                 if (photos.length === 0) {
                     galleryEl.innerHTML = `
@@ -921,9 +1197,12 @@
                     return;
                 }
 
-                galleryEl.innerHTML = photos.map(photo => `
+                galleryEl.innerHTML = photos.map(photo => {
+                    // Use thumbnailUrl if available, otherwise fallback to imageUrl
+                    const imgSrc = photo.thumbnailUrl || photo.imageUrl || '';
+                    return `
                     <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
-                        <img data-src="${photo.thumbnailUrl}"
+                        <img data-src="${imgSrc}"
                             src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
                             alt="Gallery photo"
                             class="lazy w-full h-64 object-cover"
@@ -944,7 +1223,7 @@
                             </div>
                         </div>
                     </div>
-                `).join('');
+                `}).join('');
 
                 // Lazy loading implementation for admin gallery
                 const lazyImages = galleryEl.querySelectorAll('img.lazy');
@@ -1011,6 +1290,220 @@
             }
         }
 
+        // Preview selected files for folder upload
+        function previewSelectedFiles(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('selected-files-preview');
+            const filesList = document.getElementById('files-list');
+            const countSpan = document.getElementById('selected-files-count');
+            const dropZone = document.getElementById('drop-zone');
+
+            if (files.length === 0) {
+                previewContainer.classList.add('hidden');
+                // Reset drop zone
+                dropZone.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                    <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                    <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                    <p class="text-xs text-blue-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ține Ctrl/Cmd pentru selecție multiplă
+                    </p>
+                `;
+                return;
+            }
+
+            // Filter only image files
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+            // Update drop zone to show selected count
+            dropZone.innerHTML = `
+                <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+                <p class="text-green-600 font-medium">${imageFiles.length} imagini selectate</p>
+                <p class="text-xs text-gray-400 mt-1">Click pentru a schimba selecția</p>
+            `;
+
+            countSpan.textContent = imageFiles.length;
+            filesList.innerHTML = imageFiles.slice(0, 20).map((file) => `
+                <div class="flex items-center gap-2 text-gray-600 py-1 border-b border-gray-100 last:border-0">
+                    <i class="fas fa-image text-blue-500"></i>
+                    <span class="truncate flex-1">${file.name}</span>
+                    <span class="text-xs text-gray-400">${(file.size / 1024).toFixed(0)} KB</span>
+                </div>
+            `).join('');
+
+            if (imageFiles.length > 20) {
+                filesList.innerHTML += `
+                    <div class="text-center text-gray-500 py-2 text-sm">
+                        ... și încă ${imageFiles.length - 20} fișiere
+                    </div>
+                `;
+            }
+
+            previewContainer.classList.remove('hidden');
+        }
+
+        // Upload multiple photos from folder
+        async function uploadMultiplePhotos(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('folder-files');
+            const files = Array.from(fileInput.files).filter(file => file.type.startsWith('image/'));
+
+            if (files.length === 0) {
+                showToast('Selectează cel puțin o imagine pentru încărcare', 'error');
+                return;
+            }
+
+            const progressContainer = document.getElementById('upload-progress-container');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            const statusText = document.getElementById('upload-status');
+            const uploadBtn = document.getElementById('upload-folder-btn');
+
+            // Show progress
+            progressContainer.classList.remove('hidden');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se încarcă...';
+
+            let uploaded = 0;
+            let failed = 0;
+            const total = files.length;
+            const token = sessionStorage.getItem('auth_token');
+            const failedFiles = []; // Track failed files for modal
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                statusText.textContent = `Se încarcă: ${file.name}`;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    formData.append('description', ''); // No description for batch upload
+
+                    const response = await fetch('/api/admin/photos', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        uploaded++;
+                    } else {
+                        failed++;
+                        const errorData = await response.json().catch(() => ({}));
+                        failedFiles.push({
+                            name: file.name,
+                            error: errorData.error || 'Eroare necunoscută'
+                        });
+                    }
+                } catch (error) {
+                    failed++;
+                    failedFiles.push({
+                        name: file.name,
+                        error: error.message || 'Eroare de conexiune'
+                    });
+                }
+
+                // Update progress
+                const progress = Math.round(((i + 1) / total) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${i + 1}/${total}`;
+            }
+
+            // Reset UI
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Încarcă Toate';
+            statusText.textContent = '';
+
+            // Show result
+            if (failed === 0) {
+                showToast(`Toate ${uploaded} pozele au fost încărcate cu succes!`, 'success');
+            } else {
+                // Show errors modal
+                showUploadErrorsModal(uploaded, failed, total, failedFiles);
+            }
+
+            // Reset form and hide
+            document.getElementById('folder-upload-form').classList.add('hidden');
+            document.getElementById('folder-upload-form-element').reset();
+            document.getElementById('selected-files-preview').classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            progressBar.style.width = '0%';
+            resetDropZone();
+
+            // Reload gallery
+            loadGallery();
+        }
+
+        function resetDropZone() {
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+                dropZone.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                    <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                    <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                    <p class="text-xs text-blue-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ține Ctrl/Cmd pentru selecție multiplă
+                    </p>
+                `;
+            }
+        }
+
+        function showUploadErrorsModal(uploaded, failed, total, failedFiles) {
+            const modal = document.getElementById('upload-errors-modal');
+            const summary = document.getElementById('upload-errors-summary');
+            const list = document.getElementById('upload-errors-list');
+
+            // Build summary
+            const successRate = Math.round((uploaded / total) * 100);
+            summary.innerHTML = `
+                <div class="grid grid-cols-3 gap-4 text-center mb-4">
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-green-600">${uploaded}</div>
+                        <div class="text-xs text-green-700">Încărcate</div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-red-600">${failed}</div>
+                        <div class="text-xs text-red-700">Eșuate</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-blue-600">${successRate}%</div>
+                        <div class="text-xs text-blue-700">Succes</div>
+                    </div>
+                </div>
+            `;
+
+            // Build errors list
+            if (failedFiles.length > 0) {
+                list.innerHTML = `
+                    <div class="text-sm font-medium text-gray-700 mb-2">Fișiere care nu s-au încărcat:</div>
+                    <div class="space-y-2">
+                        ${failedFiles.map(f => `
+                            <div class="flex items-start gap-2 p-2 bg-red-50 rounded-lg text-sm">
+                                <i class="fas fa-times-circle text-red-500 mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">${f.name}</div>
+                                    <div class="text-red-600 text-xs">${f.error}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                list.innerHTML = '';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUploadErrorsModal() {
+            document.getElementById('upload-errors-modal').classList.add('hidden');
+        }
+
         async function editPhoto(photoId) {
             // Get current photo data first
             try {
@@ -1021,13 +1514,39 @@
                 const photo = photos.find(p => p.id === photoId);
 
                 if (!photo) {
-                    alert('Poza nu a fost găsită');
+                    showToast('Poza nu a fost găsită', 'error');
                     return;
                 }
 
-                const newDescription = prompt('Introduceți noua descriere:', photo.description || '');
-                if (newDescription === null) return; // User cancelled
+                // Open edit modal with photo data
+                openEditPhotoModal(photo);
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
 
+        function openEditPhotoModal(photo) {
+            const modal = document.getElementById('edit-photo-modal');
+            const preview = document.getElementById('edit-photo-preview');
+            const description = document.getElementById('edit-photo-description');
+            const photoId = document.getElementById('edit-photo-id');
+
+            preview.src = photo.thumbnailUrl || photo.imageUrl || '';
+            description.value = photo.description || '';
+            photoId.value = photo.id;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeEditPhotoModal() {
+            document.getElementById('edit-photo-modal').classList.add('hidden');
+        }
+
+        async function savePhotoEdit() {
+            const photoId = document.getElementById('edit-photo-id').value;
+            const newDescription = document.getElementById('edit-photo-description').value;
+
+            try {
                 const token = sessionStorage.getItem('auth_token');
                 const editResponse = await fetch(`/api/admin/photos/${photoId}`, {
                     method: 'PUT',
@@ -1039,6 +1558,7 @@
                 });
 
                 if (editResponse.ok) {
+                    closeEditPhotoModal();
                     loadGallery();
                     showToast('Descrierea pozei a fost actualizată cu succes!', 'success');
                 } else {
@@ -1262,51 +1782,64 @@
 
             const toast = document.createElement('div');
             toast.id = toastId;
-            toast.className = `toast transform transition-all duration-300 ease-in-out translate-x-full opacity-0 max-w-sm w-full bg-white shadow-lg rounded-lg pointer-events-auto flex ring-1 ring-black ring-opacity-5`;
 
-            const iconClass = type === 'success' ? 'text-green-500 fas fa-check-circle' :
-                type === 'error' ? 'text-red-500 fas fa-exclamation-circle' :
-                    'text-blue-500 fas fa-info-circle';
+            // Define colors based on type
+            let bgColor, borderColor, iconClass, textColor;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-green-50';
+                    borderColor = 'border-green-500';
+                    iconClass = 'fas fa-check-circle text-green-500';
+                    textColor = 'text-green-800';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-50';
+                    borderColor = 'border-red-500';
+                    iconClass = 'fas fa-exclamation-circle text-red-500';
+                    textColor = 'text-red-800';
+                    break;
+                case 'warning':
+                    bgColor = 'bg-yellow-50';
+                    borderColor = 'border-yellow-500';
+                    iconClass = 'fas fa-exclamation-triangle text-yellow-500';
+                    textColor = 'text-yellow-800';
+                    break;
+                default:
+                    bgColor = 'bg-blue-50';
+                    borderColor = 'border-blue-500';
+                    iconClass = 'fas fa-info-circle text-blue-500';
+                    textColor = 'text-blue-800';
+            }
 
-            const bgClass = type === 'success' ? 'bg-green-50' :
-                type === 'error' ? 'bg-red-50' :
-                    'bg-blue-50';
+            toast.className = `pointer-events-auto transform transition-all duration-300 ease-out translate-y-2 opacity-0 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border-l-4 ${bgColor} ${borderColor}`;
 
             toast.innerHTML = `
-                <div class="flex-1 w-0 p-4">
-                    <div class="flex items-start">
-                        <div class="flex-shrink-0">
-                            <i class="${iconClass} text-xl"></i>
-                        </div>
-                        <div class="ml-3 flex-1">
-                            <p class="text-sm font-medium text-gray-900">${message}</p>
-                        </div>
-                    </div>
-                </div>
-                <div class="flex border-l border-gray-200">
-                    <button onclick="removeToast('${toastId}')" class="w-full border border-transparent rounded-none rounded-r-lg p-4 flex items-center justify-center text-sm font-medium text-gray-600 hover:text-gray-500 focus:outline-none">
-                        <i class="fas fa-times"></i>
-                    </button>
-                </div>
+                <i class="${iconClass} text-lg"></i>
+                <p class="flex-1 text-sm font-medium ${textColor}">${message}</p>
+                <button onclick="removeToast('${toastId}')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
             `;
 
             toastContainer.appendChild(toast);
 
             // Animate in
-            setTimeout(() => {
-                toast.classList.remove('translate-x-full', 'opacity-0');
-            }, 100);
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
 
-            // Auto remove after 5 seconds
+            // Auto remove after 4 seconds
             setTimeout(() => {
                 removeToast(toastId);
-            }, 5000);
+            }, 4000);
         }
 
         function removeToast(toastId) {
             const toast = document.getElementById(toastId);
             if (toast) {
-                toast.classList.add('translate-x-full', 'opacity-0');
+                toast.classList.add('translate-y-2', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
                 setTimeout(() => {
                     toast.remove();
                 }, 300);
@@ -1480,14 +2013,8 @@
 
         // ===== OFFERS MANAGEMENT =====
 
-        const offerTypeLabels = {
-            'revelion': '🎉 Revelion',
-            'craciun': '🎄 Crăciun',
-            'paste': '🐣 Paște',
-            '1mai': '🌸 1 Mai',
-            'vara': '☀️ Ofertă de Vară',
-            'custom': '📌 Ofertă Personalizată'
-        };
+        // Use holidayLabels defined at top of file
+        const offerTypeLabels = holidayLabels;
 
         async function loadOffers() {
             const listEl = document.getElementById('offers-list');
@@ -1497,30 +2024,44 @@
 
             try {
                 const token = sessionStorage.getItem('auth_token');
-                const response = await fetch('/api/admin/offers', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                const cacheBuster = Date.now();
+                const response = await fetch(`/api/admin/offers?_=${cacheBuster}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
                 });
 
                 const data = await response.json();
 
+                console.log('Loaded offers:', data.offers); // Debug log
+
                 if (loadingEl) loadingEl.classList.add('hidden');
 
                 if (data.success && data.offers && data.offers.length > 0) {
+                    const timestamp = Date.now(); // Image cache buster
                     listEl.innerHTML = data.offers.map(offer => {
                         const isActive = offer.active;
                         const isPast = new Date(offer.endDate) < new Date();
+                        const baseImage = holidayImages[offer.type] || holidayImages['custom'];
+                        const offerImage = baseImage + '&t=' + timestamp;
+                        const offerLabel = offerTypeLabels[offer.type] || offer.type;
+
+                        console.log(`Offer ${offer.title}: type=${offer.type}, image=${offerImage}`); // Debug
 
                         return `
-                            <div class="border ${isActive && !isPast ? 'border-green-200 bg-green-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6">
+                            <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-6 shadow-sm">
                                 <div class="flex justify-between items-start mb-4">
-                                    <div>
-                                        <div class="flex items-center gap-2 mb-2">
-                                            <span class="text-2xl">${offerTypeLabels[offer.type]?.split(' ')[0] || '📌'}</span>
-                                            <h3 class="text-xl font-bold text-gray-900">${offer.title}</h3>
-                                            ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Activă</span>' : ''}
-                                            ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Expirată</span>' : ''}
+                                    <div class="flex items-start gap-4">
+                                        <img src="${offerImage}" alt="${offerLabel}" class="w-16 h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm">
+                                        <div>
+                                            <div class="flex items-center gap-2 mb-2">
+                                                <h3 class="text-xl font-bold text-gray-900">${offer.title}</h3>
+                                                ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Activă</span>' : ''}
+                                                ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Expirată</span>' : ''}
+                                            </div>
+                                            <p class="text-gray-600 text-sm">${offerLabel}</p>
                                         </div>
-                                        <p class="text-gray-600">${offerTypeLabels[offer.type] || offer.type}</p>
                                     </div>
                                     <div class="flex space-x-2">
                                         <button onclick="editOffer('${offer.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
@@ -1620,9 +2161,28 @@
 
                 if (response.ok && data.success) {
                     showToast(offerId ? 'Oferta a fost actualizată!' : 'Oferta a fost adăugată!', 'success');
+
+                    // Hide and reset form
                     document.getElementById('offer-form-container').classList.add('hidden');
                     document.getElementById('offer-form').reset();
-                    loadOffers();
+                    document.getElementById('offer-id').value = '';
+
+                    // Hide preview image
+                    const previewDiv = document.getElementById('offer-type-preview');
+                    if (previewDiv) {
+                        previewDiv.classList.add('hidden');
+                    }
+
+                    // Force immediate refresh to show updated images
+                    await loadOffers();
+
+                    // Scroll to offers list smoothly after refresh
+                    setTimeout(() => {
+                        const offersList = document.getElementById('offers-list');
+                        if (offersList) {
+                            offersList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
                 } else {
                     throw new Error(data.error || 'Eroare la salvarea ofertei');
                 }
@@ -1654,6 +2214,12 @@
                     document.getElementById('offer-details').value = offer.details;
                     document.getElementById('offer-includes').value = offer.includes || '';
                     document.getElementById('offer-active').checked = offer.active;
+
+                    // Trigger image preview update
+                    const offerTypeSelect = document.getElementById('offer-type');
+                    if (offerTypeSelect) {
+                        offerTypeSelect.dispatchEvent(new Event('change'));
+                    }
 
                     document.getElementById('offer-form-title').textContent = 'Editează Oferta';
                     document.getElementById('offer-form-container').classList.remove('hidden');
