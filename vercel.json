@@ -5,8 +5,6 @@
     "installCommand": null,
     "outputDirectory": "public",
     "framework": null,
-    "functions": {},
-    "routes": [],
     "rewrites": [
         {
             "source": "/api/:path*",
