@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "nodemon backend/index.js",
-    "start": "node backend/index.js"
+    "start": "node backend/index.js",
+    "optimize-images": "node scripts/optimize-existing-images.js"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
