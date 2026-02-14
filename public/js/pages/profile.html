@@ -149,24 +149,24 @@
 
     <!-- Main Content -->
     <main class="pt-20 min-h-screen">
-        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
             <!-- Header -->
-            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                <div class="flex items-center space-x-6">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8 mb-4 sm:mb-8">
+                <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
                     <div class="relative group">
-                        <div id="profile-avatar" class="w-24 h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
-                            <i class="fas fa-user text-white text-3xl" id="avatar-icon"></i>
+                        <div id="profile-avatar" class="w-20 h-20 sm:w-24 sm:h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
+                            <i class="fas fa-user text-white text-2xl sm:text-3xl" id="avatar-icon"></i>
                             <img loading="lazy" id="avatar-img" class="hidden w-full h-full object-cover" alt="Avatar">
                         </div>
-                        <label for="avatar-upload" class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-8 h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
-                            <i class="fas fa-camera text-sm"></i>
+                        <label for="avatar-upload" class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
+                            <i class="fas fa-camera text-xs sm:text-sm"></i>
                             <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                         </label>
                     </div>
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900" id="profile-name">Bun venit!</h1>
-                        <p class="text-gray-600" id="profile-email">Încarcă...</p>
-                        <div class="flex items-center mt-2">
+                        <h1 class="text-xl sm:text-3xl font-bold text-gray-900" id="profile-name">Bun venit!</h1>
+                        <p class="text-gray-600 text-sm sm:text-base" id="profile-email">Încarcă...</p>
+                        <div class="flex items-center justify-center sm:justify-start mt-2">
                             <span
                                 class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
                                 <i class="fas fa-check-circle mr-1"></i>
@@ -177,47 +177,48 @@
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-4 sm:gap-8">
                 <!-- Profile Settings -->
                 <div class="lg:col-span-1">
-                    <div class="bg-white rounded-2xl shadow-lg p-6">
-                        <h2 class="text-xl font-bold text-gray-900 mb-6">
+                    <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900 mb-4 sm:mb-6">
                             <i class="fas fa-user-edit text-primary mr-2"></i>
                             Informații Personale
                         </h2>
-                        <form id="profile-form" class="space-y-4">
+                        <form id="profile-form" class="space-y-3 sm:space-y-4">
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Email</label>
                                 <input type="email" id="email" disabled
-                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-500 cursor-not-allowed">
+                                    class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 text-gray-500 cursor-not-allowed text-sm sm:text-base">
                             </div>
                             <div>
-                                <label class="block text-sm font-medium text-gray-700 mb-2">Telefon</label>
+                                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Telefon</label>
                                 <div class="relative">
                                     <input type="tel" id="phone" placeholder="Ex: +40 123 456 789" disabled
-                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 bg-gray-100 text-gray-500 cursor-not-allowed pr-20">
+                                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 text-gray-500 cursor-not-allowed pr-24 sm:pr-20 text-sm sm:text-base">
                                     <button type="button" id="edit-phone-btn"
-                                        class="absolute right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-secondary text-white px-3 py-1 rounded text-sm transition-colors duration-200">
+                                        class="absolute right-1 sm:right-2 top-1/2 -translate-y-1/2 bg-primary hover:bg-secondary text-white px-2 sm:px-3 py-1 rounded text-xs sm:text-sm transition-colors duration-200">
                                         <i class="fas fa-edit mr-1"></i>
-                                        Editează
+                                        <span class="hidden sm:inline">Editează</span>
+                                        <span class="sm:hidden">Edit</span>
                                     </button>
                                 </div>
                             </div>
                             <button type="submit" id="save-phone-btn" style="display: none;"
-                                class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                                class="w-full bg-primary hover:bg-secondary text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 text-sm sm:text-base">
                                 <i class="fas fa-save mr-2"></i>
                                 Salvează Modificările
                             </button>
                         </form>
 
                         <!-- Change Password Section -->
-                        <div class="mt-6 pt-6 border-t border-gray-200">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200">
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                                 <i class="fas fa-key text-primary mr-2"></i>
                                 Securitate
                             </h3>
                             <button id="change-password-btn" type="button"
-                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-3 px-6 rounded-lg transition-colors duration-200 flex items-center justify-center">
+                                class="w-full bg-gray-100 hover:bg-gray-200 text-gray-800 font-medium py-2 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 flex items-center justify-center text-sm sm:text-base">
                                 <i class="fas fa-lock mr-2"></i>
                                 Schimbă Parola
                             </button>
@@ -227,14 +228,14 @@
 
                 <!-- Bookings History -->
                 <div class="lg:col-span-2">
-                    <div class="bg-white rounded-2xl shadow-lg p-6 h-fit">
-                        <div class="flex items-center justify-between mb-6">
-                            <h2 class="text-xl font-bold text-gray-900">
+                    <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 h-fit">
+                        <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-4 sm:mb-6">
+                            <h2 class="text-lg sm:text-xl font-bold text-gray-900">
                                 <i class="fas fa-calendar-alt text-primary mr-2"></i>
                                 Rezervările mele
                             </h2>
                             <a href="/js/pages/booking.html"
-                                class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-200">
+                                class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 text-center">
                                 <i class="fas fa-plus mr-1"></i>
                                 Rezervare nouă
                             </a>
@@ -282,43 +283,43 @@
 
     <!-- Change Password Modal -->
     <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-8 relative animate-slide-up">
-            <button id="close-password-modal" class="absolute top-4 right-4 text-gray-400 hover:text-gray-600">
-                <i class="fas fa-times text-xl"></i>
+        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 relative animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="close-password-modal" class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600">
+                <i class="fas fa-times text-lg sm:text-xl"></i>
             </button>
 
-            <h2 class="text-2xl font-bold text-gray-900 mb-6">
+            <h2 class="text-xl sm:text-2xl font-bold text-gray-900 mb-4 sm:mb-6">
                 <i class="fas fa-key text-primary mr-2"></i>
                 Schimbă Parola
             </h2>
 
-            <form id="password-form" class="space-y-4">
+            <form id="password-form" class="space-y-3 sm:space-y-4">
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Parola Actuală</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Parola Actuală</label>
                     <input type="password" id="current-password" required
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Parola Nouă</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Parola Nouă</label>
                     <input type="password" id="new-password" required minlength="8"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                     <p class="text-xs text-gray-500 mt-1">Minimum 8 caractere</p>
                 </div>
 
                 <div>
-                    <label class="block text-sm font-medium text-gray-700 mb-2">Confirmă Parola Nouă</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Confirmă Parola Nouă</label>
                     <input type="password" id="confirm-password" required minlength="8"
-                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                 </div>
 
-                <div id="password-error" class="hidden text-red-500 text-sm p-3 bg-red-50 rounded-lg">
+                <div id="password-error" class="hidden text-red-500 text-xs sm:text-sm p-2 sm:p-3 bg-red-50 rounded-lg">
                     <i class="fas fa-exclamation-triangle mr-2"></i>
                     <span id="password-error-message"></span>
                 </div>
 
                 <button type="submit"
-                    class="w-full bg-primary hover:bg-secondary text-white font-bold py-3 px-6 rounded-lg transition-colors duration-200">
+                    class="w-full bg-primary hover:bg-secondary text-white font-bold py-2 sm:py-3 px-4 sm:px-6 rounded-lg transition-colors duration-200 text-sm sm:text-base">
                     <i class="fas fa-check mr-2"></i>
                     Schimbă Parola
                 </button>
@@ -612,7 +613,7 @@
                 const isUpcoming = new Date(booking.checkin) > new Date();
 
                 const bookingEl = document.createElement('div');
-                bookingEl.className = `booking-card rounded-xl p-6 bg-gradient-to-r ${isUpcoming ? 'from-blue-50 to-indigo-50' : 'from-gray-50 to-slate-50'}`;
+                bookingEl.className = `booking-card rounded-xl p-3 sm:p-6 bg-gradient-to-r ${isUpcoming ? 'from-blue-50 to-indigo-50' : 'from-gray-50 to-slate-50'}`;
                 bookingEl.style.animationDelay = `${index * 0.1}s`;
                 
                 // Calculate number of nights
@@ -621,72 +622,72 @@
                 const nights = Math.round((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
 
                 bookingEl.innerHTML = `
-                    <div class="flex justify-between items-start mb-4">
+                    <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 sm:gap-0 mb-3 sm:mb-4">
                         <div class="flex-1">
-                            <div class="flex items-center gap-3 mb-2">
-                                <h3 class="text-xl font-bold text-gray-900">
+                            <div class="flex flex-wrap items-center gap-2 sm:gap-3 mb-1 sm:mb-2">
+                                <h3 class="text-base sm:text-xl font-bold text-gray-900">
                                     ${formatDate(booking.checkin)} - ${formatDate(booking.checkout)}
                                 </h3>
-                                ${isUpcoming ? '<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><i class="fas fa-clock mr-1"></i>Viitoare</span>' : ''}
+                                ${isUpcoming ? '<span class="inline-flex items-center px-2 py-0.5 sm:py-1 rounded-full text-xs font-medium bg-blue-100 text-blue-800"><i class="fas fa-clock mr-1"></i>Viitoare</span>' : ''}
                             </div>
-                            <p class="text-sm text-gray-500">
+                            <p class="text-xs sm:text-sm text-gray-500">
                                 <i class="fas fa-moon mr-1"></i>
                                 ${nights} ${nights === 1 ? 'noapte' : 'nopți'}
                             </p>
                         </div>
-                        <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${statusClass}">
+                        <span class="inline-flex items-center px-2 sm:px-3 py-0.5 sm:py-1 rounded-full text-xs sm:text-sm font-medium ${statusClass} self-start">
                             <i class="${statusIcon} mr-1"></i>
                             ${getStatusText(booking.status)}
                         </span>
                     </div>
                     
-                    <div class="grid grid-cols-2 lg:grid-cols-3 gap-4 text-sm mb-4">
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <div class="flex items-center text-gray-500 mb-1">
-                                <i class="fas fa-${booking.roomType === 'entire' ? 'home' : 'door-open'} mr-2 text-primary"></i>
-                                <span class="font-medium">Cazare</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 gap-2 sm:gap-4 text-xs sm:text-sm mb-3 sm:mb-4">
+                        <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
+                            <div class="flex items-center text-gray-500 mb-0.5 sm:mb-1">
+                                <i class="fas fa-${booking.roomType === 'entire' ? 'home' : 'door-open'} mr-1 sm:mr-2 text-primary text-xs sm:text-sm"></i>
+                                <span class="font-medium text-xs">Cazare</span>
                             </div>
-                            <p class="text-gray-900 font-semibold">${booking.roomType === 'entire' ? 'Casa Întreagă' : `${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`}</p>
+                            <p class="text-gray-900 font-semibold text-xs sm:text-sm">${booking.roomType === 'entire' ? 'Casa Întreagă' : `${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cam.' : 'camere'}`}</p>
                         </div>
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <div class="flex items-center text-gray-500 mb-1">
-                                <i class="fas fa-users mr-2 text-primary"></i>
-                                <span class="font-medium">Persoane</span>
+                        <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm">
+                            <div class="flex items-center text-gray-500 mb-0.5 sm:mb-1">
+                                <i class="fas fa-users mr-1 sm:mr-2 text-primary text-xs sm:text-sm"></i>
+                                <span class="font-medium text-xs">Persoane</span>
                             </div>
-                            <p class="text-gray-900 font-semibold">${booking.guests}</p>
+                            <p class="text-gray-900 font-semibold text-xs sm:text-sm">${booking.guests}</p>
                         </div>
-                        <div class="bg-white rounded-lg p-3 shadow-sm">
-                            <div class="flex items-center text-gray-500 mb-1">
-                                <i class="fas fa-phone mr-2 text-primary"></i>
-                                <span class="font-medium">Telefon</span>
+                        <div class="bg-white rounded-lg p-2 sm:p-3 shadow-sm col-span-2 sm:col-span-1">
+                            <div class="flex items-center text-gray-500 mb-0.5 sm:mb-1">
+                                <i class="fas fa-phone mr-1 sm:mr-2 text-primary text-xs sm:text-sm"></i>
+                                <span class="font-medium text-xs">Telefon</span>
                             </div>
-                            <p class="text-gray-900 font-semibold">${booking.phone || 'N/A'}</p>
+                            <p class="text-gray-900 font-semibold text-xs sm:text-sm">${booking.phone || 'N/A'}</p>
                         </div>
                     </div>
                     
                     ${booking.message ? `
-                        <div class="bg-white rounded-lg p-4 shadow-sm border-l-4 border-primary">
+                        <div class="bg-white rounded-lg p-2 sm:p-4 shadow-sm border-l-4 border-primary">
                             <div class="flex items-start">
-                                <i class="fas fa-comment-alt text-primary mr-3 mt-1"></i>
-                                <div>
-                                    <span class="font-medium text-gray-700 block mb-1">Mesaj:</span>
-                                    <p class="text-gray-900 leading-relaxed">${booking.message}</p>
+                                <i class="fas fa-comment-alt text-primary mr-2 sm:mr-3 mt-0.5 sm:mt-1 text-xs sm:text-sm"></i>
+                                <div class="min-w-0 flex-1">
+                                    <span class="font-medium text-gray-700 block mb-0.5 sm:mb-1 text-xs sm:text-sm">Mesaj:</span>
+                                    <p class="text-gray-900 leading-relaxed text-xs sm:text-sm break-words">${booking.message}</p>
                                 </div>
                             </div>
                         </div>
                     ` : ''}
                     
                     ${booking.status === 'pending' || (booking.status === 'confirmed' && isUpcoming) ? `
-                        <div class="mt-4 flex items-center justify-center">
+                        <div class="mt-2 sm:mt-4 flex items-center justify-center">
                             ${booking.status === 'pending' ? `
-                                <div class="flex items-center text-sm text-yellow-600 bg-yellow-50 px-3 py-2 rounded-full">
-                                    <i class="fas fa-hourglass-half mr-2"></i>
+                                <div class="flex items-center text-xs sm:text-sm text-yellow-600 bg-yellow-50 px-2 sm:px-3 py-1 sm:py-2 rounded-full">
+                                    <i class="fas fa-hourglass-half mr-1 sm:mr-2"></i>
                                     <span>În așteptarea confirmării</span>
                                 </div>
                             ` : ''}
                             ${booking.status === 'confirmed' && isUpcoming ? `
-                                <div class="flex items-center text-sm text-green-600 bg-green-50 px-3 py-2 rounded-full">
-                                    <i class="fas fa-check-circle mr-2"></i>
+                                <div class="flex items-center text-xs sm:text-sm text-green-600 bg-green-50 px-2 sm:px-3 py-1 sm:py-2 rounded-full">
+                                    <i class="fas fa-check-circle mr-1 sm:mr-2"></i>
                                     <span>Confirmată - Te așteptăm!</span>
                                 </div>
                             ` : ''}
