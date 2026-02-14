@@ -9,7 +9,7 @@
     "optimize-images": "node scripts/optimize-existing-images.js",
     "optimize-html": "node scripts/optimize-html-pages.js",
     "optimize-all": "npm run optimize-images && npm run optimize-html",
-    "build": "npm run optimize-all"
+    "build": "echo 'Static site - no build needed. Run npm run optimize-html locally before deploying.'"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",

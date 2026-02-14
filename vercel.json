@@ -1,7 +1,10 @@
 {
     "version": 2,
     "public": true,
+    "buildCommand": null,
+    "installCommand": null,
     "outputDirectory": "public",
+    "framework": null,
     "rewrites": [
         {
             "source": "/api/:path*",
