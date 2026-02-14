@@ -1,11 +1,39 @@
-api/pb_migrations
-api/pb_data
-api/pocketbase
-api/start.sh
-api/Dockerfile
-api/fly.toml
-api/CHANGELOG.md
-api/LICENSE.md
+# Dependencies
+node_modules/
+backend/node_modules/
+
+# Backend code (nu trebuie pe Vercel - doar frontend)
 backend/
+api/pb_data/
+api/pb_data_corrupted*/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# Environment files
+.env
+.env.*
+!.env.example
+
+# Scripts
+scripts/
+
+# Documentation
 *.md
+!README.md
+
+# Development files
 .DS_Store
+*.swp
+*.swo
+*~
+
+# Build files (keep public)
+# dist/
+
+# Uploads
+uploads/
+backend/uploads/
+
