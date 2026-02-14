@@ -113,46 +113,77 @@
                 const data = await response.json();
                 const photos = data.items || [];
                 const gallery = document.getElementById('full-gallery');
+
                 if (photos.length > 0) {
+                    // Use thumbnails for grid, lazy load images
                     gallery.innerHTML = photos.map((photo, idx) => `
                         <div class="relative overflow-hidden rounded-lg shadow-lg group cursor-pointer" data-idx="${idx}">
-                            <img src="${photo.imageUrl}" 
-                                 alt="Casa Chindea" 
-                                 class="w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110">
+                            <img data-src="${photo.thumbnailUrl}"
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
+                                 alt="Casa Chindea"
+                                 class="lazy w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+                                 loading="lazy">
                             <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
                                 <i class="fas fa-expand text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
                             </div>
                         </div>
                     `).join('');
-                    // Lightbox logic
+
+                    // Lazy loading implementation
+                    const lazyImages = gallery.querySelectorAll('img.lazy');
+
+                    const imageObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                img.src = img.dataset.src;
+                                img.classList.remove('lazy');
+                                observer.unobserve(img);
+                            }
+                        });
+                    }, {
+                        rootMargin: '50px' // Start loading 50px before image enters viewport
+                    });
+
+                    lazyImages.forEach(img => imageObserver.observe(img));
+
+                    // Lightbox logic - use full resolution images
                     let currentIdx = 0;
                     const modal = document.getElementById('lightbox-modal');
                     const img = document.getElementById('lightbox-img');
                     const closeBtn = document.getElementById('lightbox-close');
                     const prevBtn = document.getElementById('lightbox-prev');
                     const nextBtn = document.getElementById('lightbox-next');
+
                     function showLightbox(idx) {
                         currentIdx = idx;
+                        // Use full resolution image in lightbox
                         img.src = photos[currentIdx].imageUrl;
                         modal.classList.remove('hidden');
                     }
+
                     gallery.querySelectorAll('.group').forEach((el, idx) => {
                         el.addEventListener('click', () => showLightbox(idx));
                     });
+
                     closeBtn.onclick = () => modal.classList.add('hidden');
+
                     prevBtn.onclick = (e) => {
                         e.stopPropagation();
                         currentIdx = (currentIdx - 1 + photos.length) % photos.length;
                         img.src = photos[currentIdx].imageUrl;
                     };
+
                     nextBtn.onclick = (e) => {
                         e.stopPropagation();
                         currentIdx = (currentIdx + 1) % photos.length;
                         img.src = photos[currentIdx].imageUrl;
                     };
+
                     modal.onclick = (e) => {
                         if (e.target === modal) modal.classList.add('hidden');
                     };
+
                     document.addEventListener('keydown', function (ev) {
                         if (modal.classList.contains('hidden')) return;
                         if (ev.key === 'ArrowLeft') prevBtn.onclick(ev);

@@ -20,6 +20,28 @@
             }
         }
     </script>
+    <style>
+        /* Custom scrollbar for mobile */
+        @media (max-width: 640px) {
+            .overflow-x-auto::-webkit-scrollbar {
+                height: 4px;
+            }
+            .overflow-x-auto::-webkit-scrollbar-thumb {
+                background: #cbd5e0;
+                border-radius: 2px;
+            }
+            .overflow-x-auto::-webkit-scrollbar-track {
+                background: #f7fafc;
+            }
+        }
+
+        /* Prevent text overflow on mobile */
+        @media (max-width: 640px) {
+            h1, h2, h3 {
+                word-break: break-word;
+            }
+        }
+    </style>
 </head>
 
 <body class="bg-gray-50">
@@ -65,115 +87,115 @@
     <main class="pt-20 min-h-screen">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
             <!-- Header -->
-            <div class="bg-white rounded-2xl shadow-lg p-8 mb-8">
-                <div class="flex items-center justify-between">
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
                     <div>
-                        <h1 class="text-3xl font-bold text-gray-900">Dashboard Admin</h1>
-                        <p class="text-gray-600">Gestionează rezervările și galeria Casa Chindea</p>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Admin</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Gestionează rezervările și galeria Casa Chindea</p>
                     </div>
-                    <div class="text-right">
-                        <div class="text-2xl font-bold text-primary" id="stats-total">0</div>
-                        <div class="text-sm text-gray-500">Total rezervări</div>
+                    <div class="text-left sm:text-right">
+                        <div class="text-xl sm:text-2xl font-bold text-primary" id="stats-total">0</div>
+                        <div class="text-xs sm:text-sm text-gray-500">Total rezervări</div>
                     </div>
                 </div>
             </div>
 
             <!-- Tab Navigation -->
-            <div class="bg-white rounded-2xl shadow-lg mb-8">
-                <div class="border-b border-gray-200">
-                    <nav class="flex space-x-8 px-8">
+            <div class="bg-white rounded-2xl shadow-lg mb-4 sm:mb-6 md:mb-8">
+                <div class="border-b border-gray-200 overflow-x-auto">
+                    <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 md:px-8 min-w-max sm:min-w-0">
                         <button id="tab-bookings"
-                            class="tab-button py-4 px-1 border-b-2 border-primary text-primary font-medium">
-                            <i class="fas fa-calendar-alt mr-2"></i>Rezervări
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-primary text-primary font-medium text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-calendar-alt mr-1 sm:mr-2"></i>Rezervări
                         </button>
                         <button id="tab-gallery"
-                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-images mr-2"></i>Galerie
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-images mr-1 sm:mr-2"></i>Galerie
                         </button>
                         <button id="tab-calendar"
-                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-ban mr-2"></i>Blocări Calendar
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-ban mr-1 sm:mr-2"></i>Blocări
                         </button>
                         <button id="tab-prices"
-                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-euro-sign mr-2"></i>Prețuri
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-euro-sign mr-1 sm:mr-2"></i>Prețuri
                         </button>
                         <button id="tab-offers"
-                            class="tab-button py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700">
-                            <i class="fas fa-gift mr-2"></i>Oferte Speciale
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-gift mr-1 sm:mr-2"></i>Oferte
                         </button>
                     </nav>
                 </div>
 
                 <!-- Bookings Tab Content -->
-                <div id="content-bookings" class="tab-content p-8">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Gestionare Rezervări</h2>
-                        <div class="flex space-x-2">
-                            <select id="filter-status" class="border border-gray-300 rounded-lg px-3 py-2">
+                <div id="content-bookings" class="tab-content p-4 sm:p-6 md:p-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Rezervări</h2>
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <select id="filter-status" class="flex-1 sm:flex-initial border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base">
                                 <option value="pending">În așteptare</option>
                                 <option value="confirmed">Confirmate</option>
                                 <option value="cancelled">Anulate</option>
                             </select>
                             <button id="refresh-bookings"
-                                class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                                class="bg-primary hover:bg-secondary text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
                                 <i class="fas fa-sync-alt"></i>
                             </button>
                         </div>
                     </div>
 
                     <!-- Loading State -->
-                    <div id="bookings-loading" class="text-center py-8">
-                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
-                        <p class="text-gray-600">Se încarcă rezervările...</p>
+                    <div id="bookings-loading" class="text-center py-6 sm:py-8">
+                        <div class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
+                        <p class="text-sm sm:text-base text-gray-600">Se încarcă rezervările...</p>
                     </div>
 
                     <!-- Bookings List -->
-                    <div id="bookings-list" class="hidden space-y-4">
+                    <div id="bookings-list" class="hidden space-y-3 sm:space-y-4">
                         <!-- Bookings will be dynamically inserted here -->
                     </div>
 
                     <!-- Empty State -->
-                    <div id="bookings-empty" class="hidden text-center py-12">
-                        <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
-                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există rezervări</h3>
-                        <p class="text-gray-600">Rezervările vor apărea aici când vor fi create.</p>
+                    <div id="bookings-empty" class="hidden text-center py-8 sm:py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-5xl sm:text-6xl mb-3 sm:mb-4"></i>
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">Nu există rezervări</h3>
+                        <p class="text-sm sm:text-base text-gray-600">Rezervările vor apărea aici când vor fi create.</p>
                     </div>
                 </div>
 
                 <!-- Gallery Tab Content -->
-                <div id="content-gallery" class="tab-content p-8 hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Gestionare Galerie</h2>
+                <div id="content-gallery" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Galerie</h2>
                         <button id="add-photo-btn"
-                            class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                            class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                             <i class="fas fa-plus mr-2"></i>Adaugă Poză
                         </button>
                     </div>
 
                     <!-- Photo Upload Form -->
-                    <div id="photo-upload-form" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
+                    <div id="photo-upload-form" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
                         <form id="upload-form" enctype="multipart/form-data">
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Selectează Poză</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Selectează Poză</label>
                                     <input type="file" id="photo-file" accept="image/*" required
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Descriere
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Descriere
                                         (opțional)</label>
                                     <input type="text" id="photo-description" placeholder="Descrierea pozei..."
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                                 </div>
                             </div>
-                            <div class="mt-4 flex space-x-2">
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
                                 <button type="submit"
-                                    class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                                    class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                     <i class="fas fa-upload mr-2"></i>Încarcă
                                 </button>
                                 <button type="button" id="cancel-upload"
-                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                     Anulează
                                 </button>
                             </div>
@@ -181,47 +203,47 @@
                     </div>
 
                     <!-- Gallery Grid -->
-                    <div id="admin-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div id="admin-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
                         <!-- Photos will be loaded here -->
                     </div>
                 </div>
 
                 <!-- Calendar Blocks Tab Content -->
-                <div id="content-calendar" class="tab-content p-8 hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Blocări Calendar</h2>
-                        <button id="add-block-btn" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                <div id="content-calendar" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Blocări Calendar</h2>
+                        <button id="add-block-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                             <i class="fas fa-ban mr-2"></i>Adaugă Blocare
                         </button>
                     </div>
 
                     <!-- Block Form -->
-                    <div id="block-form" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
+                    <div id="block-form" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
                         <form id="calendar-block-form">
-                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Început</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Data Început</label>
                                     <input type="date" id="block-start" required
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
                                     <input type="date" id="block-end" required
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Motiv</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Motiv</label>
                                     <input type="text" id="block-reason" placeholder="Motiv blocare..."
-                                        class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
                                 </div>
                             </div>
-                            <div class="mt-4 flex space-x-2">
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
                                 <button type="submit"
-                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                     <i class="fas fa-ban mr-2"></i>Blochează
                                 </button>
                                 <button type="button" id="cancel-block"
-                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                     Anulează
                                 </button>
                             </div>
@@ -229,35 +251,35 @@
                     </div>
 
                     <!-- Calendar Blocks List -->
-                    <div id="calendar-blocks" class="space-y-4">
+                    <div id="calendar-blocks" class="space-y-3 sm:space-y-4">
                         <!-- Blocks will be loaded here -->
                     </div>
                 </div>
 
                 <!-- Prices Tab Content -->
-                <div id="content-prices" class="tab-content p-8 hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Gestionare Prețuri</h2>
-                        <button id="save-prices-btn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                <div id="content-prices" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Prețuri</h2>
+                        <button id="save-prices-btn" class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                             <i class="fas fa-save mr-2"></i>Salvează Prețurile
                         </button>
                     </div>
 
                     <!-- Prices Form -->
-                    <form id="prices-form" class="space-y-8">
+                    <form id="prices-form" class="space-y-6 sm:space-y-8">
                         <!-- Room Prices -->
-                        <div class="bg-gray-50 p-6 rounded-lg">
-                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                        <div class="bg-gray-50 p-4 sm:p-6 rounded-lg">
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
                                 <i class="fas fa-bed mr-2 text-primary"></i>Prețuri Camere
                             </h3>
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
                                         Preț per cameră / noapte (RON)
                                     </label>
                                     <div class="relative">
                                         <input type="number" id="price-room" min="0" step="1" required
-                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 pr-12 sm:pr-16 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
                                             placeholder="150">
                                         <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
                                     </div>
@@ -377,25 +399,25 @@
                 </div>
 
                 <!-- Offers Tab Content -->
-                <div id="content-offers" class="tab-content p-8 hidden">
-                    <div class="flex justify-between items-center mb-6">
-                        <h2 class="text-xl font-bold text-gray-900">Oferte Speciale</h2>
-                        <button id="add-offer-btn" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                <div id="content-offers" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Oferte Speciale</h2>
+                        <button id="add-offer-btn" class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                             <i class="fas fa-plus mr-2"></i>Adaugă Ofertă
                         </button>
                     </div>
 
                     <!-- Add/Edit Offer Form -->
-                    <div id="offer-form-container" class="hidden mb-8 bg-gray-50 p-6 rounded-lg">
-                        <h3 class="text-lg font-semibold text-gray-900 mb-4" id="offer-form-title">Adaugă Ofertă Nouă</h3>
-                        <form id="offer-form" class="space-y-4">
+                    <div id="offer-form-container" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4" id="offer-form-title">Adaugă Ofertă Nouă</h3>
+                        <form id="offer-form" class="space-y-3 sm:space-y-4">
                             <input type="hidden" id="offer-id">
 
-                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Tip Ofertă</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tip Ofertă</label>
                                     <select id="offer-type" required
-                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                                         <option value="">Selectează tipul</option>
                                         <option value="revelion">🎉 Revelion</option>
                                         <option value="craciun">🎄 Crăciun</option>
@@ -406,7 +428,7 @@
                                     </select>
                                 </div>
                                 <div>
-                                    <label class="block text-sm font-medium text-gray-700 mb-2">Titlu Ofertă</label>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Titlu Ofertă</label>
                                     <input type="text" id="offer-title" required placeholder="ex: Revelion 2026 la Casa Chindea"
                                         class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                                 </div>
@@ -701,63 +723,143 @@
             }
 
             listEl.innerHTML = bookings.map(booking => `
-                <div class="border border-gray-200 rounded-lg p-6 hover:shadow-md transition-shadow duration-200">
-                    <div class="flex justify-between items-start mb-4">
-                        <div>
-                            <h3 class="text-lg font-semibold text-gray-900">
-                                ${formatDate(booking.checkin)} - ${formatDate(booking.checkout)}
-                            </h3>
-                            <p class="text-gray-600">${booking.name || booking.email}</p>
+                <div class="border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <!-- Header Section -->
+                    <div class="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
+                            <div class="flex-1 sm:flex-initial">
+                                <h3 class="text-base sm:text-lg font-bold text-gray-900">
+                                    ${booking.name || 'Fără nume'}
+                                </h3>
+                                <p class="text-xs sm:text-sm text-gray-600">${formatDateTime(booking.created)}</p>
+                            </div>
                         </div>
-                        <div class="flex items-center space-x-2">
-                            <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${getStatusClass(booking.status)}">
+                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusClass(booking.status)}">
                                 <i class="${getStatusIcon(booking.status)} mr-1"></i>
                                 ${getStatusText(booking.status)}
                             </span>
                             ${booking.status === 'pending' ? `
                                 <button onclick="updateBookingStatus('${booking.id}', 'confirmed')" 
-                                    class="bg-green-600 hover:bg-green-700 text-white px-3 py-1 rounded text-sm">
-                                    <i class="fas fa-check mr-1"></i>Aprobă
+                                    class="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
+                                    Confirmă
                                 </button>
                                 <button onclick="updateBookingStatus('${booking.id}', 'cancelled')" 
-                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
-                                    <i class="fas fa-times mr-1"></i>Respinge
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
+                                    Anulează
                                 </button>
                             ` : ''}
                         </div>
                     </div>
-                    <div class="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
-                        <div>
-                            <span class="font-medium text-gray-500">Email:</span>
-                            <p class="text-gray-900">${booking.email}</p>
+
+                    <!-- Information Grid -->
+                    <div class="px-4 sm:px-6 py-4 sm:py-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <!-- Contact Information -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Date Contact</h4>
+                                ${booking.name ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Nume</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.name}</p>
+                                </div>
+                                ` : ''}
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Email</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 break-all">${booking.email}</p>
+                                </div>
+                                ${booking.phone ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Telefon</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.phone}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Reservation Details -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Detalii Rezervare</h4>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Check-in</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${formatDate(booking.checkin)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Check-out</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${formatDate(booking.checkout)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr nopți</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${calculateNights(booking.checkin, booking.checkout)} ${calculateNights(booking.checkin, booking.checkout) === 1 ? 'noapte' : 'nopți'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr persoane</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.guests} ${booking.guests === 1 ? 'persoană' : 'persoane'}</p>
+                                </div>
+                            </div>
+
+                            <!-- Room and Pricing -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Cazare</h4>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Tip închiriere</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 font-medium">
+                                        ${booking.roomType === 'entire' ? 'Casa Întreagă' : 'Camere individuale'}
+                                    </p>
+                                </div>
+                                ${booking.roomType !== 'entire' ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr camere</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}</p>
+                                </div>
+                                ` : ''}
+                                ${booking.totalPrice ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Preț total</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 font-bold">${booking.totalPrice} RON</p>
+                                </div>
+                                ` : ''}
+                            </div>
                         </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Telefon:</span>
-                            <p class="text-gray-900">${booking.phone || 'N/A'}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Persoane:</span>
-                            <p class="text-gray-900">${booking.guests}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Tip închiriere:</span>
-                            <p class="text-gray-900">${booking.roomType === 'entire' ? 'Casa Întreagă' : `${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}`}</p>
-                        </div>
-                        <div>
-                            <span class="font-medium text-gray-500">Data rezervării:</span>
-                            <p class="text-gray-900">${formatDate(booking.created)}</p>
+
+                        <!-- Additional Information -->
+                        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 space-y-2 sm:space-y-3">
+                            ${booking.message ? `
+                            <div>
+                                <span class="text-xs font-medium text-gray-500">Mesaj de la client</span>
+                                <div class="mt-2 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                                    <p class="text-sm text-gray-900 whitespace-pre-wrap">${booking.message}</p>
+                                </div>
+                            </div>
+                            ` : ''}
                         </div>
                     </div>
-                    ${booking.message ? `
-                        <div class="mt-4">
-                            <span class="font-medium text-gray-500">Mesaj:</span>
-                            <p class="text-gray-900 mt-1">${booking.message}</p>
-                        </div>
-                    ` : ''}
                 </div>
             `).join('');
 
             listEl.classList.remove('hidden');
+        }
+
+        // Helper function to calculate nights
+        function calculateNights(checkin, checkout) {
+            const start = new Date(checkin);
+            const end = new Date(checkout);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Helper function to format date and time
+        function formatDateTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('ro-RO', options);
         }
 
         async function updateBookingStatus(bookingId, newStatus) {
@@ -815,8 +917,11 @@
 
                 galleryEl.innerHTML = photos.map(photo => `
                     <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
-                        <img src="${photo.imageUrl}" alt="Gallery photo" 
-                            class="w-full h-64 object-cover">
+                        <img data-src="${photo.thumbnailUrl}"
+                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
+                            alt="Gallery photo"
+                            class="lazy w-full h-64 object-cover"
+                            loading="lazy">
                         <div class="p-4">
                             <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
                         </div>
@@ -834,6 +939,23 @@
                         </div>
                     </div>
                 `).join('');
+
+                // Lazy loading implementation for admin gallery
+                const lazyImages = galleryEl.querySelectorAll('img.lazy');
+                const imageObserver = new IntersectionObserver((entries, observer) => {
+                    entries.forEach(entry => {
+                        if (entry.isIntersecting) {
+                            const img = entry.target;
+                            img.src = img.dataset.src;
+                            img.classList.remove('lazy');
+                            observer.unobserve(img);
+                        }
+                    });
+                }, {
+                    rootMargin: '50px'
+                });
+
+                lazyImages.forEach(img => imageObserver.observe(img));
             } catch (error) {
                 galleryEl.innerHTML = `
                     <div class="col-span-full text-red-600 text-center py-8">
