@@ -2050,52 +2050,52 @@
                         console.log(`Offer ${offer.title}: type=${offer.type}, image=${offerImage}`); // Debug
 
                         return `
-                            <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-6 shadow-sm">
-                                <div class="flex justify-between items-start mb-4">
-                                    <div class="flex items-start gap-4">
-                                        <img src="${offerImage}" alt="${offerLabel}" class="w-16 h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm">
-                                        <div>
-                                            <div class="flex items-center gap-2 mb-2">
-                                                <h3 class="text-xl font-bold text-gray-900">${offer.title}</h3>
-                                                ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-1 rounded-full">Activă</span>' : ''}
-                                                ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-1 rounded-full">Expirată</span>' : ''}
+                            <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-4 sm:p-6 shadow-sm">
+                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                                    <div class="flex items-start gap-3 sm:gap-4">
+                                        <img src="${offerImage}" alt="${offerLabel}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm flex-shrink-0">
+                                        <div class="min-w-0 flex-1">
+                                            <div class="flex flex-wrap items-center gap-2 mb-1 sm:mb-2">
+                                                <h3 class="text-base sm:text-xl font-bold text-gray-900 break-words">${offer.title}</h3>
+                                                ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Activă</span>' : ''}
+                                                ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Expirată</span>' : ''}
                                             </div>
-                                            <p class="text-gray-600 text-sm">${offerLabel}</p>
+                                            <p class="text-gray-600 text-xs sm:text-sm">${offerLabel}</p>
                                         </div>
                                     </div>
-                                    <div class="flex space-x-2">
-                                        <button onclick="editOffer('${offer.id}')" class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-1 rounded text-sm">
+                                    <div class="flex gap-2 sm:space-x-2 w-full sm:w-auto">
+                                        <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
                                             <i class="fas fa-edit mr-1"></i>Editează
                                         </button>
-                                        <button onclick="deleteOffer('${offer.id}')" class="bg-red-600 hover:bg-red-700 text-white px-3 py-1 rounded text-sm">
+                                        <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
                                             <i class="fas fa-trash mr-1"></i>Șterge
                                         </button>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-4">
+                                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
                                     <div>
-                                        <span class="text-sm text-gray-500">Perioada</span>
-                                        <p class="font-semibold">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
+                                        <span class="text-xs sm:text-sm text-gray-500">Perioada</span>
+                                        <p class="font-semibold text-xs sm:text-base">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
                                     </div>
                                     <div>
-                                        <span class="text-sm text-gray-500">Număr nopți</span>
-                                        <p class="font-semibold">${offer.nights} nopți</p>
+                                        <span class="text-xs sm:text-sm text-gray-500">Număr nopți</span>
+                                        <p class="font-semibold text-xs sm:text-base">${offer.nights} nopți</p>
                                     </div>
                                     <div>
-                                        <span class="text-sm text-gray-500">Preț total (casă)</span>
-                                        <p class="font-semibold text-primary">${offer.totalPrice} RON</p>
+                                        <span class="text-xs sm:text-sm text-gray-500">Preț total</span>
+                                        <p class="font-semibold text-primary text-xs sm:text-base">${offer.totalPrice} RON</p>
                                     </div>
                                     <div>
-                                        <span class="text-sm text-gray-500">Preț per cameră</span>
-                                        <p class="font-semibold">${offer.roomPrice || '-'} RON</p>
+                                        <span class="text-xs sm:text-sm text-gray-500">Preț/cameră</span>
+                                        <p class="font-semibold text-xs sm:text-base">${offer.roomPrice || '-'} RON</p>
                                     </div>
                                 </div>
-                                <div class="border-t pt-4">
-                                    <p class="text-gray-700">${offer.details}</p>
+                                <div class="border-t pt-3 sm:pt-4">
+                                    <p class="text-gray-700 text-sm sm:text-base">${offer.details}</p>
                                     ${offer.includes ? `
-                                        <div class="mt-3">
-                                            <span class="text-sm font-medium text-gray-700">Include:</span>
-                                            <ul class="list-disc list-inside text-gray-600 mt-1">
+                                        <div class="mt-2 sm:mt-3">
+                                            <span class="text-xs sm:text-sm font-medium text-gray-700">Include:</span>
+                                            <ul class="list-disc list-inside text-gray-600 mt-1 text-xs sm:text-sm">
                                                 ${offer.includes.split('\n').filter(i => i.trim()).map(item => `<li>${item}</li>`).join('')}
                                             </ul>
                                         </div>
