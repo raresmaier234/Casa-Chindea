@@ -1,0 +1,273 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Politica de Confidențialitate - Casa Chindea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 min-h-screen">
+    <!-- Navbar -->
+    <nav class="glass-effect w-full top-0 z-50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/offers.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/js/pages/gallery.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden glass-effect border-t border-white/20 absolute w-full left-0 top-full">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/offers.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/js/pages/gallery.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <!-- Main Content -->
+    <main class="max-w-4xl mx-auto px-4 py-8">
+        <div class="glass-effect rounded-2xl p-8 shadow-xl">
+            <div class="text-center mb-8">
+                <div class="w-16 h-16 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-4">
+                    <i class="fas fa-shield-alt text-white text-2xl"></i>
+                </div>
+                <h1 class="text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                    Politica de Confidențialitate
+                </h1>
+                <p class="text-gray-600">Ultima actualizare: 14 februarie 2026</p>
+            </div>
+
+            <div class="prose prose-green max-w-none space-y-6 text-gray-700">
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">1. Introducere</h2>
+                    <p>Casa Chindea ("noi", "al nostru") respectă confidențialitatea dumneavoastră și se angajează să protejeze datele personale pe care ni le furnizați. Această Politică de Confidențialitate explică cum colectăm, utilizăm, dezvăluim și protejăm informațiile dumneavoastră personale în conformitate cu Regulamentul General privind Protecția Datelor (GDPR).</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">2. Operatorul de Date</h2>
+                    <p><strong>Casa Chindea</strong></p>
+                    <ul class="list-none space-y-2 ml-4">
+                        <li><i class="fas fa-map-marker-alt text-primary mr-2"></i>Adresă: Hășmaș, județul Harghita, România</li>
+                        <li><i class="fas fa-envelope text-primary mr-2"></i>Email: contact@casachindea.ro</li>
+                        <li><i class="fas fa-phone text-primary mr-2"></i>Telefon: +40 XXX XXX XXX</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">3. Ce Date Personale Colectăm</h2>
+                    <p>Colectăm următoarele tipuri de informații personale:</p>
+
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3 mt-4">3.1 Date furnizate direct de dvs.:</h3>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Date de identificare:</strong> nume, prenume</li>
+                        <li><strong>Date de contact:</strong> adresă de email, număr de telefon</li>
+                        <li><strong>Date de autentificare:</strong> parolă criptată</li>
+                        <li><strong>Date de rezervare:</strong> datele sejurului, numărul de oaspeți, preferințe speciale</li>
+                        <li><strong>Date de plată:</strong> informații necesare procesării plăților</li>
+                    </ul>
+
+                    <h3 class="text-xl font-semibold text-gray-800 mb-3 mt-4">3.2 Date colectate automat:</h3>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Date tehnice:</strong> adresă IP, tip de browser, sistem de operare</li>
+                        <li><strong>Date de utilizare:</strong> pagini vizitate, timp petrecut pe site, clickuri</li>
+                        <li><strong>Cookie-uri:</strong> pentru funcționalitatea site-ului și analitică</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">4. Cum Utilizăm Datele Dvs.</h2>
+                    <p>Utilizăm datele dumneavoastră personale pentru următoarele scopuri:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Procesarea rezervărilor:</strong> Pentru a gestiona și confirma rezervările dvs.</li>
+                        <li><strong>Comunicare:</strong> Pentru a vă contacta cu privire la rezervările dvs., modificări sau anulări</li>
+                        <li><strong>Facturare:</strong> Pentru a emite facturi și procesa plăți</li>
+                        <li><strong>Îmbunătățirea serviciilor:</strong> Pentru a analiza și îmbunătăți experiența utilizatorilor</li>
+                        <li><strong>Marketing:</strong> Pentru a trimite oferte și promoții (doar cu consimțământul dvs.)</li>
+                        <li><strong>Respectarea obligațiilor legale:</strong> Pentru a respecta cerințele legale și fiscale</li>
+                        <li><strong>Securitate:</strong> Pentru a preveni frauda și a asigura securitatea platformei</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">5. Baza Legală pentru Prelucrarea Datelor</h2>
+                    <p>Prelucrăm datele dumneavoastră personale pe baza următoarelor temeiuri juridice:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Executarea contractului:</strong> Pentru a îndeplini obligațiile contractuale legate de rezervare</li>
+                        <li><strong>Consimțământ:</strong> Pentru marketing și comunicări promoționale</li>
+                        <li><strong>Interese legitime:</strong> Pentru îmbunătățirea serviciilor și securitatea platformei</li>
+                        <li><strong>Obligații legale:</strong> Pentru respectarea legislației aplicabile</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">6. Partajarea Datelor</h2>
+                    <p>Nu vindem, închiriem sau comercializăm datele dumneavoastră personale. Putem partaja datele dvs. cu:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Furnizori de servicii:</strong> Procesatori de plăți, servicii de hosting, servicii email</li>
+                        <li><strong>Autorități:</strong> Când este cerut de lege sau pentru a proteja drepturile noastre</li>
+                        <li><strong>Parteneri de afaceri:</strong> Doar cu consimțământul dvs. explicit</li>
+                    </ul>
+                    <p class="mt-3">Toți partenerii noștri sunt obligați contractual să protejeze datele dumneavoastră și să le utilizeze doar conform instrucțiunilor noastre.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">7. Retenția Datelor</h2>
+                    <p>Păstrăm datele dumneavoastră personale atât timp cât este necesar pentru:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li>Furnizarea serviciilor noastre</li>
+                        <li>Respectarea obligațiilor legale (de exemplu, obligații fiscale - 10 ani)</li>
+                        <li>Rezolvarea disputelor și aplicarea acordurilor noastre</li>
+                    </ul>
+                    <p class="mt-3">După expirarea perioadei de retenție, datele vor fi șterse sau anonimizate în mod securizat.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">8. Drepturile Dumneavoastră</h2>
+                    <p>Conform GDPR, aveți următoarele drepturi:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Dreptul de acces:</strong> Să solicitați o copie a datelor personale pe care le deținem despre dvs.</li>
+                        <li><strong>Dreptul la rectificare:</strong> Să corectați datele inexacte sau incomplete</li>
+                        <li><strong>Dreptul la ștergere ("dreptul de a fi uitat"):</strong> Să solicitați ștergerea datelor dvs.</li>
+                        <li><strong>Dreptul la restricționare:</strong> Să limitați prelucrarea datelor dvs.</li>
+                        <li><strong>Dreptul la portabilitate:</strong> Să primiți datele într-un format structurat</li>
+                        <li><strong>Dreptul de opoziție:</strong> Să vă opuneți prelucrării datelor dvs.</li>
+                        <li><strong>Dreptul de a retrage consimțământul:</strong> În orice moment, fără a afecta legalitatea prelucrării anterioare</li>
+                    </ul>
+                    <p class="mt-3">Pentru a vă exercita aceste drepturi, vă rugăm să ne contactați la contact@casachindea.ro</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">9. Securitatea Datelor</h2>
+                    <p>Implementăm măsuri tehnice și organizatorice adecvate pentru a proteja datele dumneavoastră împotriva:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li>Accesului neautorizat</li>
+                        <li>Modificării, divulgării sau distrugerii neautorizate</li>
+                        <li>Pierderii accidentale</li>
+                    </ul>
+                    <p class="mt-3">Măsurile noastre de securitate includ:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li>Criptarea parolelor și a datelor sensibile</li>
+                        <li>Conexiuni HTTPS securizate</li>
+                        <li>Acces restricționat la datele personale</li>
+                        <li>Monitorizare și audit regulat</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">10. Cookie-uri</h2>
+                    <p>Utilizăm cookie-uri și tehnologii similare pentru:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li><strong>Cookie-uri esențiale:</strong> Necesare pentru funcționarea site-ului</li>
+                        <li><strong>Cookie-uri de performanță:</strong> Pentru a analiza traficul și utilizarea site-ului</li>
+                        <li><strong>Cookie-uri funcționale:</strong> Pentru a reține preferințele dvs.</li>
+                        <li><strong>Cookie-uri de marketing:</strong> Pentru a vă afișa reclame relevante (doar cu consimțământul dvs.)</li>
+                    </ul>
+                    <p class="mt-3">Puteți gestiona preferințele de cookie-uri prin setările browserului dvs.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">11. Transferuri Internaționale</h2>
+                    <p>Datele dumneavoastră personale sunt stocate și procesate în România, în cadrul Uniunii Europene. Dacă transferăm date în afara UE, ne asigurăm că există garanții adecvate conform GDPR.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">12. Minori</h2>
+                    <p>Serviciile noastre nu sunt destinate persoanelor sub 16 ani. Nu colectăm în mod deliberat informații personale de la minori. Dacă descoperim că am colectat astfel de date, le vom șterge prompt.</p>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">13. Modificări ale Politicii</h2>
+                    <p>Ne rezervăm dreptul de a actualiza această Politică de Confidențialitate periodic. Vă vom notifica despre modificări semnificative prin:</p>
+                    <ul class="list-disc list-inside space-y-2 ml-4">
+                        <li>Publicarea noii versiuni pe site</li>
+                        <li>Email (pentru modificări importante)</li>
+                        <li>Notificare la următoarea autentificare</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">14. Plângeri</h2>
+                    <p>Dacă considerați că drepturile dvs. de protecție a datelor au fost încălcate, aveți dreptul de a depune o plângere la Autoritatea Națională de Supraveghere a Prelucrării Datelor cu Caracter Personal (ANSPDCP):</p>
+                    <ul class="list-none space-y-2 ml-4 mt-3">
+                        <li><i class="fas fa-globe text-primary mr-2"></i>www.dataprotection.ro</li>
+                        <li><i class="fas fa-envelope text-primary mr-2"></i>anspdcp@dataprotection.ro</li>
+                    </ul>
+                </section>
+
+                <section>
+                    <h2 class="text-2xl font-semibold text-primary mb-4">15. Contact</h2>
+                    <p>Pentru întrebări despre această Politică de Confidențialitate sau despre cum prelucrăm datele dvs., vă rugăm să ne contactați:</p>
+                    <ul class="list-none space-y-2 ml-4 mt-3">
+                        <li><i class="fas fa-map-marker-alt text-primary mr-2"></i>Hășmaș, județul Harghita, România</li>
+                        <li><i class="fas fa-envelope text-primary mr-2"></i>contact@casachindea.ro</li>
+                        <li><i class="fas fa-phone text-primary mr-2"></i>+40 XXX XXX XXX</li>
+                    </ul>
+                </section>
+            </div>
+
+            <div class="mt-8 pt-6 border-t border-gray-200 text-center">
+                <p class="text-gray-600 text-sm">
+                    Prin utilizarea serviciilor noastre, confirmați că ați citit și înțeles această Politică de Confidențialitate.
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-gradient-to-r from-gray-800 to-gray-900 text-white mt-12">
+        <div class="max-w-7xl mx-auto px-4 py-8">
+            <div class="text-center">
+                <p>&copy; 2026 Casa Chindea. Toate drepturile rezervate.</p>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
+

@@ -10,9 +10,6 @@ RUN wget https://github.com/pocketbase/pocketbase/releases/download/v0.36.2/pock
     && rm pocketbase_0.36.2_linux_amd64.zip \
     && chmod +x pocketbase
 
-# Create data directory
-RUN mkdir -p /app/pb_data
-
 EXPOSE 8090
 
 CMD ["./pocketbase", "serve", "--dir", "/app/pb_data", "--http", "0.0.0.0:8090"]

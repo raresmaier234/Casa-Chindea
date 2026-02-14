@@ -62,27 +62,55 @@
             position: absolute;
             top: 0;
             left: 0;
-            height: 100%;
             padding: 0.75rem;
             pointer-events: none;
             border: 1px solid transparent;
-            transform-origin: 0 0;
-            transition: opacity 0.1s ease-in-out, transform 0.1s ease-in-out;
             color: #6b7280;
-            font-size: 0.875rem;
+            font-size: 0.75rem;
+            /* Label is now STATIC - always stays at top */
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+            transform-origin: 0 0;
         }
         
         @media (min-width: 640px) {
             .form-floating label {
                 padding: 1rem 0.75rem;
-                font-size: 1rem;
+                font-size: 0.875rem;
             }
         }
 
-        .form-floating input:focus~label,
-        .form-floating input:not(:placeholder-shown)~label {
-            opacity: 0.65;
-            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+        /* Fix for autofill background color */
+        .form-floating input:-webkit-autofill,
+        .form-floating input:-webkit-autofill:hover,
+        .form-floating input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.5) inset;
+            box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.5) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        /* Password toggle button */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: #059669;
+        }
+
+        .form-floating-with-toggle {
+            position: relative;
+        }
+
+        .form-floating-with-toggle input {
+            padding-right: 3rem;
         }
 
         .glass-effect {
@@ -193,13 +221,14 @@
                     </label>
                 </div>
 
-                <div class="form-floating">
+                <div class="form-floating form-floating-with-toggle">
                     <input type="password" id="password" name="password" required placeholder=" "
                         class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
                         autocomplete="current-password">
                     <label for="password" class="px-4 text-sm sm:text-base">
                         <i class="fas fa-lock mr-2 text-primary"></i>Parola
                     </label>
+                    <i class="password-toggle fas fa-eye" id="toggle-password" onclick="togglePassword('password', 'toggle-password')"></i>
                 </div>
 
                 <button type="submit" id="login-btn"
@@ -239,6 +268,22 @@
     </main>
     <script src="https://cdn.auth0.com/js/auth0-spa-js/2.2/auth0-spa-js.production.js"></script>
     <script>
+        // Password toggle functionality
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
         // Configurare Auth0 pentru Casa Chindea
         // Încarcă configurația din backend pentru securitate
         let auth0Config = {

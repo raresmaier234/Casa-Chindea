@@ -7,6 +7,7 @@ import jwt from 'jsonwebtoken';
 import bcrypt from 'bcryptjs';
 import { auth } from 'express-openid-connect';
 import multer from 'multer';
+import nodemailer from 'nodemailer';
 
 dotenv.config();
 
@@ -22,6 +23,35 @@ const upload = multer({
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Helper function to ensure PocketBase is authenticated as admin
+async function ensurePocketBaseAuth() {
+    try {
+        // Check if already authenticated
+        if (pb.authStore.isValid) {
+            return true;
+        }
+
+        // Authenticate as admin using email/password
+        // You need to have POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD in .env
+        if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
+            await pb.admins.authWithPassword(
+                process.env.POCKETBASE_ADMIN_EMAIL,
+                process.env.POCKETBASE_ADMIN_PASSWORD
+            );
+            console.log('✅ PocketBase authenticated as admin');
+            return true;
+        }
+
+        console.log('⚠️ No PocketBase admin credentials found');
+        return false;
+    } catch (err) {
+        console.error('❌ PocketBase admin auth failed:', err.message);
+        return false;
+    }
+}
+
+// Authenticate on startup
+ensurePocketBaseAuth();
 
 // Auth0 configuration using express-openid-connect
 const auth0Config = {
@@ -126,9 +156,184 @@ app.post('/api/auth/login', async (req, res) => {
     }
 });
 
-// Register endpoint (opțional, pentru înregistrarea utilizatorilor noi)
+// Temporary storage for verification codes (in production, use Redis or database)
+const verificationCodes = new Map(); // { email: { code, name, password, expires } }
+
+// Helper function to generate 6-digit verification code
+function generateVerificationCode() {
+    return Math.floor(100000 + Math.random() * 900000).toString();
+}
+
+// Helper function to send verification email
+async function sendVerificationEmail(email, code, name) {
+    console.log('📧 sendVerificationEmail called with:', { email, code, name });
+
+    // Determine which SMTP service to use based on environment
+    const isProduction = process.env.NODE_ENV === 'production';
+    const useSendGrid = process.env.SENDGRID_API_KEY;
+
+    console.log('📧 Email service:', useSendGrid ? 'SendGrid' : 'Gmail SMTP');
+
+    try {
+        let transporter;
+
+        if (useSendGrid) {
+            // SendGrid configuration (RECOMMENDED FOR PRODUCTION)
+            transporter = nodemailer.createTransport({
+                host: 'smtp.sendgrid.net',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: 'apikey',
+                    pass: process.env.SENDGRID_API_KEY
+                }
+            });
+        } else {
+            // Gmail configuration (FOR DEVELOPMENT ONLY)
+            // NOTE: You need to enable "App Password" in Gmail settings
+            // https://support.google.com/accounts/answer/185833
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS // This must be an App Password, not regular password
+                }
+            });
+        }
+
+        console.log('✅ Transporter created');
+
+        const mailOptions = {
+            from: `"Casa Chindea" <${process.env.SMTP_USER}>`,
+            to: email,
+            subject: 'Confirmă-ți contul Casa Chindea',
+            html: `
+                <!DOCTYPE html>
+                <html>
+                <head>
+                    <style>
+                        body { font-family: Arial, sans-serif; line-height: 1.6; color: #333; }
+                        .container { max-width: 600px; margin: 0 auto; padding: 20px; }
+                        .header { background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 30px; text-align: center; border-radius: 10px 10px 0 0; }
+                        .content { background: #f9f9f9; padding: 30px; border-radius: 0 0 10px 10px; }
+                        .code-box { background: white; border: 2px solid #059669; padding: 20px; text-align: center; font-size: 32px; font-weight: bold; color: #059669; letter-spacing: 5px; margin: 20px 0; border-radius: 8px; }
+                        .button { display: inline-block; background: linear-gradient(135deg, #059669 0%, #10b981 100%); color: white; padding: 12px 30px; text-decoration: none; border-radius: 8px; margin: 20px 0; }
+                        .footer { text-align: center; color: #666; font-size: 12px; margin-top: 20px; }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <div class="header">
+                            <h1>🏡 Casa Chindea</h1>
+                            <p>Bine ai venit!</p>
+                        </div>
+                        <div class="content">
+                            <h2>Salut, ${name}! 👋</h2>
+                            <p>Mulțumim pentru că ai ales să creezi un cont la Casa Chindea!</p>
+                            <p>Pentru a finaliza înregistrarea, te rugăm să introduci codul de verificare de mai jos:</p>
+                            
+                            <div class="code-box">${code}</div>
+                            
+                            <p style="text-align: center; color: #666;">Sau dă click pe butonul de mai jos:</p>
+                            <p style="text-align: center;">
+                                <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/verify-email.html?email=${encodeURIComponent(email)}&code=${code}" class="button">
+                                    Verifică Contul
+                                </a>
+                            </p>
+                            
+                            <p><strong>Important:</strong> Acest cod este valabil 15 minute și poate fi folosit o singură dată.</p>
+                            
+                            <p>Dacă nu ai solicitat crearea acestui cont, te rugăm să ignori acest email.</p>
+                            
+                            <p>Cu drag,<br>Echipa Casa Chindea</p>
+                        </div>
+                        <div class="footer">
+                            <p>© 2026 Casa Chindea. Toate drepturile rezervate.</p>
+                            <p>Hășmaș, județul Harghita, România</p>
+                        </div>
+                    </div>
+                </body>
+                </html>
+            `
+        };
+
+        console.log('📤 Sending email to:', email);
+        const info = await transporter.sendMail(mailOptions);
+        console.log('✅ Email sent successfully! MessageId:', info.messageId);
+
+        return true;
+    } catch (err) {
+        console.error('❌ Error sending verification email:', err);
+        console.error('❌ Error details:', {
+            message: err.message,
+            code: err.code,
+            command: err.command
+        });
+        return false;
+    }
+}
+
+// NEW: Check if email exists (called before registration)
+app.post('/api/auth/check-email', async (req, res) => {
+    const { email } = req.body;
+
+    console.log('🔍 Checking email availability:', email);
+
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            error: 'Email este obligatoriu.'
+        });
+    }
+
+    try {
+        // Use getFirstListItem which throws error if not found
+        try {
+            const existingUser = await pb.collection('users').getFirstListItem(`email="${email}"`);
+
+            // If we get here, user exists
+            console.log('❌ Email already exists:', email, '- User ID:', existingUser.id);
+            return res.status(200).json({
+                success: false,
+                exists: true,
+                message: 'Acest email este deja înregistrat. Te rugăm să te autentifici sau să folosești alt email.'
+            });
+        } catch (notFoundErr) {
+            // Error 404 or "not found" means email doesn't exist - this is what we want
+            if (notFoundErr.status === 404 || notFoundErr.message?.includes('not found')) {
+                console.log('✅ Email available:', email);
+                return res.status(200).json({
+                    success: true,
+                    exists: false,
+                    message: 'Email disponibil.'
+                });
+            }
+
+            // Some other error (e.g., 400 - bad request with filter syntax)
+            console.error('⚠️ Unexpected error checking email:', notFoundErr);
+            throw notFoundErr;
+        }
+
+    } catch (err) {
+        console.error('❌ Error checking email:', err);
+        console.error('❌ Error details:', {
+            status: err.status,
+            message: err.message,
+            data: err.data
+        });
+
+        return res.status(500).json({
+            success: false,
+            error: 'Eroare la verificarea email-ului.'
+        });
+    }
+});
+
+// Register endpoint - Step 1: Send verification code
 app.post('/api/auth/register', async (req, res) => {
     const { email, password, name } = req.body;
+
+    console.log('📧 Registration attempt for:', email);
 
     if (!email || !password) {
         return res.status(400).json({
@@ -137,23 +342,171 @@ app.post('/api/auth/register', async (req, res) => {
         });
     }
 
+    if (password.length < 8) {
+        return res.status(400).json({
+            success: false,
+            error: 'Parola trebuie să aibă cel puțin 8 caractere.'
+        });
+    }
+
     try {
-        // Creează utilizator nou în PocketBase
-        const userData = {
-            email,
-            password,
-            passwordConfirm: password,
-            name: name || email.split('@')[0]
-        };
+        // Check if email already exists in PocketBase
+        try {
+            const existingUsers = await pb.collection('users').getList(1, 1, {
+                filter: `email="${email}"`
+            });
 
-        const record = await pb.collection('users').create(userData);
+            if (existingUsers && existingUsers.items && existingUsers.items.length > 0) {
+                console.log('❌ Email already exists in database:', email);
+                return res.status(400).json({
+                    success: false,
+                    error: 'Acest email este deja înregistrat. Te rugăm să te autentifici sau să folosești alt email.'
+                });
+            }
 
-        // Trimite email de verificare (opțional)
-        await pb.collection('users').requestVerification(email);
+            console.log('✅ Email available:', email);
+        } catch (err) {
+            // If it's a 404, email doesn't exist (which is good)
+            // Any other error, we'll log it but continue
+            if (err.status !== 404) {
+                console.log('⚠️ Warning checking email existence:', err.message);
+            }
+            console.log('✅ Email available (no existing user found)');
+        }
+
+        // Also check if there's a pending verification for this email
+        if (verificationCodes.has(email)) {
+            console.log('⚠️ Verification already in progress for:', email);
+            // Delete old verification and create new one
+            verificationCodes.delete(email);
+            console.log('✅ Cleared old verification code');
+        }
+
+        // Generate verification code
+        const verificationCode = generateVerificationCode();
+        const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+        console.log('✅ Generated code:', verificationCode);
+
+        // Store verification data temporarily
+        verificationCodes.set(email, {
+            code: verificationCode,
+            name: name || email.split('@')[0],
+            password: password,
+            expires: expiresAt,
+            attempts: 0
+        });
+
+        console.log('✅ Stored verification data for:', email);
+
+        // Send verification email
+        console.log('📤 Attempting to send email...');
+        const emailSent = await sendVerificationEmail(email, verificationCode, name || email.split('@')[0]);
+
+        if (!emailSent) {
+            console.error('❌ Failed to send verification email');
+            verificationCodes.delete(email);
+            return res.status(500).json({
+                success: false,
+                error: 'Eroare la trimiterea emailului de verificare. Te rugăm să încerci din nou.'
+            });
+        }
+
+        console.log('✅ Email sent successfully to:', email);
 
         res.json({
             success: true,
-            message: 'Cont creat cu succes! Verifică-ți emailul pentru activare.',
+            message: 'Cod de verificare trimis! Verifică-ți emailul.',
+            email: email
+        });
+    } catch (err) {
+        console.error('❌ Registration error:', err);
+        console.error('❌ Error details:', {
+            message: err.message,
+            stack: err.stack
+        });
+        res.status(500).json({
+            success: false,
+            error: 'Eroare server la înregistrare: ' + err.message
+        });
+    }
+});
+
+// Register endpoint - Step 2: Verify code and create account
+app.post('/api/auth/verify-email', async (req, res) => {
+    const { email, code } = req.body;
+
+    if (!email || !code) {
+        return res.status(400).json({
+            success: false,
+            error: 'Email și cod sunt obligatorii.'
+        });
+    }
+
+    try {
+        const verificationData = verificationCodes.get(email);
+
+        if (!verificationData) {
+            return res.status(400).json({
+                success: false,
+                error: 'Cod de verificare invalid sau expirat.'
+            });
+        }
+
+        // Check if code expired
+        if (Date.now() > verificationData.expires) {
+            verificationCodes.delete(email);
+            return res.status(400).json({
+                success: false,
+                error: 'Codul de verificare a expirat. Te rugăm să te înregistrezi din nou.'
+            });
+        }
+
+        // Check attempts (max 5 attempts)
+        if (verificationData.attempts >= 5) {
+            verificationCodes.delete(email);
+            return res.status(400).json({
+                success: false,
+                error: 'Prea multe încercări eșuate. Te rugăm să te înregistrezi din nou.'
+            });
+        }
+
+        // Verify code
+        if (verificationData.code !== code.trim()) {
+            verificationData.attempts++;
+            return res.status(400).json({
+                success: false,
+                error: `Cod incorect. Mai ai ${5 - verificationData.attempts} încercări.`
+            });
+        }
+
+        // Create user in PocketBase
+        const userData = {
+            email: email,
+            password: verificationData.password,
+            passwordConfirm: verificationData.password,
+            name: verificationData.name,
+            emailVisibility: true
+            // NOTE: Do NOT set 'verified' field - PocketBase manages this automatically
+            // The user is verified through our custom code verification process
+        };
+
+        console.log('📝 Creating user in PocketBase:', { email, name: verificationData.name });
+
+        const record = await pb.collection('users').create(userData);
+
+        console.log('✅ User created successfully:', record.id);
+
+        // Remove verification data
+        verificationCodes.delete(email);
+
+        // NOTE: We DO NOT generate a JWT token here
+        // User must login manually after registration for better security
+
+        res.json({
+            success: true,
+            message: 'Cont creat cu succes! Te rugăm să te autentifici.',
+            // NO token returned - user must login
             user: {
                 id: record.id,
                 email: record.email,
@@ -161,19 +514,93 @@ app.post('/api/auth/register', async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Registration error:', err);
+        console.error('❌ Verification error:', err);
+        console.error('❌ Error details:', {
+            message: err.message,
+            status: err.status,
+            data: err.data,
+            response: err.response
+        });
 
-        if (err.status === 400) {
+        if (err.status === 400 && err.data) {
+            // Try to extract specific field errors from PocketBase
+            let errorMessage = 'Date invalide.';
+
+            if (err.data.data) {
+                const fieldErrors = Object.entries(err.data.data).map(([field, error]) => {
+                    return `${field}: ${error.message}`;
+                }).join(', ');
+
+                if (fieldErrors) {
+                    errorMessage = fieldErrors;
+                }
+            } else if (err.data.message) {
+                errorMessage = err.data.message;
+            }
+
             res.status(400).json({
                 success: false,
-                error: 'Email deja existent sau date invalide.'
+                error: errorMessage
             });
         } else {
             res.status(500).json({
                 success: false,
-                error: 'Eroare server la înregistrare.'
+                error: 'Eroare server la verificare: ' + (err.message || 'Unknown error')
             });
         }
+    }
+});
+
+// Resend verification code
+app.post('/api/auth/resend-code', async (req, res) => {
+    const { email } = req.body;
+
+    if (!email) {
+        return res.status(400).json({
+            success: false,
+            error: 'Email este obligatoriu.'
+        });
+    }
+
+    try {
+        const verificationData = verificationCodes.get(email);
+
+        if (!verificationData) {
+            return res.status(400).json({
+                success: false,
+                error: 'Nu există nicio solicitare de înregistrare pentru acest email.'
+            });
+        }
+
+        // Generate new code
+        const newCode = generateVerificationCode();
+        const expiresAt = Date.now() + 15 * 60 * 1000; // 15 minutes
+
+        // Update verification data
+        verificationData.code = newCode;
+        verificationData.expires = expiresAt;
+        verificationData.attempts = 0;
+
+        // Send new verification email
+        const emailSent = await sendVerificationEmail(email, newCode, verificationData.name);
+
+        if (!emailSent) {
+            return res.status(500).json({
+                success: false,
+                error: 'Eroare la trimiterea emailului.'
+            });
+        }
+
+        res.json({
+            success: true,
+            message: 'Un nou cod de verificare a fost trimis!'
+        });
+    } catch (err) {
+        console.error('Resend code error:', err);
+        res.status(500).json({
+            success: false,
+            error: 'Eroare server.'
+        });
     }
 });
 
