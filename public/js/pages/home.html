@@ -200,6 +200,10 @@
         </div>
     </section>
     <script>
+        function isVisualEditorActive() {
+  return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+}
+
         // Load CMS content when page loads
         document.addEventListener('DOMContentLoaded', () => {
             loadCMSContent('home');
@@ -559,10 +563,10 @@
   const observer = new MutationObserver(hideHeroSkeletonIfEditor);
   observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
 })();
-        // Hide all skeletons if visual editor becomes active after page load
+        // Observer global pentru ascundere skeleton-uri
 (function(){
   function hideAllSkeletonsIfEditor() {
-    if(window.isVisualEditor || document.body.classList.contains('visual-editor-active')) {
+    if(isVisualEditorActive()) {
       document.querySelectorAll('.skeleton-image, #hero-skeleton').forEach(el => el.style.display = 'none');
     }
   }

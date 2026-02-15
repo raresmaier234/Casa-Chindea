@@ -577,7 +577,7 @@
             if (!carousel) return;
 
             // If no photos, show skeleton placeholder doar dacă nu e editor vizual
-            if ((!photos || photos.length === 0) && !(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
+            if ((!photos || photos.length === 0) && !isVisualEditorActive()) {
                 carousel.innerHTML = `<div class="skeleton-image w-full h-full absolute inset-0"></div>`;
                 return;
             }
@@ -648,6 +648,22 @@
         function reserveCottage() {
             window.location.href = '/js/pages/booking.html?type=entire';
         }
+
+        function isVisualEditorActive() {
+          return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+        }
+
+        // Observer global pentru ascundere skeleton-uri
+        (function(){
+          function hideAllSkeletonsIfEditor() {
+            if(isVisualEditorActive()) {
+              document.querySelectorAll('.skeleton-image, .offer-img-skeleton, .skeleton-offer').forEach(el => el.style.display = 'none');
+            }
+          }
+          hideAllSkeletonsIfEditor();
+          const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+          observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
     </script>
 
     <section class="pt-20 pb-12 bg-gradient-to-b from-gray-50 to-white min-h-screen">
