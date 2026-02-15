@@ -1,4 +1,4 @@
-// CMS Content Loader v2.0 - Optimized for Production
+// CMS Content Loader v3.0 - Optimized for Production with Preload Support
 // Loads dynamic content from PocketBase with instant rendering
 
 (function() {
@@ -105,7 +105,7 @@
         });
     }
 
-    // Main load function
+    // Main load function - uses pre-fetched data if available
     async function loadCMSContent(pageName) {
         pageName = pageName || getPageName();
 
@@ -113,23 +113,30 @@
         const cached = getCachedContent(pageName);
         if (cached) {
             applySections(cached, pageName);
+            markAllCMSElementsLoaded();
+            return; // Use cache, skip fetch
         }
 
-        // Fetch fresh content in background
+        // Try pre-fetched data from window._cmsPromise
         try {
-            const response = await fetch(`/api/admin/cms/sections?page=${pageName}`);
-            const data = await response.json();
+            let data;
+            if (window._cmsPromise) {
+                data = await window._cmsPromise;
+                window._cmsPromise = null; // Clear after use
+            }
 
-            if (data.success && data.sections && data.sections.length > 0) {
+            // Fallback to fresh fetch if no pre-fetched data
+            if (!data) {
+                const response = await fetch(`/api/admin/cms/sections?page=${pageName}`);
+                data = await response.json();
+            }
+
+            if (data && data.success && data.sections && data.sections.length > 0) {
                 setCachedContent(pageName, data.sections);
-
-                // Apply if different from cache or no cache
-                if (!cached) {
-                    applySections(data.sections, pageName);
-                }
+                applySections(data.sections, pageName);
             }
         } catch (e) {
-            // Silent fail - use cached or default content
+            // Silent fail - use default content
         }
 
         // Mark all CMS elements as loaded to remove skeleton

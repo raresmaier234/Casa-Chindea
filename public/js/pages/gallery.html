@@ -7,11 +7,17 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Galerie Casa Chindea</title>
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- Early data fetch for instant render -->
+    <script>
+        window._galleryPromise = fetch('/api/photos?limit=500').then(r => r.json()).catch(() => null);
+    </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
@@ -19,6 +25,18 @@
         @keyframes skeleton-pulse {
             0%, 100% { opacity: 0.4; }
             50% { opacity: 0.7; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .skeleton-image {
+            background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
         }
 
         /* Hide CMS elements until loaded */
@@ -157,13 +175,33 @@
         </div>
     </section>
     <script>
+        // Show skeleton while loading
+        function showGallerySkeleton() {
+            const gallery = document.getElementById('full-gallery');
+            if (!gallery) return;
+            gallery.innerHTML = Array(8).fill(0).map(() => `
+                <div class="skeleton-image h-64 w-full"></div>
+            `).join('');
+        }
+
         async function loadGalleryPhotos() {
+            const gallery = document.getElementById('full-gallery');
+
             try {
-                // Request all photos with a high limit to ensure we get everything
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
-                const photos = data.items || [];
-                const gallery = document.getElementById('full-gallery');
+                // Use pre-fetched data if available
+                let data;
+                if (window._galleryPromise) {
+                    data = await window._galleryPromise;
+                    window._galleryPromise = null; // Clear after use
+                }
+
+                // Fallback to fresh fetch if no pre-fetched data
+                if (!data) {
+                    const response = await fetch('/api/photos?limit=500');
+                    data = await response.json();
+                }
+
+                const photos = data?.items || [];
 
                 if (photos.length > 0) {
                     // Use thumbnails for grid, lazy load images

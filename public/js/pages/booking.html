@@ -7,10 +7,25 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rezervare Casa Chindea</title>
+
+    <!-- Early data fetch for instant render -->
+    <script>
+        const t = Date.now();
+        window._bookingDataPromises = {
+            prices: fetch(`/api/prices?_t=${t}`).then(r => r.json()).catch(() => null),
+            availability: fetch(`/api/booking/booking-availability?_t=${t}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            }).then(r => r.json()).catch(() => null),
+            offers: fetch(`/api/admin/offers?_t=${t}`).then(r => r.json()).catch(() => null)
+        };
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
@@ -261,34 +276,39 @@
             return unavailableDateRangesNormalized.some(range => (dLocal >= range.start && dLocal <= range.end));
         }
 
-        function fetchAvailabilityAndInitCalendar() {
-            // Fetch unavailable dates from the backend with cache busting
-            fetch(`/api/booking/booking-availability?_t=${Date.now()}`, {
-                cache: 'no-store',
-                headers: {
-                    'Cache-Control': 'no-cache, no-store, must-revalidate',
-                    'Pragma': 'no-cache'
+        async function fetchAvailabilityAndInitCalendar() {
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._bookingDataPromises?.availability) {
+                    data = await window._bookingDataPromises.availability;
+                    window._bookingDataPromises.availability = null;
                 }
-            })
-                .then(res => {
-                    if (!res.ok) {
-                        throw new Error(`HTTP error! status: ${res.status}`);
-                    }
-                    return res.json();
-                })
-                .then(data => {
-                    if (data.success) {
-                        unavailableDateRanges = data.unavailableDates;
-                        normalizeUnavailableRanges();
-                    }
-                    initCalendar();
-                })
-                .catch(err => {
-                    // In case of error, ensure normalized array is empty and initialize calendar
-                    unavailableDateRanges = [];
-                    unavailableDateRangesNormalized = [];
-                    initCalendar(); // Initialize anyway but without blocked dates
-                });
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch(`/api/booking/booking-availability?_t=${Date.now()}`, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    data = await response.json();
+                }
+
+                if (data?.success) {
+                    unavailableDateRanges = data.unavailableDates;
+                    normalizeUnavailableRanges();
+                }
+                initCalendar();
+            } catch (err) {
+                // In case of error, ensure normalized array is empty and initialize calendar
+                unavailableDateRanges = [];
+                unavailableDateRangesNormalized = [];
+                initCalendar();
+            }
         }
 
         let selectedOffer = null; // Ofertă selectată din URL
@@ -522,11 +542,22 @@
         // Încarcă prețurile din API
         async function loadPrices() {
             try {
-                const response = await fetch('/api/prices');
-                const data = await response.json();
-                if (data.success && data.prices) {
+                // Use pre-fetched data if available
+                let data;
+                if (window._bookingDataPromises?.prices) {
+                    data = await window._bookingDataPromises.prices;
+                    window._bookingDataPromises.prices = null;
+                }
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch('/api/prices');
+                    data = await response.json();
+                }
+
+                if (data?.success && data?.prices) {
                     prices = { ...prices, ...data.prices };
-                    updateBookingSummary(); // Actualizează summary-ul cu noile prețuri
+                    updateBookingSummary();
                 }
             } catch (err) {
                 // Use default prices silently if loading fails
