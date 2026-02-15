@@ -47,11 +47,23 @@ app.use(express.static(join(__dirname, "js"), {
     lastModified: true
 }));
 
-// Add cache control headers for API responses
+// Add cache control headers for API responses - optimized for mobile
 app.use('/api', (req, res, next) => {
     // Don't cache POST/PUT/DELETE requests
     if (req.method === 'GET') {
-        res.set('Cache-Control', 'public, max-age=300'); // 5 minutes
+        // Check if it's a mobile/slow connection
+        const saveData = req.headers['save-data'] === 'on';
+        const isSlowConnection = req.headers['x-slow-connection'] === 'true';
+        
+        // More aggressive caching for mobile/slow connections
+        if (saveData || isSlowConnection) {
+            res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=300'); // 10 min + 5 min stale
+        } else {
+            res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60'); // 5 min + 1 min stale
+        }
+        
+        // Add Vary header for proper caching
+        res.set('Vary', 'Accept-Encoding, Save-Data');
     } else {
         res.set('Cache-Control', 'no-store');
     }

@@ -13,9 +13,15 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Casa Chindea</title>
 
-    <!-- Early CMS data fetch -->
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early CMS data fetch with timeout -->
     <script>
-        window._cmsPromise = fetch('/api/admin/cms/sections?page=contact').then(r => r.json()).catch(() => null);
+        const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+        window._cmsPromise = window.fetchJsonWithTimeout
+            ? window.fetchJsonWithTimeout('/api/admin/cms/sections?page=contact', {}, timeout)
+            : fetch('/api/admin/cms/sections?page=contact').then(r => r.json()).catch(() => null);
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
@@ -34,6 +40,13 @@
             color: transparent !important;
             border-radius: 4px;
             min-height: 1em;
+        }
+
+        /* Faster animation on mobile */
+        @media (max-width: 640px) {
+            [id^="cms-"]:not(.cms-loaded), img[id^="cms-"]:not(.cms-loaded) {
+                animation-duration: 0.8s !important;
+            }
         }
 
         /* Images skeleton */
