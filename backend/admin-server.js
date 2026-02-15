@@ -15,6 +15,26 @@ const router = express.Router();
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Authenticate PocketBase as admin for server-side operations
+async function authPocketBaseAdmin() {
+    try {
+        if (process.env.PB_ADMIN_EMAIL && process.env.PB_ADMIN_PASSWORD) {
+            await pb.collection('users').authWithPassword(
+                process.env.PB_ADMIN_EMAIL,
+                process.env.PB_ADMIN_PASSWORD
+            );
+            console.log('✅ PocketBase authenticated as admin');
+        } else {
+            console.log('⚠️ PocketBase admin credentials not set - some operations may fail');
+        }
+    } catch (err) {
+        console.error('❌ PocketBase admin authentication failed:', err.message);
+    }
+}
+
+// Initialize admin auth
+authPocketBaseAdmin();
+
 // Cache pentru status admin (pentru a evita request-uri duplicate)
 const adminCache = new Map();
 const CACHE_TTL = 5 * 60 * 1000; // 5 minute
@@ -405,6 +425,13 @@ router.delete('/calendar-blocks/:id', authenticateToken, requireAdmin, async (re
     try {
         const { id } = req.params;
 
+        if (!id || id === 'undefined') {
+            return res.status(400).json({
+                success: false,
+                error: 'ID-ul blocării este invalid.'
+            });
+        }
+
         await pb.collection('calendar_blocks').delete(id);
 
         res.json({
@@ -412,7 +439,15 @@ router.delete('/calendar-blocks/:id', authenticateToken, requireAdmin, async (re
             message: 'Blocarea a fost ștearsă cu succes.'
         });
     } catch (err) {
-        console.error('Error deleting calendar block:', err);
+        console.error('Error deleting calendar block:', err.message);
+
+        if (err.status === 404) {
+            return res.status(404).json({
+                success: false,
+                error: 'Blocarea nu a fost găsită.'
+            });
+        }
+
         res.status(500).json({
             success: false,
             error: 'Eroare la ștergerea blocării de calendar.'
