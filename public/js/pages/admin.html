@@ -89,6 +89,43 @@
                 transform: translateY(0);
             }
         }
+
+        /* Skeleton loading animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-title {
+            height: 1.5rem;
+            width: 60%;
+            margin-bottom: 0.75rem;
+        }
+
+        .skeleton-card {
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-image {
+            width: 100%;
+            height: 150px;
+            border-radius: 0.5rem;
+        }
     </style>
 </head>
 
@@ -719,14 +756,136 @@
     </div>
 
     <script>
+        // Cache for admin data to reduce API calls
+        const adminCache = {
+            bookings: { data: null, timestamp: 0, ttl: 30000 }, // 30 seconds
+            gallery: { data: null, timestamp: 0, ttl: 60000 }, // 1 minute
+            prices: { data: null, timestamp: 0, ttl: 120000 }, // 2 minutes
+            offers: { data: null, timestamp: 0, ttl: 60000 }, // 1 minute
+            calendarBlocks: { data: null, timestamp: 0, ttl: 30000 } // 30 seconds
+        };
+
+        function isCacheValid(cacheKey) {
+            const cache = adminCache[cacheKey];
+            return cache.data && (Date.now() - cache.timestamp < cache.ttl);
+        }
+
+        function setCache(cacheKey, data) {
+            adminCache[cacheKey].data = data;
+            adminCache[cacheKey].timestamp = Date.now();
+        }
+
+        function invalidateCache(cacheKey) {
+            if (cacheKey) {
+                adminCache[cacheKey].data = null;
+                adminCache[cacheKey].timestamp = 0;
+            }
+        }
+
+        // Skeleton generators
+        function generateBookingSkeleton(count = 3) {
+            return Array(count).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text" style="width: 80%"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%"></div>
+                        </div>
+                        <div class="skeleton" style="width: 80px; height: 32px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateGallerySkeleton(count = 6) {
+            return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                ${Array(count).fill(0).map(() => `
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton skeleton-text mt-2" style="width: 70%"></div>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+
+        function generateCalendarBlocksSkeleton(count = 2) {
+            return Array(count).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text" style="width: 50%"></div>
+                        </div>
+                        <div class="skeleton" style="width: 40px; height: 40px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateOffersSkeleton(count = 2) {
+            return Array(count).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex gap-4">
+                        <div class="skeleton" style="width: 100px; height: 100px;"></div>
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
         // Check admin authentication
         document.addEventListener('DOMContentLoaded', function () {
             checkAdminAuth();
             initializeTabs();
+            // Preload bookings immediately with skeleton
+            showBookingsSkeleton();
             loadBookings();
             setupEventListeners();
             setupOfferTypePreview();
+
+            // Preload other data in background for faster tab switching
+            setTimeout(() => {
+                preloadAdminData();
+            }, 500);
         });
+
+        // Preload data in background
+        async function preloadAdminData() {
+            const token = sessionStorage.getItem('auth_token');
+            if (!token) return;
+
+            // Preload in parallel without blocking UI
+            Promise.allSettled([
+                fetch(`/api/admin/gallery?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('gallery', data)),
+                fetch(`/api/prices?_t=${Date.now()}`, { cache: 'no-store' })
+                    .then(r => r.json()).then(data => setCache('prices', data)),
+                fetch(`/api/admin/offers?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('offers', data)),
+                fetch(`/api/admin/calendar-blocks?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('calendarBlocks', data))
+            ]);
+        }
+
+        function showBookingsSkeleton() {
+            const container = document.getElementById('bookings-list');
+            if (container) {
+                container.innerHTML = generateBookingSkeleton(3);
+            }
+            document.getElementById('bookings-loading')?.classList.add('hidden');
+        }
 
         // Holiday type images mapping
         const holidayImages = {
@@ -949,25 +1108,28 @@
             });
         }
 
-        async function loadBookings() {
+        async function loadBookings(forceRefresh = false) {
             const loadingEl = document.getElementById('bookings-loading');
             const listEl = document.getElementById('bookings-list');
             const emptyEl = document.getElementById('bookings-empty');
             const filterStatus = document.getElementById('filter-status').value;
 
-            loadingEl.classList.remove('hidden');
-            listEl.classList.add('hidden');
+            // Show skeleton immediately
+            loadingEl.classList.add('hidden');
+            listEl.innerHTML = generateBookingSkeleton(3);
+            listEl.classList.remove('hidden');
             emptyEl.classList.add('hidden');
 
             try {
                 const token = sessionStorage.getItem('auth_token');
-                let url = '/api/admin/booking';
-                if (filterStatus) url += `?status=${filterStatus}`;
+                let url = `/api/admin/booking?_t=${Date.now()}`;
+                if (filterStatus) url += `&status=${filterStatus}`;
 
                 const response = await fetch(url, {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
                 if (response.ok) {
@@ -982,7 +1144,6 @@
                     throw new Error(errorData.error || `Eroare HTTP ${response.status}`);
                 }
             } catch (error) {
-                console.error('Error loading bookings:', error);
                 listEl.innerHTML = `<div class="text-red-600 text-center py-4">Eroare: ${error.message}</div>`;
                 listEl.classList.remove('hidden');
             } finally {
@@ -1172,82 +1333,92 @@
             );
         }
 
-        async function loadGallery() {
-            // Implementation for loading gallery photos for admin
+        async function loadGallery(forceRefresh = false) {
             const galleryEl = document.getElementById('admin-gallery');
 
+            // Show skeleton immediately
+            galleryEl.innerHTML = generateGallerySkeleton(8);
+
+            // Check cache first
+            if (!forceRefresh && isCacheValid('gallery')) {
+                renderGallery(adminCache.gallery.data);
+                return;
+            }
+
             try {
-                // Request all photos with a high limit and cache buster to ensure fresh data
                 const cacheBuster = Date.now();
-                const response = await fetch(`/api/photos?limit=500&_=${cacheBuster}`);
-                const data = await response.json();
-                const photos = data.items || [];
-
-                console.log('📸 Loaded photos:', photos.length);
-
-                if (photos.length === 0) {
-                    galleryEl.innerHTML = `
-                        <div class="col-span-full text-center py-12">
-                            <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există poze în galerie</h3>
-                            <p class="text-gray-600">Adaugă prima poză folosind butonul de mai sus.</p>
-                        </div>
-                    `;
-                    return;
-                }
-
-                galleryEl.innerHTML = photos.map(photo => {
-                    // Use thumbnailUrl if available, otherwise fallback to imageUrl
-                    const imgSrc = photo.thumbnailUrl || photo.imageUrl || '';
-                    return `
-                    <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
-                        <img data-src="${imgSrc}"
-                            src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
-                            alt="Gallery photo"
-                            class="lazy w-full h-64 object-cover"
-                            loading="lazy">
-                        <div class="p-4">
-                            <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
-                        </div>
-                        <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
-                            <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-x-2">
-                                <button onclick="editPhoto('${photo.id}')" 
-                                    class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
-                                    <i class="fas fa-edit mr-1"></i>Editează
-                                </button>
-                                <button onclick="deletePhoto('${photo.id}')" 
-                                    class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors">
-                                    <i class="fas fa-trash mr-1"></i>Șterge
-                                </button>
-                            </div>
-                        </div>
-                    </div>
-                `}).join('');
-
-                // Lazy loading implementation for admin gallery
-                const lazyImages = galleryEl.querySelectorAll('img.lazy');
-                const imageObserver = new IntersectionObserver((entries, observer) => {
-                    entries.forEach(entry => {
-                        if (entry.isIntersecting) {
-                            const img = entry.target;
-                            img.src = img.dataset.src;
-                            img.classList.remove('lazy');
-                            observer.unobserve(img);
-                        }
-                    });
-                }, {
-                    rootMargin: '50px'
+                const response = await fetch(`/api/photos?limit=500&_=${cacheBuster}`, {
+                    cache: 'no-store'
                 });
-
-                lazyImages.forEach(img => imageObserver.observe(img));
+                const data = await response.json();
+                setCache('gallery', data);
+                renderGallery(data);
             } catch (error) {
                 galleryEl.innerHTML = `
-                    <div class="col-span-full text-red-600 text-center py-8">
-                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
-                        <p>Eroare la încărcarea galeriei: ${error.message}</p>
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600">Eroare la încărcarea galeriei</p>
                     </div>
                 `;
             }
+        }
+
+        function renderGallery(data) {
+            const galleryEl = document.getElementById('admin-gallery');
+            const photos = data.items || [];
+
+            if (photos.length === 0) {
+                galleryEl.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există poze în galerie</h3>
+                        <p class="text-gray-600">Adaugă prima poză folosind butonul de mai sus.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            galleryEl.innerHTML = photos.map(photo => {
+                const imgSrc = photo.thumbnailUrl || photo.imageUrl || '';
+                return `
+                <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
+                    <img data-src="${imgSrc}"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
+                        alt="Gallery photo"
+                        class="lazy w-full h-64 object-cover"
+                        loading="lazy">
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-x-2">
+                            <button onclick="editPhoto('${photo.id}')"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Editează
+                            </button>
+                            <button onclick="deletePhoto('${photo.id}')"
+                                class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-trash mr-1"></i>Șterge
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            // Lazy loading implementation
+            const lazyImages = galleryEl.querySelectorAll('img.lazy');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '50px' });
+
+            lazyImages.forEach(img => imageObserver.observe(img));
         }
 
         async function uploadPhoto(e) {
@@ -1278,7 +1449,8 @@
                 if (response.ok) {
                     document.getElementById('photo-upload-form').classList.add('hidden');
                     document.getElementById('upload-form').reset();
-                    loadGallery();
+                    invalidateCache('gallery');
+                    loadGallery(true);
                     showToast('Poza a fost încărcată cu succes!', 'success');
                 } else {
                     const errorData = await response.json();
@@ -1434,7 +1606,8 @@
             resetDropZone();
 
             // Reload gallery
-            loadGallery();
+            invalidateCache('gallery');
+            loadGallery(true);
         }
 
         function resetDropZone() {
@@ -1558,7 +1731,8 @@
 
                 if (editResponse.ok) {
                     closeEditPhotoModal();
-                    loadGallery();
+                    invalidateCache('gallery');
+                    loadGallery(true);
                     showToast('Descrierea pozei a fost actualizată cu succes!', 'success');
                 } else {
                     const errorData = await editResponse.json();
@@ -1584,7 +1758,8 @@
                         });
 
                         if (response.ok) {
-                            loadGallery();
+                            invalidateCache('gallery');
+                            loadGallery(true);
                             showToast('Poza a fost ștearsă cu succes!', 'success');
                         } else {
                             const errorData = await response.json();
@@ -1597,9 +1772,11 @@
             );
         }
 
-        async function loadCalendarBlocks() {
-            // Implementation for loading calendar blocks
+        async function loadCalendarBlocks(forceRefresh = false) {
             const blocksEl = document.getElementById('calendar-blocks');
+
+            // Show skeleton immediately
+            blocksEl.innerHTML = generateCalendarBlocksSkeleton(3);
 
             try {
                 const token = sessionStorage.getItem('auth_token');
@@ -1721,7 +1898,8 @@
                 if (response.ok) {
                     document.getElementById('block-form').classList.add('hidden');
                     document.getElementById('calendar-block-form').reset();
-                    loadCalendarBlocks();
+                    invalidateCache('calendarBlocks');
+                    loadCalendarBlocks(true);
 
                     // Show success message
                     showToast('Blocarea a fost adăugată cu succes!', 'success');
@@ -1775,8 +1953,9 @@
                             }
                             showToast('Blocarea a fost ștearsă cu succes!', 'success');
                             // Force reload to sync with server
+                            invalidateCache('calendarBlocks');
                             setTimeout(async () => {
-                                await loadCalendarBlocks();
+                                await loadCalendarBlocks(true);
                             }, 100);
                         } else {
                             showToast(responseData.error || 'Eroare la ștergerea blocării', 'error');
@@ -1959,41 +2138,48 @@
 
         // ===== PRICES MANAGEMENT =====
 
-        async function loadPrices() {
+        async function loadPrices(forceRefresh = false) {
+            // Check cache first
+            if (!forceRefresh && isCacheValid('prices')) {
+                applyPricesData(adminCache.prices.data);
+                return;
+            }
+
             try {
                 const token = sessionStorage.getItem('auth_token');
-                const response = await fetch('/api/admin/prices', {
+                const response = await fetch(`/api/admin/prices?_t=${Date.now()}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
                 if (response.ok) {
                     const data = await response.json();
-                    if (data.success && data.prices) {
-                        // Populate form fields
-                        document.getElementById('price-room').value = data.prices.priceRoom || '';
-                        document.getElementById('price-entire').value = data.prices.priceEntire || '';
-                        document.getElementById('price-breakfast').value = data.prices.priceBreakfast || '';
-                        document.getElementById('price-breakfast-child').value = data.prices.priceBreakfastChild || '';
-                        document.getElementById('surcharge-weekend').value = data.prices.surchargeWeekend || '';
-                        document.getElementById('surcharge-holiday').value = data.prices.surchargeHoliday || '';
-
-                        // Update summary
-                        updatePriceSummary();
-
-                        // Show last updated
-                        if (data.prices.updated) {
-                            document.getElementById('prices-last-updated').classList.remove('hidden');
-                            document.getElementById('prices-updated-date').textContent =
-                                new Date(data.prices.updated).toLocaleString('ro-RO');
-                        }
-                    }
-                } else {
+                    setCache('prices', data);
+                    applyPricesData(data);
                 }
             } catch (error) {
-                console.error('Error loading prices:', error);
                 showToast('Eroare la încărcarea prețurilor', 'error');
+            }
+        }
+
+        function applyPricesData(data) {
+            if (data.success && data.prices) {
+                document.getElementById('price-room').value = data.prices.priceRoom || '';
+                document.getElementById('price-entire').value = data.prices.priceEntire || '';
+                document.getElementById('price-breakfast').value = data.prices.priceBreakfast || '';
+                document.getElementById('price-breakfast-child').value = data.prices.priceBreakfastChild || '';
+                document.getElementById('surcharge-weekend').value = data.prices.surchargeWeekend || '';
+                document.getElementById('surcharge-holiday').value = data.prices.surchargeHoliday || '';
+
+                updatePriceSummary();
+
+                if (data.prices.updated) {
+                    document.getElementById('prices-last-updated').classList.remove('hidden');
+                    document.getElementById('prices-updated-date').textContent =
+                        new Date(data.prices.updated).toLocaleString('ro-RO');
+                }
             }
         }
 
@@ -2039,6 +2225,7 @@
                 const data = await response.json();
 
                 if (response.ok && data.success) {
+                    invalidateCache('prices');
                     showToast('Prețurile au fost salvate cu succes!', 'success');
 
                     // Update last updated date
@@ -2059,11 +2246,19 @@
         // Use holidayLabels defined at top of file
         const offerTypeLabels = holidayLabels;
 
-        async function loadOffers() {
+        async function loadOffers(forceRefresh = false) {
             const listEl = document.getElementById('offers-list');
             const loadingEl = document.getElementById('offers-loading');
 
-            if (loadingEl) loadingEl.classList.remove('hidden');
+            // Show skeleton immediately instead of spinner
+            listEl.innerHTML = generateOffersSkeleton(3);
+            if (loadingEl) loadingEl.classList.add('hidden');
+
+            // Check cache first
+            if (!forceRefresh && isCacheValid('offers')) {
+                renderOffers(adminCache.offers.data);
+                return;
+            }
 
             try {
                 const token = sessionStorage.getItem('auth_token');
@@ -2072,93 +2267,91 @@
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Cache-Control': 'no-cache'
-                    }
+                    },
+                    cache: 'no-store'
                 });
 
                 const data = await response.json();
+                setCache('offers', data);
+                renderOffers(data);
+            } catch (error) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600">Eroare la încărcarea ofertelor</p>
+                    </div>
+                `;
+            }
+        }
 
-                console.log('Loaded offers:', data.offers); // Debug log
+        function renderOffers(data) {
+            const listEl = document.getElementById('offers-list');
 
-                if (loadingEl) loadingEl.classList.add('hidden');
+            if (data.success && data.offers && data.offers.length > 0) {
+                const timestamp = Date.now();
+                listEl.innerHTML = data.offers.map(offer => {
+                    const isActive = offer.active;
+                    const isPast = new Date(offer.endDate) < new Date();
+                    const baseImage = holidayImages[offer.type] || holidayImages['custom'];
+                    const offerImage = baseImage + '&t=' + timestamp;
+                    const offerLabel = offerTypeLabels[offer.type] || offer.type;
 
-                if (data.success && data.offers && data.offers.length > 0) {
-                    const timestamp = Date.now(); // Image cache buster
-                    listEl.innerHTML = data.offers.map(offer => {
-                        const isActive = offer.active;
-                        const isPast = new Date(offer.endDate) < new Date();
-                        const baseImage = holidayImages[offer.type] || holidayImages['custom'];
-                        const offerImage = baseImage + '&t=' + timestamp;
-                        const offerLabel = offerTypeLabels[offer.type] || offer.type;
-
-                        console.log(`Offer ${offer.title}: type=${offer.type}, image=${offerImage}`); // Debug
-
-                        return `
-                            <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-4 sm:p-6 shadow-sm">
-                                <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
-                                    <div class="flex items-start gap-3 sm:gap-4">
-                                        <img src="${offerImage}" alt="${offerLabel}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm flex-shrink-0">
-                                        <div class="min-w-0 flex-1">
-                                            <div class="flex flex-wrap items-center gap-2 mb-1 sm:mb-2">
-                                                <h3 class="text-base sm:text-xl font-bold text-gray-900 break-words">${offer.title}</h3>
-                                                ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Activă</span>' : ''}
-                                                ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Expirată</span>' : ''}
-                                            </div>
-                                            <p class="text-gray-600 text-xs sm:text-sm">${offerLabel}</p>
+                    return `
+                        <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-4 sm:p-6 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                                <div class="flex items-start gap-3 sm:gap-4">
+                                    <img src="${offerImage}" alt="${offerLabel}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm flex-shrink-0">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2 mb-1 sm:mb-2">
+                                            <h3 class="text-base sm:text-xl font-bold text-gray-900 break-words">${offer.title}</h3>
+                                            ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Activă</span>' : ''}
+                                            ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Expirată</span>' : ''}
                                         </div>
-                                    </div>
-                                    <div class="flex gap-2 sm:space-x-2 w-full sm:w-auto">
-                                        <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
-                                            <i class="fas fa-edit mr-1"></i>Editează
-                                        </button>
-                                        <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
-                                            <i class="fas fa-trash mr-1"></i>Șterge
-                                        </button>
+                                        <p class="text-gray-600 text-xs sm:text-sm">${offerLabel}</p>
                                     </div>
                                 </div>
-                                <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
-                                    <div>
-                                        <span class="text-xs sm:text-sm text-gray-500">Perioada</span>
-                                        <p class="font-semibold text-xs sm:text-base">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs sm:text-sm text-gray-500">Număr nopți</span>
-                                        <p class="font-semibold text-xs sm:text-base">${offer.nights} nopți</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs sm:text-sm text-gray-500">Preț total</span>
-                                        <p class="font-semibold text-primary text-xs sm:text-base">${offer.totalPrice} RON</p>
-                                    </div>
-                                    <div>
-                                        <span class="text-xs sm:text-sm text-gray-500">Preț/cameră</span>
-                                        <p class="font-semibold text-xs sm:text-base">${offer.roomPrice || '-'} RON</p>
-                                    </div>
-                                </div>
-                                <div class="border-t pt-3 sm:pt-4">
-                                    <p class="text-gray-700 text-sm sm:text-base">${offer.details}</p>
-                                    ${offer.includes ? `
-                                        <div class="mt-2 sm:mt-3">
-                                            <span class="text-xs sm:text-sm font-medium text-gray-700">Include:</span>
-                                            <ul class="list-disc list-inside text-gray-600 mt-1 text-xs sm:text-sm">
-                                                ${offer.includes.split('\n').filter(i => i.trim()).map(item => `<li>${item}</li>`).join('')}
-                                            </ul>
-                                        </div>
-                                    ` : ''}
+                                <div class="flex gap-2 sm:space-x-2 w-full sm:w-auto">
+                                    <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                        <i class="fas fa-edit mr-1"></i>Editează
+                                    </button>
+                                    <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                        <i class="fas fa-trash mr-1"></i>Șterge
+                                    </button>
                                 </div>
                             </div>
-                        `;
-                    }).join('');
-                } else {
-                    listEl.innerHTML = `
-                        <div class="text-center py-12">
-                            <i class="fas fa-gift text-gray-400 text-6xl mb-4"></i>
-                            <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există oferte speciale</h3>
-                            <p class="text-gray-600">Adaugă prima ofertă folosind butonul de mai sus.</p>
+                            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Perioada</span>
+                                    <p class="font-semibold text-xs sm:text-base">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Număr nopți</span>
+                                    <p class="font-semibold text-xs sm:text-base">${offer.nights} nopți</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Preț total</span>
+                                    <p class="font-semibold text-primary text-xs sm:text-base">${offer.totalPrice} RON</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Preț/cameră</span>
+                                    <p class="font-semibold text-xs sm:text-base">${offer.roomPrice || '-'} RON</p>
+                                </div>
+                            </div>
+                            <div class="border-t pt-3 sm:pt-4">
+                                <p class="text-gray-700 text-sm sm:text-base">${offer.details}</p>
+                                ${offer.includes ? `
+                                    <div class="mt-2 sm:mt-3">
+                                        <span class="text-xs sm:text-sm font-medium text-gray-700">Include:</span>
+                                        <ul class="list-disc list-inside text-gray-600 mt-1 text-xs sm:text-sm">
+                                            ${offer.includes.split('\n').filter(i => i.trim()).map(item => `<li>${item}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
                         </div>
                     `;
-                }
-            } catch (error) {
-                console.error('Error loading offers:', error);
-                if (loadingEl) loadingEl.classList.add('hidden');
+                }).join('');
+            } else {
                 listEl.innerHTML = `
                     <div class="text-center py-12">
                         <i class="fas fa-gift text-gray-400 text-6xl mb-4"></i>
@@ -2217,7 +2410,8 @@
                     }
 
                     // Force immediate refresh to show updated images
-                    await loadOffers();
+                    invalidateCache('offers');
+                    await loadOffers(true);
 
                     // Scroll to offers list smoothly after refresh
                     setTimeout(() => {
@@ -2287,7 +2481,8 @@
 
                         if (response.ok) {
                             showToast('Oferta a fost ștearsă!', 'success');
-                            loadOffers();
+                            invalidateCache('offers');
+                            loadOffers(true);
                         } else {
                             const data = await response.json();
                             throw new Error(data.error || 'Eroare la ștergerea ofertei');

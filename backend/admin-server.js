@@ -13,6 +13,15 @@ dotenv.config();
 
 const router = express.Router();
 
+// Middleware to disable caching on all admin endpoints
+router.use((req, res, next) => {
+    res.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    res.set('Pragma', 'no-cache');
+    res.set('Expires', '0');
+    res.set('Surrogate-Control', 'no-store');
+    next();
+});
+
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 // Authenticate PocketBase as admin for server-side operations
