@@ -544,7 +544,22 @@
             </div>
         </div>
     </footer>
+    <script>
+        // Hide hero skeleton if visual editor becomes active after page load
+        (function(){
+  function hideHeroSkeletonIfEditor() {
+    var sk = document.getElementById('hero-skeleton');
+    if(sk && (window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
+      sk.style.display = 'none';
+    }
+  }
+  // Check now
+  hideHeroSkeletonIfEditor();
+  // And on any class change
+  const observer = new MutationObserver(hideHeroSkeletonIfEditor);
+  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+})();
+    </script>
 </body>
 
 </html>
-
