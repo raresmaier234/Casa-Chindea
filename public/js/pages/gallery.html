@@ -83,6 +83,18 @@
             background: transparent;
             object-position: center center; /* Restore normal position */
         }
+
+        /* Disable skeleton when visual editor is active */
+        body.visual-editor-active [id^="cms-"]:not(.cms-loaded),
+        body.visual-editor-active img[id^="cms-"]:not(.cms-loaded) {
+            animation: none !important;
+            background: transparent !important;
+            color: inherit !important;
+            object-position: center center !important;
+        }
+        body.visual-editor-active .skeleton-image {
+            display: none !important;
+        }
     </style>
 
     <script src="https://cdn.tailwindcss.com"></script>

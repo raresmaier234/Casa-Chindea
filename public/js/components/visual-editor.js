@@ -166,6 +166,10 @@ function toggleEditMode() {
         if (btnMobile) btnMobile.textContent = 'Stop';
         document.getElementById('visual-edit-toggle').querySelector('button').classList.add('ring-4', 'ring-yellow-300');
 
+        // Mark body as visual editor active to disable skeleton CSS
+        document.body.classList.add('visual-editor-active');
+        window.isVisualEditor = true;
+
         if (isMobile) {
             sidebar.classList.remove('translate-y-full');
             document.body.style.paddingBottom = '60vh';
@@ -180,6 +184,10 @@ function toggleEditMode() {
         if (btn) btn.textContent = 'Activează Editare';
         if (btnMobile) btnMobile.textContent = 'Edit';
         document.getElementById('visual-edit-toggle').querySelector('button').classList.remove('ring-4', 'ring-yellow-300');
+
+        // Remove visual editor active class
+        document.body.classList.remove('visual-editor-active');
+        window.isVisualEditor = false;
 
         if (isMobile) {
             sidebar.classList.add('translate-y-full');
@@ -199,6 +207,8 @@ function scanEditableElements() {
 
     // 1. Elements with cms- prefix
     document.querySelectorAll('[id^="cms-"]').forEach(elem => {
+        // Ensure cms-loaded class is present to prevent skeleton
+        elem.classList.add('cms-loaded');
         addEditableElement(elem);
     });
 
@@ -207,6 +217,7 @@ function scanEditableElements() {
         if (!elem.id && elem.closest('main, section, article')) {
             const text = elem.textContent.trim().substring(0, 30);
             elem.id = `cms-heading-${text.replace(/\s+/g, '-').toLowerCase().replace(/[^a-z0-9-]/g, '')}`;
+            elem.classList.add('cms-loaded'); // Prevent skeleton
             addEditableElement(elem);
         }
     });
@@ -215,6 +226,7 @@ function scanEditableElements() {
     document.querySelectorAll('main p, section p, article p, [class*="description"] p').forEach((elem, idx) => {
         if (!elem.id && elem.textContent.trim().length > 20) {
             elem.id = `cms-paragraph-${idx}`;
+            elem.classList.add('cms-loaded'); // Prevent skeleton
             addEditableElement(elem);
         }
     });
@@ -224,6 +236,7 @@ function scanEditableElements() {
         if (!elem.id) {
             elem.id = `cms-image-${idx}`;
         }
+        elem.classList.add('cms-loaded'); // Prevent skeleton
         addEditableElement(elem, true);
     });
 
@@ -232,6 +245,7 @@ function scanEditableElements() {
         if (!elem.id) {
             elem.id = `cms-bg-${idx}`;
         }
+        elem.classList.add('cms-loaded'); // Prevent skeleton
         addEditableElement(elem, true, true);
     });
 
