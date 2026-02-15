@@ -20,42 +20,47 @@
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
-        /* Skeleton loading animation */
-        @keyframes skeleton-pulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.7; }
+        /* Smooth shimmer animation */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
         }
 
-        /* Hide CMS elements until loaded */
+        /* Hide CMS elements until loaded - smooth shimmer */
         [id^="cms-"]:not(.cms-loaded) {
             background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
             background-size: 200% 100%;
-            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            animation: shimmer 1.2s ease-in-out infinite;
             color: transparent !important;
             border-radius: 4px;
             min-height: 1em;
         }
 
-        /* Images skeleton - HIDE the src completely */
+        /* Images skeleton */
         img[id^="cms-"]:not(.cms-loaded) {
             background: linear-gradient(90deg, #d1d5db 25%, #e5e7eb 50%, #d1d5db 75%);
             background-size: 200% 100%;
-            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            animation: shimmer 1.2s ease-in-out infinite;
             content: "";
-            object-position: -9999px -9999px; /* Hide the actual image */
+            object-position: -9999px -9999px;
         }
 
-        /* Loaded state */
+        /* Loaded state - smooth fade in */
         [id^="cms-"].cms-loaded {
-            animation: none;
+            animation: fadeIn 0.3s ease-out;
             background: transparent;
             color: inherit !important;
         }
 
         img[id^="cms-"].cms-loaded {
-            animation: none;
+            animation: fadeIn 0.3s ease-out;
             background: transparent;
-            object-position: center center; /* Restore normal position */
+            object-position: center center;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0.7; }
+            to { opacity: 1; }
         }
     </style>
 
