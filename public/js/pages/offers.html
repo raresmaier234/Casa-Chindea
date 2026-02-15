@@ -20,8 +20,8 @@
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
         window._offersPromise = window.fetchJsonWithTimeout
-            ? window.fetchJsonWithTimeout('/api/admin/offers', {}, timeout)
-            : fetch('/api/admin/offers').then(r => r.json()).catch(() => null);
+            ? window.fetchJsonWithTimeout('/api/offers', {}, timeout)
+            : fetch('/api/offers').then(r => r.json()).catch(() => null);
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
@@ -399,15 +399,18 @@
                     window._offersPromise = null;
                 }
 
-                // Fallback to fresh fetch
-                if (!data) {
+                // Fallback to fresh fetch if no data or invalid data
+                if (!data || !data.success) {
                     const response = await fetch('/api/offers');
                     data = await response.json();
                 }
 
                 loadingEl?.classList.add('hidden');
 
-                if (data.success && data.offers && data.offers.length > 0) {
+                // Debug log
+                console.log('Offers data:', data);
+
+                if (data && data.success && data.offers && data.offers.length > 0) {
                     gridEl.innerHTML = data.offers.map((offer, index) => {
                         const image = holidayImages[offer.type] || holidayImages['custom'];
                         const label = offerTypeLabels[offer.type] || 'Ofertă Specială';
@@ -421,16 +424,15 @@
                                     <i class="fas fa-fire mr-1"></i>OFERTĂ
                                 </div>
 
-                                <!-- Header with holiday image - lazy loaded -->
-                                <div class="relative overflow-hidden">
-                                    <div class="offer-img-skeleton w-full h-48 skeleton-image"></div>
-                                    <img data-src="${image}"
-                                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 192'%3E%3Crect fill='%23e5e7eb' width='400' height='192'/%3E%3C/svg%3E"
+                                <!-- Header with holiday image -->
+                                <div class="relative overflow-hidden h-48">
+                                    <div class="offer-img-skeleton absolute inset-0 skeleton-image"></div>
+                                    <img src="${image}"
                                          alt="${label}"
-                                         class="offer-lazy-img w-full h-48 object-cover absolute inset-0 opacity-0 transition-opacity duration-300"
-                                         loading="lazy"
-                                         onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display='none';">
-                                    <div class="absolute inset-0 from-primary/90 to-transparent flex items-end justify-center p-4">
+                                         class="w-full h-48 object-cover absolute inset-0 opacity-0 transition-opacity duration-300"
+                                         onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display='none';"
+                                         onerror="this.style.display='none';">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center p-4">
                                         <span class="text-white text-lg font-bold uppercase tracking-wider drop-shadow-lg">${label}</span>
                                     </div>
                                 </div>
@@ -501,14 +503,6 @@
                     }).join('');
 
                     gridEl.classList.remove('hidden');
-
-                    // Lazy load offer images
-                    const lazyOfferImages = gridEl.querySelectorAll('.offer-lazy-img');
-                    lazyOfferImages.forEach(img => {
-                        if (img.dataset.src) {
-                            img.src = img.dataset.src;
-                        }
-                    });
 
                     // Show badge with offer count
                     const badge = document.getElementById('offers-badge');
