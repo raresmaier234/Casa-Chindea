@@ -426,11 +426,11 @@
 
                                 <!-- Header with holiday image -->
                                 <div class="relative overflow-hidden h-48">
-                                    <div class="offer-img-skeleton absolute inset-0 skeleton-image"></div>
+                                    ${window.isVisualEditor || document.body.classList.contains('visual-editor-active') ? '' : '<div class="offer-img-skeleton absolute inset-0 skeleton-image"></div>'}
                                     <img src="${image}"
                                          alt="${label}"
                                          class="w-full h-48 object-cover absolute inset-0 opacity-0 transition-opacity duration-300"
-                                         onload="this.classList.add('opacity-100'); this.previousElementSibling.style.display='none';"
+                                         onload="this.classList.add('opacity-100'); var sk=this.previousElementSibling; if(sk && sk.classList.contains('offer-img-skeleton')) sk.style.display='none';"
                                          onerror="this.style.display='none';">
                                     <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center p-4">
                                         <span class="text-white text-lg font-bold uppercase tracking-wider drop-shadow-lg">${label}</span>
