@@ -576,8 +576,8 @@
             const carousel = document.getElementById(carouselId);
             if (!carousel) return;
 
-            // If no photos, show skeleton placeholder
-            if (!photos || photos.length === 0) {
+            // If no photos, show skeleton placeholder doar dacă nu e editor vizual
+            if ((!photos || photos.length === 0) && !(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
                 carousel.innerHTML = `<div class="skeleton-image w-full h-full absolute inset-0"></div>`;
                 return;
             }
