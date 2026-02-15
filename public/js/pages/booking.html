@@ -262,8 +262,14 @@
         }
 
         function fetchAvailabilityAndInitCalendar() {
-            // Fetch unavailable dates from the backend
-            fetch('/api/booking/booking-availability')
+            // Fetch unavailable dates from the backend with cache busting
+            fetch(`/api/booking/booking-availability?_t=${Date.now()}`, {
+                cache: 'no-store',
+                headers: {
+                    'Cache-Control': 'no-cache, no-store, must-revalidate',
+                    'Pragma': 'no-cache'
+                }
+            })
                 .then(res => {
                     if (!res.ok) {
                         throw new Error(`HTTP error! status: ${res.status}`);
