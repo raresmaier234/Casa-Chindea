@@ -179,7 +179,7 @@
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
         <div id="hero-bg" class="absolute inset-0 w-full h-full">
             <!-- Skeleton while loading -->
-            <div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-pulse"></div>
+            <script>if(!(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))){document.write('<div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-pulse"></div>');}</script>
         </div>
         <div class="absolute inset-0 bg-black opacity-30"></div>
         <div class="relative z-10 text-center text-white px-4">
@@ -547,3 +547,4 @@
 </body>
 
 </html>
+
