@@ -303,6 +303,9 @@
             // Încarcă prețurile din API
             loadPrices();
 
+            // Pre-fill form with logged-in user data
+            prefillUserData();
+
             // Handle URL parameters
             const urlParams = new URLSearchParams(window.location.search);
             const rentalType = urlParams.get('type');
@@ -448,6 +451,53 @@
             window.history.replaceState({}, document.title, window.location.pathname);
 
             updateBookingSummary();
+        }
+
+        // Pre-fill booking form with logged-in user data
+        async function prefillUserData() {
+            const token = sessionStorage.getItem('auth_token');
+            if (!token) {
+                console.log('👤 User not logged in, skipping prefill');
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.user;
+
+                    console.log('👤 Pre-filling form with user data:', user);
+
+                    // Pre-fill name
+                    const nameInput = document.getElementById('full-name');
+                    if (nameInput && user.name) {
+                        nameInput.value = user.name;
+                    }
+
+                    // Pre-fill email
+                    const emailInput = document.getElementById('email');
+                    if (emailInput && user.email) {
+                        emailInput.value = user.email;
+                    }
+
+                    // Pre-fill phone
+                    const phoneInput = document.getElementById('phone');
+                    if (phoneInput && user.phone) {
+                        phoneInput.value = user.phone;
+                    }
+
+                    console.log('✅ Form pre-filled successfully');
+                }
+            } catch (err) {
+                console.log('⚠️ Could not prefill user data:', err.message);
+                // Silently fail - user can fill manually
+            }
         }
 
         // Încarcă prețurile din API
