@@ -11,9 +11,50 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
 
+    <!-- Critical CSS - prevent flash of default content -->
+    <style>
+        /* Skeleton loading animation */
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Hide CMS elements until loaded */
+        [id^="cms-"]:not(.cms-loaded) {
+            background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            color: transparent !important;
+            border-radius: 4px;
+            min-height: 1em;
+        }
+
+        /* Images skeleton */
+        img[id^="cms-"]:not(.cms-loaded) {
+            background: linear-gradient(90deg, #d1d5db 25%, #e5e7eb 50%, #d1d5db 75%);
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Loaded state */
+        [id^="cms-"].cms-loaded {
+            animation: none;
+            background: transparent;
+            color: inherit !important;
+        }
+
+        img[id^="cms-"].cms-loaded {
+            animation: none;
+            background: transparent;
+        }
+    </style>
+
     <!-- Critical CSS/JS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- CMS Loader - load early for instant content -->
+    <script src="/js/components/cms-loader.js"></script>
 
     <!-- Non-critical JS - defer loading -->
     <script defer src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
@@ -87,7 +128,6 @@
         </div>
     </nav>
     <script src="/js/components/navigation.js"></script>
-    <script src="/js/components/cms-loader.js"></script>
     <script src="/js/components/visual-editor.js"></script>
 
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
