@@ -188,9 +188,13 @@
         </div>
     </section>
     <script>
+        function isVisualEditorActive() {
+          return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+        }
+
         // Show skeleton while loading
         function showGallerySkeleton() {
-            if (window.isVisualEditor || document.body.classList.contains('visual-editor-active')) return;
+            if (isVisualEditorActive()) return;
             const gallery = document.getElementById('full-gallery');
             if (!gallery) return;
             gallery.innerHTML = Array(8).fill(0).map(() => `
@@ -354,15 +358,15 @@
             loadGalleryPhotos();
         });
 
-        // Hide skeletons if visual editor becomes active after page load
+        // Observer global pentru ascundere skeleton-uri
         (function(){
-          function hideGallerySkeletonsIfEditor() {
-            if(window.isVisualEditor || document.body.classList.contains('visual-editor-active')) {
+          function hideAllSkeletonsIfEditor() {
+            if(isVisualEditorActive()) {
               document.querySelectorAll('.skeleton-image').forEach(el => el.style.display = 'none');
             }
           }
-          hideGallerySkeletonsIfEditor();
-          const observer = new MutationObserver(hideGallerySkeletonsIfEditor);
+          hideAllSkeletonsIfEditor();
+          const observer = new MutationObserver(hideAllSkeletonsIfEditor);
           observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
         })();
     </script>
@@ -413,4 +417,3 @@
 </body>
 
 </html>
-
