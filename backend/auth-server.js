@@ -173,6 +173,7 @@ async function sendVerificationEmail(email, code, name) {
     const useSendGrid = process.env.SENDGRID_API_KEY;
 
     console.log('📧 Email service:', useSendGrid ? 'SendGrid' : 'Gmail SMTP');
+    console.log('📧 NODE_ENV:', process.env.NODE_ENV);
 
     try {
         let transporter;
@@ -186,7 +187,10 @@ async function sendVerificationEmail(email, code, name) {
                 auth: {
                     user: 'apikey',
                     pass: process.env.SENDGRID_API_KEY
-                }
+                },
+                connectionTimeout: 10000, // 10 seconds
+                greetingTimeout: 10000,
+                socketTimeout: 15000
             });
         } else {
             // Gmail configuration (FOR DEVELOPMENT ONLY)
@@ -197,7 +201,10 @@ async function sendVerificationEmail(email, code, name) {
                 auth: {
                     user: process.env.SMTP_USER,
                     pass: process.env.SMTP_PASS // This must be an App Password, not regular password
-                }
+                },
+                connectionTimeout: 10000, // 10 seconds
+                greetingTimeout: 10000,
+                socketTimeout: 15000
             });
         }
 
@@ -258,7 +265,18 @@ async function sendVerificationEmail(email, code, name) {
         };
 
         console.log('📤 Sending email to:', email);
-        const info = await transporter.sendMail(mailOptions);
+
+        // Add timeout wrapper to prevent hanging
+        const sendWithTimeout = (mailOptions, timeoutMs = 30000) => {
+            return Promise.race([
+                transporter.sendMail(mailOptions),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error('Email sending timeout after ' + timeoutMs + 'ms')), timeoutMs)
+                )
+            ]);
+        };
+
+        const info = await sendWithTimeout(mailOptions, 30000);
         console.log('✅ Email sent successfully! MessageId:', info.messageId);
 
         return true;
@@ -693,11 +711,20 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
         const { name, phone } = req.body;
 
+        console.log('📝 Updating profile for user:', req.user.userId);
+        console.log('📝 Data to update:', { name, phone });
+
+        // Build update object - only include fields that are provided
+        const updateData = {};
+        if (name !== undefined) updateData.name = name;
+        if (phone !== undefined) updateData.phone = phone;
+
+        console.log('📝 Update data object:', updateData);
+
         // Actualizează informațiile utilizatorului în PocketBase
-        const updatedUser = await pb.collection('users').update(req.user.userId, {
-            name,
-            phone
-        });
+        const updatedUser = await pb.collection('users').update(req.user.userId, updateData);
+
+        console.log('✅ Profile updated successfully');
 
         res.json({
             success: true,
@@ -711,10 +738,11 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
             }
         });
     } catch (err) {
-        console.error('Error updating user profile:', err);
+        console.error('❌ Error updating user profile:', err);
+        console.error('❌ Error details:', err.response?.data || err.message);
         res.status(500).json({
             success: false,
-            error: 'Eroare la actualizarea profilului.'
+            error: 'Eroare la actualizarea profilului: ' + (err.message || 'Unknown error')
         });
     }
 });
