@@ -190,6 +190,7 @@
     <script>
         // Show skeleton while loading
         function showGallerySkeleton() {
+            if (window.isVisualEditor || document.body.classList.contains('visual-editor-active')) return;
             const gallery = document.getElementById('full-gallery');
             if (!gallery) return;
             gallery.innerHTML = Array(8).fill(0).map(() => `
@@ -352,6 +353,18 @@
         document.addEventListener('DOMContentLoaded', () => {
             loadGalleryPhotos();
         });
+
+        // Hide skeletons if visual editor becomes active after page load
+        (function(){
+          function hideGallerySkeletonsIfEditor() {
+            if(window.isVisualEditor || document.body.classList.contains('visual-editor-active')) {
+              document.querySelectorAll('.skeleton-image').forEach(el => el.style.display = 'none');
+            }
+          }
+          hideGallerySkeletonsIfEditor();
+          const observer = new MutationObserver(hideGallerySkeletonsIfEditor);
+          observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
     </script>
 
     <footer class="bg-gray-800 text-white py-12 mt-20">
@@ -400,3 +413,4 @@
 </body>
 
 </html>
+
