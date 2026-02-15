@@ -43,12 +43,24 @@
 
         if ((section.type === 'image' || section.type === 'background') && section.imageUrl) {
             if (elem.tagName === 'IMG') {
-                elem.src = section.imageUrl;
+                // For images with skeleton overlay, load smoothly
+                const newImg = new Image();
+                newImg.onload = function() {
+                    elem.src = section.imageUrl;
+                    elem.classList.add('opacity-100', 'cms-loaded');
+                    // Hide skeleton overlay if exists
+                    const skeleton = elem.previousElementSibling;
+                    if (skeleton && skeleton.classList.contains('about-img-skeleton')) {
+                        skeleton.style.display = 'none';
+                    }
+                };
+                newImg.src = section.imageUrl;
                 if (section.content) elem.alt = section.content;
             } else {
                 elem.style.backgroundImage = `url(${section.imageUrl})`;
                 elem.style.backgroundSize = 'cover';
                 elem.style.backgroundPosition = 'center';
+                elem.classList.add('cms-loaded');
             }
         } else if (section.content) {
             if (elem.tagName === 'INPUT' || elem.tagName === 'TEXTAREA') {
@@ -56,10 +68,10 @@
             } else {
                 elem.textContent = section.content;
             }
+            elem.classList.add('cms-loaded');
+        } else {
+            elem.classList.add('cms-loaded');
         }
-
-        // Mark as loaded to remove skeleton
-        elem.classList.add('cms-loaded');
     }
 
     // Find element by key
@@ -143,10 +155,40 @@
         markAllCMSElementsLoaded();
     }
 
-    // Mark all CMS elements as loaded
+    // Mark all CMS elements as loaded and load default images
     function markAllCMSElementsLoaded() {
         document.querySelectorAll('[id^="cms-"]').forEach(elem => {
-            elem.classList.add('cms-loaded');
+            // For images that weren't updated by CMS, load their default
+            if (elem.tagName === 'IMG' && !elem.classList.contains('cms-loaded')) {
+                const defaultSrc = elem.dataset.default;
+                if (defaultSrc && elem.src.indexOf('data:image') !== -1) {
+                    const newImg = new Image();
+                    newImg.onload = function() {
+                        elem.src = defaultSrc;
+                        elem.classList.add('opacity-100', 'cms-loaded');
+                        // Hide skeleton overlay if exists
+                        const skeleton = elem.previousElementSibling;
+                        if (skeleton && skeleton.classList.contains('about-img-skeleton')) {
+                            skeleton.style.display = 'none';
+                        }
+                    };
+                    newImg.src = defaultSrc;
+                } else {
+                    elem.classList.add('cms-loaded');
+                }
+            } else {
+                elem.classList.add('cms-loaded');
+            }
+        });
+
+        // Also handle about-lazy-img and offer-lazy-img
+        document.querySelectorAll('.about-lazy-img, .offer-lazy-img').forEach(img => {
+            if (!img.classList.contains('opacity-100')) {
+                const defaultSrc = img.dataset.default || img.dataset.src;
+                if (defaultSrc) {
+                    img.src = defaultSrc;
+                }
+            }
         });
     }
 
@@ -157,8 +199,8 @@
         // Try to apply cached content immediately (before DOM ready)
         const cached = getCachedContent(pageName);
 
-        // Fallback: mark all elements as loaded after 2 seconds max
-        setTimeout(markAllCMSElementsLoaded, 2000);
+        // Fallback: mark all elements as loaded after 800ms max
+        setTimeout(markAllCMSElementsLoaded, 800);
 
         if (document.readyState === 'loading') {
             // DOM not ready yet - wait for it
