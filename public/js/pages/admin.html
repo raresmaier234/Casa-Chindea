@@ -644,10 +644,10 @@
             <h3 class="text-lg font-semibold text-gray-900 mb-4" id="modal-title">Confirmă Acțiunea</h3>
             <p class="text-gray-600 mb-6" id="modal-message">Ești sigur că vrei să continui?</p>
             <div class="flex justify-end space-x-2">
-                <button id="modal-cancel" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                <button onclick="closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
                     Anulează
                 </button>
-                <button id="modal-confirm" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                <button onclick="confirmModalAction()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
                     Confirmă
                 </button>
             </div>
@@ -943,8 +943,7 @@
 
             document.getElementById('offer-form').addEventListener('submit', saveOffer);
 
-            // Modal events
-            document.getElementById('modal-cancel').addEventListener('click', closeModal);
+            // Modal events - close when clicking on backdrop
             document.getElementById('confirmation-modal').addEventListener('click', (e) => {
                 if (e.target.id === 'confirmation-modal') closeModal();
             });
@@ -1604,10 +1603,12 @@
 
             try {
                 const token = sessionStorage.getItem('auth_token');
-                const response = await fetch('/api/admin/calendar-blocks', {
+                const response = await fetch(`/api/admin/calendar-blocks?_t=${Date.now()}`, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate'
+                    },
+                    cache: 'no-store'
                 });
 
                 if (response.ok) {
@@ -1634,7 +1635,7 @@
                         const isActive = endDate >= new Date();
 
                         return `
-                            <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6">
+                            <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6" data-block-id="${block.id}">
                                 <div class="flex justify-between items-start">
                                     <div class="flex-1">
                                         <div class="flex items-center mb-2">
@@ -1733,46 +1734,88 @@
         }
 
         async function deleteCalendarBlock(blockId) {
+            if (!blockId || blockId === 'undefined') {
+                showToast('ID-ul blocării este invalid', 'error');
+                return;
+            }
+
             showConfirmationModal(
                 'Confirmă ștergerea',
                 'Ești sigur că vrei să ștergi această blocare?',
                 async () => {
                     try {
                         const token = sessionStorage.getItem('auth_token');
+
+                        if (!token) {
+                            showToast('Sesiune expirată. Te rugăm să te autentifici din nou.', 'error');
+                            return;
+                        }
+
                         const response = await fetch(`/api/admin/calendar-blocks/${blockId}`, {
                             method: 'DELETE',
                             headers: {
-                                'Authorization': `Bearer ${token}`
-                            }
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            cache: 'no-store'
                         });
 
-                        if (response.ok) {
-                            loadCalendarBlocks();
+                        let responseData;
+                        try {
+                            responseData = await response.json();
+                        } catch (e) {
+                            responseData = { error: 'Răspuns invalid de la server' };
+                        }
+
+                        if (response.ok && responseData.success !== false) {
+                            // Remove item from DOM immediately for better UX
+                            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+                            if (blockElement) {
+                                blockElement.remove();
+                            }
                             showToast('Blocarea a fost ștearsă cu succes!', 'success');
+                            // Force reload to sync with server
+                            setTimeout(async () => {
+                                await loadCalendarBlocks();
+                            }, 100);
                         } else {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || 'Eroare la ștergerea blocării');
+                            showToast(responseData.error || 'Eroare la ștergerea blocării', 'error');
                         }
                     } catch (error) {
-                        showToast(`Eroare: ${error.message}`, 'error');
+                        showToast(`Eroare de rețea: ${error.message}`, 'error');
                     }
                 }
             );
         }
+
+        // Store modal callback globally to ensure it's called correctly
+        let _modalConfirmCallback = null;
 
         function showConfirmationModal(title, message, onConfirm) {
             document.getElementById('modal-title').textContent = title;
             document.getElementById('modal-message').textContent = message;
             document.getElementById('confirmation-modal').classList.remove('hidden');
 
-            document.getElementById('modal-confirm').onclick = () => {
-                closeModal();
-                onConfirm();
-            };
+            // Store callback reference
+            _modalConfirmCallback = onConfirm;
         }
 
         function closeModal() {
             document.getElementById('confirmation-modal').classList.add('hidden');
+            _modalConfirmCallback = null;
+        }
+
+        async function confirmModalAction() {
+            if (_modalConfirmCallback) {
+                const callback = _modalConfirmCallback;
+                _modalConfirmCallback = null;
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                try {
+                    await callback();
+                } catch (error) {
+                    console.error('Error in modal callback:', error);
+                }
+            }
         }
 
         // Toast notification system
