@@ -902,6 +902,20 @@
             </div>
         </div>
     </footer>
+
+    <!-- Hide all skeletons if visual editor becomes active after page load -->
+    <script>
+      (function(){
+        function hideAllSkeletonsIfEditor() {
+          if(window.isVisualEditor || document.body.classList.contains('visual-editor-active')) {
+            document.querySelectorAll('.skeleton-image, .offer-img-skeleton, .skeleton-offer').forEach(el => el.style.display = 'none');
+          }
+        }
+        hideAllSkeletonsIfEditor();
+        const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+        observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+      })();
+    </script>
 </body>
 
 </html>
