@@ -7,10 +7,16 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Despre Casa Chindea</title>
+
+    <!-- Early CMS data fetch -->
+    <script>
+        window._cmsPromise = fetch('/api/admin/cms/sections?page=about').then(r => r.json()).catch(() => null);
+    </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>

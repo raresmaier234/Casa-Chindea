@@ -7,10 +7,16 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Camere Casa Chindea</title>
+
+    <!-- Early data fetch for instant render -->
+    <script>
+        window._offersPromise = fetch('/api/admin/offers').then(r => r.json()).catch(() => null);
+    </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
@@ -18,6 +24,19 @@
         @keyframes skeleton-pulse {
             0%, 100% { opacity: 0.4; }
             50% { opacity: 0.7; }
+        }
+
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .skeleton-offer {
+            background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.75rem;
+            height: 300px;
         }
 
         /* Hide CMS elements until loaded */
@@ -342,6 +361,14 @@
             document.getElementById('content-cazare').classList.toggle('hidden', tabName !== 'cazare');
         }
 
+        // Show skeleton while loading
+        function showOffersSkeleton() {
+            const gridEl = document.getElementById('offers-grid');
+            if (gridEl) {
+                gridEl.innerHTML = Array(3).fill(0).map(() => '<div class="skeleton-offer"></div>').join('');
+            }
+        }
+
         async function loadSpecialOffers() {
             const loadingEl = document.getElementById('offers-loading');
             const gridEl = document.getElementById('offers-grid');
@@ -349,10 +376,20 @@
             const sectionEl = document.getElementById('special-offers-section');
 
             try {
-                const response = await fetch('/api/offers');
-                const data = await response.json();
+                // Use pre-fetched data if available
+                let data;
+                if (window._offersPromise) {
+                    data = await window._offersPromise;
+                    window._offersPromise = null;
+                }
 
-                loadingEl.classList.add('hidden');
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch('/api/offers');
+                    data = await response.json();
+                }
+
+                loadingEl?.classList.add('hidden');
 
                 if (data.success && data.offers && data.offers.length > 0) {
                     gridEl.innerHTML = data.offers.map((offer, index) => {

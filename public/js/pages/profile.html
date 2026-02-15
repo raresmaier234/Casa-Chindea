@@ -7,10 +7,27 @@
     <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
-    
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilul Meu - Casa Chindea</title>
+
+    <!-- Early data fetch for instant render -->
+    <script>
+        const token = sessionStorage.getItem('auth_token');
+        if (token) {
+            window._profileDataPromises = {
+                profile: fetch('/api/auth/profile', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(r => r.json()).catch(() => null),
+                bookings: fetch('/api/booking/my-bookings', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                }).then(r => r.json()).catch(() => null)
+            };
+        }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -420,14 +437,27 @@
         async function loadUserProfile() {
             try {
                 const token = sessionStorage.getItem('auth_token');
-                const response = await fetch('/api/user/profile', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`
-                    }
-                });
 
-                if (response.ok) {
-                    const data = await response.json();
+                // Use pre-fetched data if available
+                let data;
+                if (window._profileDataPromises?.profile) {
+                    data = await window._profileDataPromises.profile;
+                    window._profileDataPromises.profile = null;
+                }
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch('/api/user/profile', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        }
+                    });
+                    if (response.ok) {
+                        data = await response.json();
+                    }
+                }
+
+                if (data?.user) {
                     const user = data.user;
 
                     // Store user ID globally for avatar functionality
@@ -549,35 +579,48 @@
                     return;
                 }
 
-                const response = await fetch('/api/user/booking', {
-                    headers: {
-                        'Authorization': `Bearer ${token}`,
-                        'Cache-Control': 'no-cache'
-                    },
-                    signal: loadUserBookingsController.signal
-                });
+                // Use pre-fetched data if available
+                let data;
+                if (window._profileDataPromises?.bookings) {
+                    const response = await window._profileDataPromises.bookings;
+                    window._profileDataPromises.bookings = null;
+                    data = response;
+                }
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch('/api/user/booking', {
+                        headers: {
+                            'Authorization': `Bearer ${token}`,
+                            'Cache-Control': 'no-cache'
+                        },
+                        signal: loadUserBookingsController.signal
+                    });
+
+                    if (response.ok) {
+                        data = await response.json();
+                    } else if (response.status === 401 || response.status === 403) {
+                        logout();
+                        return;
+                    } else {
+                        const errorData = await response.json().catch(() => ({ error: 'Eroare necunoscută' }));
+                        throw new Error(errorData.error || `HTTP ${response.status}`);
+                    }
+                }
 
                 loadingEl.classList.add('hidden');
 
-                if (response.ok) {
-                    const data = await response.json();
-                    if (data.success && data.bookings) {
-                        document.getElementById('bookings-count').textContent = data.bookings.length;
-                        displayBookings(data.bookings);
-                        containerEl.classList.remove('hidden');
-                        setTimeout(() => {
-                            if (listEl.scrollHeight > listEl.clientHeight) {
-                                listEl.classList.add('shadow-inner');
-                            }
-                        }, 100);
-                    } else {
-                        emptyEl.classList.remove('hidden');
-                    }
-                } else if (response.status === 401 || response.status === 403) {
-                    logout();
+                if (data?.success && data?.bookings) {
+                    document.getElementById('bookings-count').textContent = data.bookings.length;
+                    displayBookings(data.bookings);
+                    containerEl.classList.remove('hidden');
+                    setTimeout(() => {
+                        if (listEl.scrollHeight > listEl.clientHeight) {
+                            listEl.classList.add('shadow-inner');
+                        }
+                    }, 100);
                 } else {
-                    const errorData = await response.json().catch(() => ({ error: 'Eroare necunoscută' }));
-                    throw new Error(errorData.error || `HTTP ${response.status}`);
+                    emptyEl.classList.remove('hidden');
                 }
             } catch (error) {
                 if (error.name === 'AbortError') {

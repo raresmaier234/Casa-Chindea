@@ -8,9 +8,29 @@
     <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
     <link rel="dns-prefetch" href="https://unpkg.com">
     
+    <!-- Preload critical API data -->
+    <link rel="preconnect" href="/api" crossorigin>
+
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Casa Chindea</title>
+
+    <!-- Start fetching data immediately before JS loads -->
+    <script>
+        // Early data fetching - start before DOM is ready
+        window._adminDataPromises = {};
+        const token = sessionStorage.getItem('auth_token');
+        if (token) {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const t = Date.now();
+            window._adminDataPromises.bookings = fetch(`/api/admin/booking?status=pending&_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
+            window._adminDataPromises.gallery = fetch(`/api/photos?limit=500&_t=${t}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
+            window._adminDataPromises.prices = fetch(`/api/admin/prices?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
+            window._adminDataPromises.offers = fetch(`/api/admin/offers?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
+            window._adminDataPromises.calendarBlocks = fetch(`/api/admin/calendar-blocks?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
+        }
+    </script>
+
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
     <script>
@@ -840,19 +860,39 @@
         }
 
         // Check admin authentication
-        document.addEventListener('DOMContentLoaded', function () {
+        document.addEventListener('DOMContentLoaded', async function () {
             checkAdminAuth();
             initializeTabs();
-            // Preload bookings immediately with skeleton
-            showBookingsSkeleton();
-            loadBookings();
             setupEventListeners();
             setupOfferTypePreview();
 
-            // Preload other data in background for faster tab switching
-            setTimeout(() => {
-                preloadAdminData();
-            }, 500);
+            // Use pre-fetched data if available (from head script)
+            if (window._adminDataPromises) {
+                // Load bookings immediately - use pre-fetched if ready
+                const bookingsData = await window._adminDataPromises.bookings;
+                if (bookingsData && bookingsData.bookings) {
+                    setCache('bookings', bookingsData);
+                    displayBookings(bookingsData.bookings);
+                    document.getElementById('stats-total').textContent = bookingsData.bookings?.length || 0;
+                } else {
+                    loadBookings();
+                }
+
+                // Cache other pre-fetched data
+                const [galleryData, pricesData, offersData, blocksData] = await Promise.all([
+                    window._adminDataPromises.gallery,
+                    window._adminDataPromises.prices,
+                    window._adminDataPromises.offers,
+                    window._adminDataPromises.calendarBlocks
+                ]);
+
+                if (galleryData) setCache('gallery', galleryData);
+                if (pricesData) setCache('prices', pricesData);
+                if (offersData) setCache('offers', offersData);
+                if (blocksData) setCache('calendarBlocks', blocksData);
+            } else {
+                loadBookings();
+            }
         });
 
         // Preload data in background
@@ -1114,9 +1154,16 @@
             const emptyEl = document.getElementById('bookings-empty');
             const filterStatus = document.getElementById('filter-status').value;
 
-            // Show skeleton immediately
+            // Check cache first - render instantly without skeleton
+            if (!forceRefresh && isCacheValid('bookings') && filterStatus === 'pending') {
+                displayBookings(adminCache.bookings.data.bookings || []);
+                document.getElementById('stats-total').textContent = adminCache.bookings.data.bookings?.length || 0;
+                return;
+            }
+
+            // Show skeleton only if no cached data
             loadingEl.classList.add('hidden');
-            listEl.innerHTML = generateBookingSkeleton(3);
+            listEl.innerHTML = generateBookingSkeleton(2);
             listEl.classList.remove('hidden');
             emptyEl.classList.add('hidden');
 
@@ -1137,6 +1184,7 @@
                     if (data.success === false) {
                         throw new Error(data.error || 'Eroare necunoscută');
                     }
+                    if (filterStatus === 'pending') setCache('bookings', data);
                     displayBookings(data.bookings || []);
                     document.getElementById('stats-total').textContent = data.bookings?.length || 0;
                 } else {
@@ -1155,11 +1203,19 @@
         function displayBookings(bookings) {
             const listEl = document.getElementById('bookings-list');
             const emptyEl = document.getElementById('bookings-empty');
+            const loadingEl = document.getElementById('bookings-loading');
+
+            // Hide loading
+            loadingEl.classList.add('hidden');
 
             if (bookings.length === 0) {
+                listEl.classList.add('hidden');
                 emptyEl.classList.remove('hidden');
                 return;
             }
+
+            emptyEl.classList.add('hidden');
+            listEl.classList.remove('hidden');
 
             listEl.innerHTML = bookings.map(booking => `
                 <div class="border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
@@ -1274,8 +1330,6 @@
                     </div>
                 </div>
             `).join('');
-
-            listEl.classList.remove('hidden');
         }
 
         // Helper function to calculate nights
@@ -1336,14 +1390,14 @@
         async function loadGallery(forceRefresh = false) {
             const galleryEl = document.getElementById('admin-gallery');
 
-            // Show skeleton immediately
-            galleryEl.innerHTML = generateGallerySkeleton(8);
-
-            // Check cache first
+            // Check cache first - render instantly without skeleton
             if (!forceRefresh && isCacheValid('gallery')) {
                 renderGallery(adminCache.gallery.data);
                 return;
             }
+
+            // Show skeleton only if no cached data
+            galleryEl.innerHTML = generateGallerySkeleton(6);
 
             try {
                 const cacheBuster = Date.now();
@@ -1775,8 +1829,14 @@
         async function loadCalendarBlocks(forceRefresh = false) {
             const blocksEl = document.getElementById('calendar-blocks');
 
-            // Show skeleton immediately
-            blocksEl.innerHTML = generateCalendarBlocksSkeleton(3);
+            // Check cache first - render instantly
+            if (!forceRefresh && isCacheValid('calendarBlocks')) {
+                renderCalendarBlocks(adminCache.calendarBlocks.data);
+                return;
+            }
+
+            // Show skeleton only if no cached data
+            blocksEl.innerHTML = generateCalendarBlocksSkeleton(2);
 
             try {
                 const token = sessionStorage.getItem('auth_token');
@@ -1793,50 +1853,8 @@
                     if (data.success === false) {
                         throw new Error(data.error || 'Eroare la încărcarea blocărilor de calendar');
                     }
-                    const blocks = data.blocks || [];
-
-                    if (blocks.length === 0) {
-                        blocksEl.innerHTML = `
-                            <div class="text-center py-12">
-                                <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
-                                <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există blocări de calendar</h3>
-                                <p class="text-gray-600">Adaugă o blocare pentru a preveni rezervările în anumite perioade.</p>
-                            </div>
-                        `;
-                        return;
-                    }
-
-                    blocksEl.innerHTML = blocks.map(block => {
-                        const startDate = new Date(block.startDate);
-                        const endDate = new Date(block.endDate);
-                        const isActive = endDate >= new Date();
-
-                        return `
-                            <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6" data-block-id="${block.id}">
-                                <div class="flex justify-between items-start">
-                                    <div class="flex-1">
-                                        <div class="flex items-center mb-2">
-                                            <h4 class="font-semibold ${isActive ? 'text-red-800' : 'text-gray-600'}">
-                                                ${formatDate(block.startDate)} - ${formatDate(block.endDate)}
-                                            </h4>
-                                            ${isActive ?
-                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' :
-                                '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
-                            }
-                                        </div>
-                                        <p class="${isActive ? 'text-red-600' : 'text-gray-500'}">${block.reason || 'Fără motiv specificat'}</p>
-                                        <p class="text-xs ${isActive ? 'text-red-500' : 'text-gray-400'} mt-2">
-                                            Creată: ${formatDate(block.created)}
-                                        </p>
-                                    </div>
-                                    <button onclick="deleteCalendarBlock('${block.id}')" 
-                                        class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
-                                        <i class="fas fa-trash"></i>
-                                    </button>
-                                </div>
-                            </div>
-                        `;
-                    }).join('');
+                    setCache('calendarBlocks', data);
+                    renderCalendarBlocks(data);
                 } else {
                     throw new Error('Eroare la încărcarea blocărilor');
                 }
@@ -1848,6 +1866,54 @@
                     </div>
                 `;
             }
+        }
+
+        function renderCalendarBlocks(data) {
+            const blocksEl = document.getElementById('calendar-blocks');
+            const blocks = data.blocks || [];
+
+            if (blocks.length === 0) {
+                blocksEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există blocări de calendar</h3>
+                        <p class="text-gray-600">Adaugă o blocare pentru a preveni rezervările în anumite perioade.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            blocksEl.innerHTML = blocks.map(block => {
+                const startDate = new Date(block.startDate);
+                const endDate = new Date(block.endDate);
+                const isActive = endDate >= new Date();
+
+                return `
+                    <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6" data-block-id="${block.id}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <h4 class="font-semibold ${isActive ? 'text-red-800' : 'text-gray-600'}">
+                                        ${formatDate(block.startDate)} - ${formatDate(block.endDate)}
+                                    </h4>
+                                    ${isActive ?
+                        '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' :
+                        '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
+                    }
+                                </div>
+                                <p class="${isActive ? 'text-red-600' : 'text-gray-500'}">${block.reason || 'Fără motiv specificat'}</p>
+                                <p class="text-xs ${isActive ? 'text-red-500' : 'text-gray-400'} mt-2">
+                                    Creată: ${formatDate(block.created)}
+                                </p>
+                            </div>
+                            <button onclick="deleteCalendarBlock('${block.id}')"
+                                class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
         }
 
         async function addCalendarBlock(e) {
@@ -2249,16 +2315,16 @@
         async function loadOffers(forceRefresh = false) {
             const listEl = document.getElementById('offers-list');
             const loadingEl = document.getElementById('offers-loading');
-
-            // Show skeleton immediately instead of spinner
-            listEl.innerHTML = generateOffersSkeleton(3);
             if (loadingEl) loadingEl.classList.add('hidden');
 
-            // Check cache first
+            // Check cache first - render instantly
             if (!forceRefresh && isCacheValid('offers')) {
                 renderOffers(adminCache.offers.data);
                 return;
             }
+
+            // Show skeleton only if no cached data
+            listEl.innerHTML = generateOffersSkeleton(2);
 
             try {
                 const token = sessionStorage.getItem('auth_token');
