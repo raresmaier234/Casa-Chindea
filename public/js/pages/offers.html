@@ -311,7 +311,7 @@
                 loadingEl.classList.add('hidden');
 
                 if (data.success && data.offers && data.offers.length > 0) {
-                    gridEl.innerHTML = data.offers.map(offer => {
+                    gridEl.innerHTML = data.offers.map((offer, index) => {
                         const image = holidayImages[offer.type] || holidayImages['custom'];
                         const label = offerTypeLabels[offer.type] || 'Ofertă Specială';
                         const startDate = new Date(offer.startDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
@@ -326,8 +326,8 @@
 
                                 <!-- Header with holiday image -->
                                 <div class="relative overflow-hidden">
-                                    <img src="${image}" alt="${label}" class="w-full h-48 object-cover" loading="lazy">
-                                    <div class="absolute inset-0 bg-gradient-to-t from-primary/90 to-transparent flex items-end justify-center p-4">
+                                    <img id="cms-offer-image-${offer.type}-${index}" src="${image}" alt="${label}" class="w-full h-48 object-cover" loading="lazy">
+                                    <div class="absolute inset-0 from-primary/90 to-transparent flex items-end justify-center p-4">
                                         <span class="text-white text-lg font-bold uppercase tracking-wider drop-shadow-lg">${label}</span>
                                     </div>
                                 </div>
@@ -403,6 +403,11 @@
                     const badge = document.getElementById('offers-badge');
                     badge.textContent = data.offers.length;
                     badge.classList.remove('hidden');
+
+                    // Reload CMS content to apply saved images to dynamically generated offers
+                    if (typeof loadCMSContent === 'function') {
+                        setTimeout(() => loadCMSContent('offers'), 100);
+                    }
                 } else {
                     // No offers - show the no-offers message
                     noOffersEl.classList.remove('hidden');
