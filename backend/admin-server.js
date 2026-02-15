@@ -464,6 +464,9 @@ router.get('/cms/sections', async (req, res) => {
     try {
         const { page, section, key } = req.query;
 
+        // Add cache headers for faster loading (cache for 1 minute, revalidate in background)
+        res.set('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+
         // Build filter - start with page condition
         let filter = '';
 

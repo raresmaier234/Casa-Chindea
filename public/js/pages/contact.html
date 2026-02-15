@@ -11,10 +11,52 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Contact Casa Chindea</title>
+
+    <!-- Critical CSS - prevent flash of default content -->
+    <style>
+        /* Skeleton loading animation */
+        @keyframes skeleton-pulse {
+            0%, 100% { opacity: 0.4; }
+            50% { opacity: 0.7; }
+        }
+
+        /* Hide CMS elements until loaded */
+        [id^="cms-"]:not(.cms-loaded) {
+            background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+            color: transparent !important;
+            border-radius: 4px;
+            min-height: 1em;
+        }
+
+        /* Images skeleton */
+        img[id^="cms-"]:not(.cms-loaded) {
+            background: linear-gradient(90deg, #d1d5db 25%, #e5e7eb 50%, #d1d5db 75%);
+            background-size: 200% 100%;
+            animation: skeleton-pulse 1.5s ease-in-out infinite;
+        }
+
+        /* Loaded state */
+        [id^="cms-"].cms-loaded {
+            animation: none;
+            background: transparent;
+            color: inherit !important;
+        }
+
+        img[id^="cms-"].cms-loaded {
+            animation: none;
+            background: transparent;
+        }
+    </style>
+
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://smtpjs.com/v3/smtp.js">
-    </script>
+    <script src="https://smtpjs.com/v3/smtp.js"></script>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- CMS Loader - load early for instant content -->
+    <script src="/js/components/cms-loader.js"></script>
+
     <script>
         tailwind.config = {
             theme: {
@@ -87,16 +129,18 @@
 
     <!-- Include navigation component -->
     <script src="/js/components/navigation.js"></script>
+    <script src="/js/components/visual-editor.js"></script>
+
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h1 id="cms-contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
-                <p class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice întrebare</p>
+                <p id="cms-contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice întrebare</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <!-- Contact Info -->
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact</h2>
+                    <h2 id="cms-contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact</h2>
                     <div class="space-y-6">
                         <div class="flex items-start">
                             <div
@@ -135,7 +179,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Program</h3>
-                                <p class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00</p>
+                                <p id="cms-contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00</p>
                             </div>
                         </div>
                     </div>
@@ -160,7 +204,7 @@
                 </div>
                 <!-- Contact Form -->
                 <div>
-                    <h2 class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj</h2>
+                    <h2 id="cms-contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj</h2>
                     <form id="contact-form" class="space-y-6" onsubmit="event.preventDefault(); sendMail();">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nume</label>
@@ -193,7 +237,7 @@
             </div>
             <!-- Map -->
             <div class="mt-20">
-                <h2 class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe Hartă</h2>
+                <h2 id="cms-contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe Hartă</h2>
                 <div class="h-96 bg-gray-300 rounded-lg overflow-hidden">
                     <iframe src="https://www.google.com/maps?q=46.7820948,25.8335092&z=15&output=embed" width="100%"
                         height="100%" style="border:0;" allowfullscreen="" loading="lazy">
