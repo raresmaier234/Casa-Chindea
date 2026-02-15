@@ -110,7 +110,13 @@
 
     <!-- Critical CSS/JS -->
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
 
     <!-- CMS Loader - load early for instant content -->
     <script src="/js/components/cms-loader.js"></script>
