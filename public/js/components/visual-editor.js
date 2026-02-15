@@ -4,6 +4,7 @@
 let isAdmin = false;
 let editMode = false;
 let editableElements = [];
+let isMobile = window.innerWidth < 768;
 
 // Check if user is admin
 function checkAdminStatus() {
@@ -23,15 +24,36 @@ function checkAdminStatus() {
 
 // Initialize visual editor for admins
 function initVisualEditor() {
+    // Update mobile check on resize
+    window.addEventListener('resize', () => {
+        const wasMobile = isMobile;
+        isMobile = window.innerWidth < 768;
+        if (wasMobile !== isMobile && editMode) {
+            // Re-create sidebar for new screen size
+            const oldSidebar = document.getElementById('editor-sidebar');
+            if (oldSidebar) oldSidebar.remove();
+            createEditorSidebar();
+            const sidebar = document.getElementById('editor-sidebar');
+            if (isMobile) {
+                sidebar.classList.remove('translate-y-full');
+            } else {
+                sidebar.classList.remove('translate-x-full');
+            }
+            document.body.style.paddingRight = isMobile ? '0' : '320px';
+            document.body.style.paddingBottom = isMobile ? '60vh' : '0';
+        }
+    });
+
     // Add edit mode toggle button
     const editBtn = document.createElement('div');
     editBtn.id = 'visual-edit-toggle';
-    editBtn.className = 'fixed bottom-6 right-6 z-50';
+    editBtn.className = 'fixed bottom-4 right-4 sm:bottom-6 sm:right-6 z-50';
     editBtn.innerHTML = `
         <button onclick="toggleEditMode()" 
-            class="bg-primary hover:bg-secondary text-white px-6 py-3 rounded-full shadow-lg flex items-center space-x-2 transition-all">
+            class="bg-primary hover:bg-secondary text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg flex items-center space-x-2 transition-all text-sm sm:text-base">
             <i class="fas fa-edit"></i>
-            <span id="edit-mode-text">Activează Editare</span>
+            <span id="edit-mode-text" class="hidden sm:inline">Activează Editare</span>
+            <span id="edit-mode-text-mobile" class="sm:hidden">Edit</span>
         </button>
     `;
     document.body.appendChild(editBtn);
@@ -40,16 +62,30 @@ function initVisualEditor() {
     createEditorSidebar();
 }
 
-// Create the editor sidebar
+// Create the editor sidebar (responsive)
 function createEditorSidebar() {
     const sidebar = document.createElement('div');
     sidebar.id = 'editor-sidebar';
-    sidebar.className = 'fixed top-0 right-0 w-80 h-full bg-white shadow-2xl z-[100] transform translate-x-full transition-transform duration-300';
+
+    // Mobile: bottom sheet, Desktop: right sidebar
+    if (isMobile) {
+        sidebar.className = 'fixed bottom-0 left-0 right-0 h-[60vh] bg-white shadow-2xl z-[100] transform translate-y-full transition-transform duration-300 rounded-t-2xl';
+    } else {
+        sidebar.className = 'fixed top-0 right-0 w-80 h-full bg-white shadow-2xl z-[100] transform translate-x-full transition-transform duration-300';
+    }
+
     sidebar.innerHTML = `
         <div class="h-full flex flex-col">
+            <!-- Mobile drag handle -->
+            ${isMobile ? `
+                <div class="flex justify-center py-2">
+                    <div class="w-12 h-1 bg-gray-300 rounded-full"></div>
+                </div>
+            ` : ''}
+            
             <!-- Header -->
-            <div class="bg-primary text-white p-4 flex items-center justify-between">
-                <h3 class="font-bold text-lg flex items-center">
+            <div class="bg-primary text-white p-3 sm:p-4 flex items-center justify-between ${isMobile ? 'rounded-t-2xl' : ''}">
+                <h3 class="font-bold text-base sm:text-lg flex items-center">
                     <i class="fas fa-edit mr-2"></i>Editor Vizual
                 </h3>
                 <button onclick="toggleEditMode()" class="hover:bg-white/20 p-2 rounded">
@@ -59,31 +95,31 @@ function createEditorSidebar() {
 
             <!-- Tabs -->
             <div class="flex border-b">
-                <button onclick="switchEditorTab('elements')" id="tab-elements" class="flex-1 py-3 px-4 text-sm font-medium text-primary border-b-2 border-primary">
+                <button onclick="switchEditorTab('elements')" id="tab-elements" class="flex-1 py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium text-primary border-b-2 border-primary">
                     <i class="fas fa-list mr-1"></i>Elemente
                 </button>
-                <button onclick="switchEditorTab('edit')" id="tab-edit" class="flex-1 py-3 px-4 text-sm font-medium text-gray-500 hover:text-gray-700">
+                <button onclick="switchEditorTab('edit')" id="tab-edit" class="flex-1 py-2 sm:py-3 px-3 sm:px-4 text-xs sm:text-sm font-medium text-gray-500 hover:text-gray-700">
                     <i class="fas fa-pencil-alt mr-1"></i>Editare
                 </button>
             </div>
 
             <!-- Elements List Tab -->
-            <div id="panel-elements" class="flex-1 overflow-y-auto p-4">
-                <p class="text-sm text-gray-500 mb-3">Click pe un element pentru a-l edita:</p>
+            <div id="panel-elements" class="flex-1 overflow-y-auto p-3 sm:p-4">
+                <p class="text-xs sm:text-sm text-gray-500 mb-2 sm:mb-3">Click pe un element pentru a-l edita:</p>
                 <div id="elements-list" class="space-y-2">
                     <!-- Elements will be listed here -->
                 </div>
             </div>
 
             <!-- Edit Tab -->
-            <div id="panel-edit" class="flex-1 overflow-y-auto p-4 hidden">
+            <div id="panel-edit" class="flex-1 overflow-y-auto p-3 sm:p-4 hidden">
                 <div id="edit-form-container">
-                    <p class="text-sm text-gray-500 text-center py-8">Selectează un element din pagină pentru a-l edita</p>
+                    <p class="text-xs sm:text-sm text-gray-500 text-center py-6 sm:py-8">Selectează un element din pagină pentru a-l edita</p>
                 </div>
             </div>
 
             <!-- Footer -->
-            <div class="p-4 border-t bg-gray-50">
+            <div class="p-3 sm:p-4 border-t bg-gray-50">
                 <p class="text-xs text-gray-500 text-center">
                     <i class="fas fa-info-circle mr-1"></i>
                     Modificările se salvează în baza de date
@@ -122,20 +158,37 @@ function switchEditorTab(tab) {
 function toggleEditMode() {
     editMode = !editMode;
     const btn = document.getElementById('edit-mode-text');
+    const btnMobile = document.getElementById('edit-mode-text-mobile');
     const sidebar = document.getElementById('editor-sidebar');
 
     if (editMode) {
-        btn.textContent = 'Dezactivează Editare';
+        if (btn) btn.textContent = 'Dezactivează Editare';
+        if (btnMobile) btnMobile.textContent = 'Stop';
         document.getElementById('visual-edit-toggle').querySelector('button').classList.add('ring-4', 'ring-yellow-300');
-        sidebar.classList.remove('translate-x-full');
-        document.body.style.paddingRight = '320px';
+
+        if (isMobile) {
+            sidebar.classList.remove('translate-y-full');
+            document.body.style.paddingBottom = '60vh';
+        } else {
+            sidebar.classList.remove('translate-x-full');
+            document.body.style.paddingRight = '320px';
+        }
+
         scanEditableElements();
         showEditableOverlays();
     } else {
-        btn.textContent = 'Activează Editare';
+        if (btn) btn.textContent = 'Activează Editare';
+        if (btnMobile) btnMobile.textContent = 'Edit';
         document.getElementById('visual-edit-toggle').querySelector('button').classList.remove('ring-4', 'ring-yellow-300');
-        sidebar.classList.add('translate-x-full');
-        document.body.style.paddingRight = '0';
+
+        if (isMobile) {
+            sidebar.classList.add('translate-y-full');
+            document.body.style.paddingBottom = '0';
+        } else {
+            sidebar.classList.add('translate-x-full');
+            document.body.style.paddingRight = '0';
+        }
+
         hideEditableOverlays();
     }
 }
@@ -592,3 +645,4 @@ function showToast(message, type) {
 document.addEventListener('DOMContentLoaded', () => {
     checkAdminStatus();
 });
+
