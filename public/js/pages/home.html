@@ -15,12 +15,31 @@
     <!-- Mobile optimizations - load first -->
     <script src="/js/components/mobile-optimizations.js"></script>
 
-    <!-- Early CMS data fetch with timeout -->
+    <!-- Early CMS data fetch with timeout + preload hero image -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
         window._cmsPromise = window.fetchJsonWithTimeout
             ? window.fetchJsonWithTimeout('/api/admin/cms/sections?page=home', {}, timeout)
             : fetch('/api/admin/cms/sections?page=home').then(r => r.json()).catch(() => null);
+
+        // Preload hero image as soon as CMS data arrives
+        window._cmsPromise.then(data => {
+            if (data && data.sections) {
+                const heroSection = data.sections.find(s => s.key === 'home-hero-bg' || s.key === 'hero-bg');
+                if (heroSection && heroSection.imageUrl) {
+                    const link = document.createElement('link');
+                    link.rel = 'preload';
+                    link.as = 'image';
+                    link.href = heroSection.imageUrl;
+                    link.fetchpriority = 'high';
+                    document.head.appendChild(link);
+                    // Also start loading immediately
+                    window._heroImageUrl = heroSection.imageUrl;
+                    const img = new Image();
+                    img.src = heroSection.imageUrl;
+                }
+            }
+        }).catch(() => {});
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
@@ -187,6 +206,22 @@
         });
 
         async function loadHeroImages() {
+            const heroBg = document.getElementById('hero-bg');
+            const heroSkeleton = document.getElementById('hero-skeleton');
+
+            // Check if we already have preloaded hero image from early fetch
+            if (window._heroImageUrl) {
+                const preloadedImg = new Image();
+                preloadedImg.onload = function() {
+                    if (heroSkeleton) heroSkeleton.style.display = 'none';
+                    heroBg.innerHTML = `<img src="${window._heroImageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-100" alt="Hero">`;
+                };
+                preloadedImg.src = window._heroImageUrl;
+                // Still load other images for slideshow in background
+                loadHeroSlideshow(heroBg, heroSkeleton);
+                return;
+            }
+
             try {
                 // Request all photos with a high limit to ensure we get everything
                 const response = await fetch('/api/photos?limit=500');
@@ -195,8 +230,7 @@
                 const photos = (data.items || []).filter(photo =>
                     photo.description && photo.description.toLowerCase() === 'home'
                 );
-                const heroBg = document.getElementById('hero-bg');
-                const heroSkeleton = document.getElementById('hero-skeleton');
+
                 if (photos.length > 0) {
                     // Preload first image before showing
                     const firstImg = new Image();
@@ -218,23 +252,47 @@
                     firstImg.src = photos[0].imageUrl;
                 } else {
                     // Load default with preload
-                    const defaultImg = new Image();
-                    defaultImg.onload = function() {
-                        if (heroSkeleton) heroSkeleton.style.display = 'none';
-                        heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
-                    };
-                    defaultImg.src = 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200';
+                    showDefaultHero(heroBg, heroSkeleton);
                 }
             } catch (e) {
-                // Use default hero image if loading fails
-                const heroSkeleton = document.getElementById('hero-skeleton');
-                const defaultImg = new Image();
-                defaultImg.onload = function() {
-                    if (heroSkeleton) heroSkeleton.style.display = 'none';
-                    document.getElementById('hero-bg').innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
-                };
-                defaultImg.src = 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200';
+                showDefaultHero(heroBg, heroSkeleton);
             }
+        }
+
+        function showDefaultHero(heroBg, heroSkeleton) {
+            const defaultImg = new Image();
+            defaultImg.onload = function() {
+                if (heroSkeleton) heroSkeleton.style.display = 'none';
+                heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
+            };
+            defaultImg.src = 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200';
+        }
+
+        async function loadHeroSlideshow(heroBg, heroSkeleton) {
+            try {
+                const response = await fetch('/api/photos?limit=500');
+                const data = await response.json();
+                const photos = (data.items || []).filter(photo =>
+                    photo.description && photo.description.toLowerCase() === 'home'
+                );
+                if (photos.length > 1) {
+                    // Replace with slideshow after a delay
+                    setTimeout(() => {
+                        heroBg.innerHTML = photos.map((photo, idx) => {
+                            return `<img src="${photo.imageUrl}"
+                            class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
+                            style="z-index:0;" alt="Hero ${idx + 1}">`;
+                        }).join('');
+                        let current = 0;
+                        setInterval(() => {
+                            const slides = heroBg.querySelectorAll('.hero-slide');
+                            slides.forEach((img, i) => img.classList.toggle('opacity-100', i === current));
+                            slides.forEach((img, i) => img.classList.toggle('opacity-0', i !== current));
+                            current = (current + 1) % slides.length;
+                        }, 3500);
+                    }, 100);
+                }
+            } catch (e) {}
         }
 
         async function loadHomeGallery() {

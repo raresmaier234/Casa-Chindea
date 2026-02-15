@@ -158,22 +158,12 @@
     // Mark all CMS elements as loaded and load default images
     function markAllCMSElementsLoaded() {
         document.querySelectorAll('[id^="cms-"]').forEach(elem => {
-            // For images that weren't updated by CMS, load their default
+            // For images that weren't updated by CMS, just mark as loaded (keep skeleton visible)
             if (elem.tagName === 'IMG' && !elem.classList.contains('cms-loaded')) {
-                const defaultSrc = elem.dataset.default;
-                if (defaultSrc && elem.src.indexOf('data:image') !== -1) {
-                    const newImg = new Image();
-                    newImg.onload = function() {
-                        elem.src = defaultSrc;
-                        elem.classList.add('opacity-100', 'cms-loaded');
-                        // Hide skeleton overlay if exists
-                        const skeleton = elem.previousElementSibling;
-                        if (skeleton && skeleton.classList.contains('about-img-skeleton')) {
-                            skeleton.style.display = 'none';
-                        }
-                    };
-                    newImg.src = defaultSrc;
-                } else {
+                // Don't load placeholder images - keep skeleton visible until real image loads
+                // Only mark as loaded if there's no skeleton overlay
+                const skeleton = elem.previousElementSibling;
+                if (!skeleton || !skeleton.classList.contains('about-img-skeleton')) {
                     elem.classList.add('cms-loaded');
                 }
             } else {
@@ -181,14 +171,14 @@
             }
         });
 
-        // Also handle about-lazy-img and offer-lazy-img
-        document.querySelectorAll('.about-lazy-img, .offer-lazy-img').forEach(img => {
-            if (!img.classList.contains('opacity-100')) {
-                const defaultSrc = img.dataset.default || img.dataset.src;
-                if (defaultSrc) {
-                    img.src = defaultSrc;
-                }
-            }
+        // Handle about-lazy-img - don't load placeholders, keep skeleton
+        document.querySelectorAll('.about-lazy-img').forEach(img => {
+            // Don't auto-load placeholder - wait for CMS image
+        });
+
+        // Handle offer-lazy-img - don't load placeholders, keep skeleton
+        document.querySelectorAll('.offer-lazy-img').forEach(img => {
+            // Don't auto-load placeholder - wait for real image
         });
     }
 
