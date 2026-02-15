@@ -13,17 +13,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Profilul Meu - Casa Chindea</title>
 
-    <!-- Early data fetch for instant render -->
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early data fetch for instant render with timeout -->
     <script>
         const token = sessionStorage.getItem('auth_token');
         if (token) {
+            const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+            const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+
             window._profileDataPromises = {
-                profile: fetch('/api/auth/profile', {
+                profile: fetchFn('/api/auth/profile', {
                     headers: { 'Authorization': `Bearer ${token}` }
-                }).then(r => r.json()).catch(() => null),
-                bookings: fetch('/api/booking/my-bookings', {
+                }, timeout),
+                bookings: fetchFn('/api/booking/my-bookings', {
                     headers: { 'Authorization': `Bearer ${token}` }
-                }).then(r => r.json()).catch(() => null)
+                }, timeout)
             };
         }
     </script>

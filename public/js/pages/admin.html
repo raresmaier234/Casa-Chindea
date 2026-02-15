@@ -15,19 +15,47 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Admin Dashboard - Casa Chindea</title>
 
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
     <!-- Start fetching data immediately before JS loads -->
     <script>
         // Early data fetching - start before DOM is ready
         window._adminDataPromises = {};
         const token = sessionStorage.getItem('auth_token');
+
         if (token) {
             const headers = { 'Authorization': `Bearer ${token}` };
             const t = Date.now();
-            window._adminDataPromises.bookings = fetch(`/api/admin/booking?status=pending&_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
-            window._adminDataPromises.gallery = fetch(`/api/photos?limit=500&_t=${t}`, { cache: 'no-store' }).then(r => r.json()).catch(() => null);
-            window._adminDataPromises.prices = fetch(`/api/admin/prices?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
-            window._adminDataPromises.offers = fetch(`/api/admin/offers?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
-            window._adminDataPromises.calendarBlocks = fetch(`/api/admin/calendar-blocks?_t=${t}`, { headers, cache: 'no-store' }).then(r => r.json()).catch(() => null);
+            // Use mobile optimizations if available
+            const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+            const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+
+            window._adminDataPromises.bookings = fetchFn(
+                `/api/admin/booking?status=pending&_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.gallery = fetchFn(
+                `/api/photos?limit=500&_t=${t}`,
+                { cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.prices = fetchFn(
+                `/api/admin/prices?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.offers = fetchFn(
+                `/api/admin/offers?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.calendarBlocks = fetchFn(
+                `/api/admin/calendar-blocks?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
         }
     </script>
 
@@ -110,7 +138,7 @@
             }
         }
 
-        /* Skeleton loading animation */
+        /* Skeleton loading animation - faster on mobile */
         @keyframes shimmer {
             0% { background-position: -200% 0; }
             100% { background-position: 200% 0; }
@@ -121,6 +149,13 @@
             background-size: 200% 100%;
             animation: shimmer 1.5s infinite;
             border-radius: 0.5rem;
+        }
+
+        /* Faster animation on mobile for better perceived performance */
+        @media (max-width: 640px) {
+            .skeleton {
+                animation: shimmer 1s infinite;
+            }
         }
 
         .skeleton-text {
@@ -197,6 +232,12 @@
                     <div>
                         <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Admin</h1>
                         <p class="text-sm sm:text-base text-gray-600">Gestionează rezervările și galeria Casa Chindea</p>
+                        <!-- Slow connection indicator -->
+                        <div id="slow-connection-indicator" class="hidden mt-2">
+                            <span class="inline-flex items-center px-2 py-1 rounded-full text-xs bg-yellow-100 text-yellow-800">
+                                <i class="fas fa-wifi mr-1"></i>Mod conexiune lentă activat
+                            </span>
+                        </div>
                     </div>
                     <div class="text-left sm:text-right">
                         <div class="text-xl sm:text-2xl font-bold text-primary" id="stats-total">0</div>
@@ -776,13 +817,18 @@
     </div>
 
     <script>
+        // Use mobile optimizations from common script
+        const isMobile = window.mobileOpts ? window.mobileOpts.isMobile : /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isSlowConnection = window.mobileOpts ? window.mobileOpts.isSlowConnection : isMobile;
+        const cacheTTLMultiplier = window.mobileOpts ? window.mobileOpts.cacheTTLMultiplier : (isSlowConnection ? 2 : 1);
+
         // Cache for admin data to reduce API calls
         const adminCache = {
-            bookings: { data: null, timestamp: 0, ttl: 30000 }, // 30 seconds
-            gallery: { data: null, timestamp: 0, ttl: 60000 }, // 1 minute
-            prices: { data: null, timestamp: 0, ttl: 120000 }, // 2 minutes
-            offers: { data: null, timestamp: 0, ttl: 60000 }, // 1 minute
-            calendarBlocks: { data: null, timestamp: 0, ttl: 30000 } // 30 seconds
+            bookings: { data: null, timestamp: 0, ttl: 30000 * cacheTTLMultiplier }, // 30s / 60s on mobile
+            gallery: { data: null, timestamp: 0, ttl: 60000 * cacheTTLMultiplier }, // 1min / 2min on mobile
+            prices: { data: null, timestamp: 0, ttl: 120000 * cacheTTLMultiplier }, // 2min / 4min on mobile
+            offers: { data: null, timestamp: 0, ttl: 60000 * cacheTTLMultiplier }, // 1min / 2min on mobile
+            calendarBlocks: { data: null, timestamp: 0, ttl: 30000 * cacheTTLMultiplier } // 30s / 60s on mobile
         };
 
         function isCacheValid(cacheKey) {
@@ -802,9 +848,12 @@
             }
         }
 
-        // Skeleton generators
+        // Skeleton generators - optimized for mobile (fewer items)
+        const skeletonCountMobile = window.innerWidth < 640;
+
         function generateBookingSkeleton(count = 3) {
-            return Array(count).fill(0).map(() => `
+            const actualCount = skeletonCountMobile ? Math.min(count, 2) : count;
+            return Array(actualCount).fill(0).map(() => `
                 <div class="skeleton-card">
                     <div class="flex justify-between items-start">
                         <div class="flex-1">
@@ -820,8 +869,9 @@
         }
 
         function generateGallerySkeleton(count = 6) {
+            const actualCount = skeletonCountMobile ? Math.min(count, 4) : count;
             return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                ${Array(count).fill(0).map(() => `
+                ${Array(actualCount).fill(0).map(() => `
                     <div class="skeleton-card">
                         <div class="skeleton skeleton-image"></div>
                         <div class="skeleton skeleton-text mt-2" style="width: 70%"></div>
@@ -831,7 +881,8 @@
         }
 
         function generateCalendarBlocksSkeleton(count = 2) {
-            return Array(count).fill(0).map(() => `
+            const actualCount = skeletonCountMobile ? Math.min(count, 1) : count;
+            return Array(actualCount).fill(0).map(() => `
                 <div class="skeleton-card">
                     <div class="flex justify-between items-center">
                         <div class="flex-1">
@@ -845,7 +896,8 @@
         }
 
         function generateOffersSkeleton(count = 2) {
-            return Array(count).fill(0).map(() => `
+            const actualCount = skeletonCountMobile ? Math.min(count, 1) : count;
+            return Array(actualCount).fill(0).map(() => `
                 <div class="skeleton-card">
                     <div class="flex gap-4">
                         <div class="skeleton" style="width: 100px; height: 100px;"></div>
@@ -865,6 +917,12 @@
             initializeTabs();
             setupEventListeners();
             setupOfferTypePreview();
+
+            // Show slow connection indicator if detected
+            if (isSlowConnection) {
+                const indicator = document.getElementById('slow-connection-indicator');
+                if (indicator) indicator.classList.remove('hidden');
+            }
 
             // Use pre-fetched data if available (from head script)
             if (window._adminDataPromises) {
@@ -1167,6 +1225,11 @@
             listEl.classList.remove('hidden');
             emptyEl.classList.add('hidden');
 
+            // Timeout for slow connections (shorter on mobile)
+            const controller = new AbortController();
+            const timeoutMs = isSlowConnection ? 8000 : 15000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
             try {
                 const token = sessionStorage.getItem('auth_token');
                 let url = `/api/admin/booking?_t=${Date.now()}`;
@@ -1174,10 +1237,14 @@
 
                 const response = await fetch(url, {
                     headers: {
-                        'Authorization': `Bearer ${token}`
+                        'Authorization': `Bearer ${token}`,
+                        'X-Slow-Connection': isSlowConnection ? 'true' : 'false'
                     },
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    signal: controller.signal
                 });
+
+                clearTimeout(timeoutId);
 
                 if (response.ok) {
                     const data = await response.json();
@@ -1192,7 +1259,15 @@
                     throw new Error(errorData.error || `Eroare HTTP ${response.status}`);
                 }
             } catch (error) {
-                listEl.innerHTML = `<div class="text-red-600 text-center py-4">Eroare: ${error.message}</div>`;
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    listEl.innerHTML = `<div class="text-yellow-600 text-center py-4">
+                        <i class="fas fa-clock mr-2"></i>Conexiune lentă.
+                        <button onclick="loadBookings(true)" class="underline text-primary">Încearcă din nou</button>
+                    </div>`;
+                } else {
+                    listEl.innerHTML = `<div class="text-red-600 text-center py-4">Eroare: ${error.message}</div>`;
+                }
                 listEl.classList.remove('hidden');
             } finally {
                 loadingEl.classList.add('hidden');
@@ -1396,24 +1471,47 @@
                 return;
             }
 
-            // Show skeleton only if no cached data
-            galleryEl.innerHTML = generateGallerySkeleton(6);
+            // Show skeleton only if no cached data (fewer on mobile)
+            galleryEl.innerHTML = generateGallerySkeleton(isMobile ? 4 : 6);
+
+            // Timeout for slow connections
+            const controller = new AbortController();
+            const timeoutMs = isSlowConnection ? 10000 : 20000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
 
             try {
                 const cacheBuster = Date.now();
                 const response = await fetch(`/api/photos?limit=500&_=${cacheBuster}`, {
-                    cache: 'no-store'
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    headers: {
+                        'X-Slow-Connection': isSlowConnection ? 'true' : 'false'
+                    }
                 });
+                clearTimeout(timeoutId);
                 const data = await response.json();
                 setCache('gallery', data);
                 renderGallery(data);
             } catch (error) {
-                galleryEl.innerHTML = `
-                    <div class="col-span-full text-center py-12">
-                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
-                        <p class="text-gray-600">Eroare la încărcarea galeriei</p>
-                    </div>
-                `;
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    galleryEl.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-clock text-yellow-400 text-4xl mb-4"></i>
+                            <p class="text-gray-600 mb-2">Conexiune lentă - încărcarea durează mai mult</p>
+                            <button onclick="loadGallery(true)" class="bg-primary text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-redo mr-2"></i>Încearcă din nou
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    galleryEl.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
+                            <p class="text-gray-600">Eroare la încărcarea galeriei</p>
+                        </div>
+                    `;
+                }
             }
         }
 

@@ -13,16 +13,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Rezervare Casa Chindea</title>
 
-    <!-- Early data fetch for instant render -->
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early data fetch for instant render with timeout -->
     <script>
         const t = Date.now();
+        const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+
         window._bookingDataPromises = {
-            prices: fetch(`/api/prices?_t=${t}`).then(r => r.json()).catch(() => null),
-            availability: fetch(`/api/booking/booking-availability?_t=${t}`, {
+            prices: fetchFn(`/api/prices?_t=${t}`, {}, timeout),
+            availability: fetchFn(`/api/booking/booking-availability?_t=${t}`, {
                 cache: 'no-store',
                 headers: { 'Cache-Control': 'no-cache' }
-            }).then(r => r.json()).catch(() => null),
-            offers: fetch(`/api/admin/offers?_t=${t}`).then(r => r.json()).catch(() => null)
+            }, timeout),
+            offers: fetchFn(`/api/admin/offers?_t=${t}`, {}, timeout)
         };
     </script>
 
