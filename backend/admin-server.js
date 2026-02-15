@@ -463,16 +463,23 @@ router.get('/calendar-blocks/check', async (req, res) => {
 router.get('/cms/sections', async (req, res) => {
     try {
         const { page, section, key } = req.query;
-        let filter = 'active = true || active = false';
+
+        // Build filter - start with page condition
+        let filter = '';
 
         if (page) {
-            filter += ` && page = "${page}"`;
+            filter = `page = "${page}"`;
         }
         if (section) {
-            filter += ` && section = "${section}"`;
+            filter += (filter ? ' && ' : '') + `section = "${section}"`;
         }
         if (key) {
-            filter += ` && key = "${key}"`;
+            filter += (filter ? ' && ' : '') + `key = "${key}"`;
+        }
+
+        // If no filter specified, get all
+        if (!filter) {
+            filter = 'active = true || active = false';
         }
 
         const sections = await pb.collection('page_sections').getFullList(500, {
