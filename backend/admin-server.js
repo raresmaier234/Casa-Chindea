@@ -7,6 +7,7 @@ import fs from 'fs';
 import { fileURLToPath } from 'url';
 import PocketBase from 'pocketbase';
 import { authenticateToken } from './auth-server.js';
+import { sendWhatsAppBookingConfirmed, sendWhatsAppBookingDeclined } from './whatsapp.js';
 import dotenv from 'dotenv';
 
 dotenv.config();
@@ -43,6 +44,80 @@ async function authPocketBaseAdmin() {
 
 // Initialize admin auth
 authPocketBaseAdmin();
+
+// Cache pentru prețuri (pentru a evita citiri repetate)
+let pricesCache = null;
+let pricesCacheTimestamp = 0;
+const PRICES_CACHE_TTL = 5 * 60 * 1000; // 5 minute
+
+/**
+ * Obține prețurile din baza de date (prices.json sau PocketBase)
+ */
+async function getPrices() {
+    // Verifică cache
+    if (pricesCache && (Date.now() - pricesCacheTimestamp) < PRICES_CACHE_TTL) {
+        return pricesCache;
+    }
+
+    const defaultPrices = {
+        priceRoom: 150,
+        priceEntire: 500,
+        priceBreakfast: 35,
+        priceBreakfastChild: 20,
+        surchargeWeekend: 0,
+        surchargeHoliday: 0
+    };
+
+    // Încearcă să citească din prices.json
+    try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const { fileURLToPath } = await import('url');
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const pricesFilePath = path.join(__dirname, 'prices.json');
+
+        if (fs.existsSync(pricesFilePath)) {
+            const fileData = fs.readFileSync(pricesFilePath, 'utf8');
+            const prices = JSON.parse(fileData);
+            pricesCache = prices;
+            pricesCacheTimestamp = Date.now();
+            console.log('💰 Prețuri încărcate din prices.json:', prices);
+            return prices;
+        }
+    } catch (fileErr) {
+        console.warn('⚠️ Nu s-a putut citi prices.json:', fileErr.message);
+    }
+
+    // Fallback la PocketBase
+    try {
+        const records = await pb.collection('prices').getFullList({
+            sort: '-created',
+            $autoCancel: false
+        });
+
+        if (records.length > 0) {
+            const prices = {
+                priceRoom: records[0].priceRoom || defaultPrices.priceRoom,
+                priceEntire: records[0].priceEntire || defaultPrices.priceEntire,
+                priceBreakfast: records[0].priceBreakfast || defaultPrices.priceBreakfast,
+                priceBreakfastChild: records[0].priceBreakfastChild || defaultPrices.priceBreakfastChild,
+                surchargeWeekend: records[0].surchargeWeekend || 0,
+                surchargeHoliday: records[0].surchargeHoliday || 0
+            };
+            pricesCache = prices;
+            pricesCacheTimestamp = Date.now();
+
+            return prices;
+        }
+    } catch (pbErr) {
+        console.warn('⚠️ Nu s-a putut citi prețurile din PocketBase:', pbErr.message);
+    }
+
+    // Fallback la prețuri default
+    console.log('💰 Folosesc prețuri default:', defaultPrices);
+    return defaultPrices;
+}
 
 // Cache pentru status admin (pentru a evita request-uri duplicate)
 const adminCache = new Map();
@@ -207,7 +282,7 @@ router.get('/booking', authenticateToken, requireAdmin, async (req, res) => {
 router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
-        const { status } = req.body;
+        const { status, declineReason } = req.body;
 
         if (!['pending', 'confirmed', 'cancelled'].includes(status)) {
             return res.status(400).json({
@@ -216,10 +291,107 @@ router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => 
             });
         }
 
+        // Obține rezervarea completă pentru a trimite notificarea WhatsApp
+        const booking = await pb.collection('booking').getOne(id, {
+            $autoCancel: false
+        });
+
+        console.log('📋 Rezervare citită din PocketBase:', {
+            id: booking.id,
+            name: booking.name,
+            roomType: booking.roomType,
+            offerId: booking.offerId,
+            offerTitle: booking.offerTitle,
+            offerPrice: booking.offerPrice,
+            checkin: booking.checkin,
+            checkout: booking.checkout
+        });
+
         const updatedBooking = await pb.collection('booking').update(id, {
             status,
             updated: new Date().toISOString()
         });
+
+        // Trimite notificare WhatsApp către client
+        // LOCAL: folosește numărul din .env pentru testare
+        // PRODUCTION: va folosi booking.phone
+        const testPhone = process.env.TEST_WHATSAPP_PHONE || process.env.CONTACT_PHONE;
+        const targetPhone = process.env.NODE_ENV === 'production' ? booking.phone : testPhone;
+
+        let whatsappResult = null;
+        let whatsappError = null;
+
+        if (targetPhone && status !== 'pending') {
+            try {
+                // Formatează numărul de telefon pentru WhatsApp API
+                // WhatsApp API necesită format: cod țară + număr (fără +, spații, sau alte caractere)
+                // Exemplu: 40744308651 pentru România
+                let formattedPhone = targetPhone.replace(/[\s+\-()]/g, '');
+
+                // Dacă începe cu 0, adaugă codul țării România (40)
+                if (formattedPhone.startsWith('0')) {
+                    formattedPhone = '40' + formattedPhone.substring(1);
+                }
+
+                console.log('📱 WhatsApp target phone:', targetPhone, '→', formattedPhone);
+
+                // Calculează prețul total
+                // 1. Dacă e ofertă, folosește offerPrice
+                // 2. Altfel, calculează bazat pe prețurile din admin
+                const checkinDate = new Date(booking.checkin);
+                const checkoutDate = new Date(booking.checkout);
+                const nights = Math.round((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+
+                let totalPrice = 0;
+                let offerPriceFromDB = booking.offerPrice;
+
+                // Fallback: extrage prețul ofertei din mesaj dacă câmpul nu există în DB
+                if (!offerPriceFromDB && booking.message) {
+                    const priceMatch = booking.message.match(/Preț pachet:\s*(\d+)\s*RON/i);
+                    if (priceMatch) {
+                        offerPriceFromDB = parseInt(priceMatch[1]);
+                        console.log('💡 Preț ofertă extras din mesaj:', offerPriceFromDB);
+                    }
+                }
+
+                if (offerPriceFromDB && offerPriceFromDB > 0) {
+                    // Rezervare cu ofertă - folosește prețul ofertei
+                    totalPrice = offerPriceFromDB;
+                } else {
+                    // Rezervare normală - calculează bazat pe prețurile din admin
+                    const prices = await getPrices();
+
+                    if (booking.roomType === 'entire') {
+                        totalPrice = nights * prices.priceEntire;
+                    } else {
+                        const rooms = booking.numberOfRooms || 1;
+                        totalPrice = nights * prices.priceRoom * rooms;
+                    }
+                }
+
+                console.log('💰 Preț calculat:', { offerPrice: offerPriceFromDB, nights, roomType: booking.roomType, totalPrice });
+
+                const bookingData = {
+                    name: booking.name,
+                    checkin: booking.checkin,
+                    checkout: booking.checkout,
+                    guests: booking.guests,
+                    roomType: booking.roomType === 'entire' ? 'Casa Întreagă' :
+                              booking.roomType === 'room' ? `${booking.numberOfRooms || 1} Cameră(e)` :
+                              booking.roomType || 'Standard',
+                    totalPrice: totalPrice
+                };
+
+                if (status === 'confirmed') {
+                    whatsappResult = await sendWhatsAppBookingConfirmed(formattedPhone, bookingData);
+                } else if (status === 'cancelled') {
+                    const reason = declineReason || 'Perioada solicitată nu este disponibilă.';
+                    whatsappResult = await sendWhatsAppBookingDeclined(formattedPhone, bookingData, reason);
+                }
+            } catch (waErr) {
+                whatsappError = waErr.message;
+            }
+        }
 
         res.json({
             success: true,
@@ -228,6 +400,10 @@ router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => 
                 id: updatedBooking.id,
                 status: updatedBooking.status,
                 updated: updatedBooking.updated
+            },
+            whatsapp: {
+                sent: !!whatsappResult,
+                error: whatsappError
             }
         });
     } catch (err) {

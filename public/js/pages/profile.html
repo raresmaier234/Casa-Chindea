@@ -22,13 +22,20 @@
         if (token) {
             const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
             const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+            const cacheBuster = Date.now();
 
             window._profileDataPromises = {
-                profile: fetchFn('/api/auth/profile', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                profile: fetchFn(`/api/user/profile?_t=${cacheBuster}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
                 }, timeout),
-                bookings: fetchFn('/api/booking/my-bookings', {
-                    headers: { 'Authorization': `Bearer ${token}` }
+                bookings: fetchFn(`/api/booking/my-bookings?_t=${cacheBuster}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    }
                 }, timeout)
             };
         }
@@ -458,12 +465,14 @@
                     window._profileDataPromises.profile = null;
                 }
 
-                // Fallback to fresh fetch
+                // Fallback to fresh fetch with cache busting
                 if (!data) {
-                    const response = await fetch('/api/user/profile', {
+                    const response = await fetch(`/api/user/profile?_t=${Date.now()}`, {
                         headers: {
-                            'Authorization': `Bearer ${token}`
-                        }
+                            'Authorization': `Bearer ${token}`,
+                            'Cache-Control': 'no-cache'
+                        },
+                        cache: 'no-store'
                     });
                     if (response.ok) {
                         data = await response.json();
