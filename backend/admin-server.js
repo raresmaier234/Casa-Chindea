@@ -51,7 +51,7 @@ let pricesCacheTimestamp = 0;
 const PRICES_CACHE_TTL = 5 * 60 * 1000; // 5 minute
 
 /**
- * Obține prețurile din baza de date (prices.json sau PocketBase)
+ * Obține prețurile din baza de date (PocketBase prioritar, JSON fallback)
  */
 async function getPrices() {
     // Verifică cache
@@ -68,28 +68,7 @@ async function getPrices() {
         surchargeHoliday: 0
     };
 
-    // Încearcă să citească din prices.json
-    try {
-        const fs = await import('fs');
-        const path = await import('path');
-        const { fileURLToPath } = await import('url');
-        const __filename = fileURLToPath(import.meta.url);
-        const __dirname = path.dirname(__filename);
-        const pricesFilePath = path.join(__dirname, 'prices.json');
-
-        if (fs.existsSync(pricesFilePath)) {
-            const fileData = fs.readFileSync(pricesFilePath, 'utf8');
-            const prices = JSON.parse(fileData);
-            pricesCache = prices;
-            pricesCacheTimestamp = Date.now();
-            console.log('💰 Prețuri încărcate din prices.json:', prices);
-            return prices;
-        }
-    } catch (fileErr) {
-        console.warn('⚠️ Nu s-a putut citi prices.json:', fileErr.message);
-    }
-
-    // Fallback la PocketBase
+    // PRIORITAR: Citește din PocketBase
     try {
         const records = await pb.collection('prices').getFullList({
             sort: '-created',
@@ -107,11 +86,32 @@ async function getPrices() {
             };
             pricesCache = prices;
             pricesCacheTimestamp = Date.now();
-
+            console.log('💰 Prețuri încărcate din PocketBase:', prices);
             return prices;
         }
     } catch (pbErr) {
         console.warn('⚠️ Nu s-a putut citi prețurile din PocketBase:', pbErr.message);
+    }
+
+    // FALLBACK: Citește din prices.json (pentru development local)
+    try {
+        const fs = await import('fs');
+        const path = await import('path');
+        const { fileURLToPath } = await import('url');
+        const __filename = fileURLToPath(import.meta.url);
+        const __dirname = path.dirname(__filename);
+        const pricesFilePath = path.join(__dirname, 'prices.json');
+
+        if (fs.existsSync(pricesFilePath)) {
+            const fileData = fs.readFileSync(pricesFilePath, 'utf8');
+            const prices = JSON.parse(fileData);
+            pricesCache = prices;
+            pricesCacheTimestamp = Date.now();
+            console.log('💰 Prețuri încărcate din prices.json (fallback):', prices);
+            return prices;
+        }
+    } catch (fileErr) {
+        console.warn('⚠️ Nu s-a putut citi prices.json:', fileErr.message);
     }
 
     // Fallback la prețuri default
@@ -1006,11 +1006,10 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             priceBreakfast: parseInt(priceBreakfast) || 0,
             priceBreakfastChild: parseInt(priceBreakfastChild) || 0,
             surchargeWeekend: parseInt(surchargeWeekend) || 0,
-            surchargeHoliday: parseInt(surchargeHoliday) || 0,
-            updated: new Date().toISOString()
+            surchargeHoliday: parseInt(surchargeHoliday) || 0
         };
 
-        // Încearcă să salveze în PocketBase
+        // Salvează în PocketBase (prioritar)
         let savedInPocketBase = false;
         try {
             const existingRecords = await pb.collection('prices').getFullList({
@@ -1020,23 +1019,37 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             let result;
             if (existingRecords.length > 0) {
                 result = await pb.collection('prices').update(existingRecords[0].id, pricesData);
+                console.log('✅ Prețuri actualizate în PocketBase:', result.id);
             } else {
                 result = await pb.collection('prices').create(pricesData);
+                console.log('✅ Prețuri create în PocketBase:', result.id);
             }
             savedInPocketBase = true;
             pricesData.updated = result.updated;
+
+            // Invalidează cache-ul pentru a forța recitirea
+            pricesCache = null;
+            pricesCacheTimestamp = 0;
         } catch (pbErr) {
-            console.warn('⚠️ PocketBase save failed, using JSON file fallback:', pbErr.message);
+            console.error('❌ PocketBase save failed:', pbErr.message);
         }
 
-        // Salvează și în fișier JSON ca backup
+        // Salvează și în fișier JSON ca backup (pentru development local)
         const fileSaved = savePricesToFile(pricesData);
 
-        if (savedInPocketBase || fileSaved) {
+        if (savedInPocketBase) {
             res.json({
                 success: true,
-                message: 'Prețurile au fost salvate cu succes!',
-                prices: pricesData
+                message: 'Prețurile au fost salvate în baza de date!',
+                prices: pricesData,
+                savedTo: 'PocketBase'
+            });
+        } else if (fileSaved) {
+            res.json({
+                success: true,
+                message: 'Prețurile au fost salvate local (PocketBase indisponibil).',
+                prices: pricesData,
+                savedTo: 'JSON file'
             });
         } else {
             throw new Error('Nu s-a putut salva în nicio destinație');
