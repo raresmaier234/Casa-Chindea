@@ -80,8 +80,27 @@ class CasaChindeaNav {
     }
 
     clearAuthData() {
+        // Clear session storage
         sessionStorage.removeItem('auth_token');
         sessionStorage.removeItem('user_info');
+
+        // Clear any cached profile data
+        sessionStorage.removeItem('profile_cache');
+
+        // Clear CMS cache (for admin users)
+        Object.keys(sessionStorage).forEach(key => {
+            if (key.startsWith('cms_cache_') || key.startsWith('admin_cache_')) {
+                sessionStorage.removeItem(key);
+            }
+        });
+
+        // Clear avatar cache from localStorage (all users)
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('avatar_')) {
+                localStorage.removeItem(key);
+            }
+        });
+
         this.currentUser = null;
     }
 

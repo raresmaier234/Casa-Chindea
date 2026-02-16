@@ -1434,33 +1434,120 @@
         async function updateBookingStatus(bookingId, newStatus) {
             const actionText = newStatus === 'confirmed' ? 'aprobă' : 'respinge';
 
+            // Dacă se respinge, cere motivul
+            let declineReason = null;
+            if (newStatus === 'cancelled') {
+                declineReason = await showDeclineReasonModal();
+                if (declineReason === null) {
+                    // Utilizatorul a anulat
+                    return;
+                }
+            }
+
             showConfirmationModal(
                 `Confirmă ${actionText} rezervarea`,
-                `Ești sigur că vrei să ${actionText} această rezervare?`,
+                `Ești sigur că vrei să ${actionText} această rezervare?${declineReason ? `\n\nMotiv: ${declineReason}` : ''}\n\n📱 Se va trimite o notificare WhatsApp clientului.`,
                 async () => {
                     try {
                         const token = sessionStorage.getItem('auth_token');
+                        const body = { status: newStatus };
+                        if (declineReason) {
+                            body.declineReason = declineReason;
+                        }
+
                         const response = await fetch(`/api/admin/booking/${bookingId}`, {
                             method: 'PUT',
                             headers: {
                                 'Content-Type': 'application/json',
                                 'Authorization': `Bearer ${token}`
                             },
-                            body: JSON.stringify({ status: newStatus })
+                            body: JSON.stringify(body)
                         });
 
+                        const data = await response.json();
+
                         if (response.ok) {
-                            loadBookings(); // Refresh the list
-                            showToast(`Rezervarea a fost ${newStatus === 'confirmed' ? 'aprobată' : 'respinsă'} cu succes!`, 'success');
+                            // Invalidează cache-ul și forțează refresh
+                            invalidateCache('bookings');
+                            loadBookings(true); // Force refresh the list
+
+                            // Afișează mesaj cu status WhatsApp
+                            let toastMessage = `Rezervarea a fost ${newStatus === 'confirmed' ? 'aprobată' : 'respinsă'} cu succes!`;
+                            if (data.whatsapp) {
+                                if (data.whatsapp.sent) {
+                                    toastMessage += ' 📱 Notificare WhatsApp trimisă!';
+                                } else if (data.whatsapp.error) {
+                                    toastMessage += ` ⚠️ WhatsApp: ${data.whatsapp.error}`;
+                                }
+                            }
+                            showToast(toastMessage, 'success');
                         } else {
-                            const errorData = await response.json();
-                            throw new Error(errorData.error || 'Eroare la actualizarea rezervării');
+                            throw new Error(data.error || 'Eroare la actualizarea rezervării');
                         }
                     } catch (error) {
                         showToast(`Eroare: ${error.message}`, 'error');
                     }
                 }
             );
+        }
+
+        // Modal pentru motivul respingerii
+        function showDeclineReasonModal() {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                            Motivul respingerii
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm">
+                            Acest motiv va fi trimis clientului prin WhatsApp.
+                        </p>
+                        <textarea id="decline-reason"
+                            class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                            rows="3"
+                            placeholder="Ex: Perioada solicitată nu este disponibilă."
+                        >Perioada solicitată nu este disponibilă.</textarea>
+                        <div class="flex gap-3 mt-4">
+                            <button id="cancel-decline"
+                                class="flex-1 py-2 px-4 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all">
+                                Anulează
+                            </button>
+                            <button id="confirm-decline"
+                                class="flex-1 py-2 px-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all">
+                                <i class="fas fa-paper-plane mr-1"></i>
+                                Respinge
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                const textarea = modal.querySelector('#decline-reason');
+                textarea.focus();
+                textarea.select();
+
+                modal.querySelector('#cancel-decline').onclick = () => {
+                    modal.remove();
+                    resolve(null);
+                };
+
+                modal.querySelector('#confirm-decline').onclick = () => {
+                    const reason = textarea.value.trim() || 'Perioada solicitată nu este disponibilă.';
+                    modal.remove();
+                    resolve(reason);
+                };
+
+                // Închide cu click pe background
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                        resolve(null);
+                    }
+                };
+            });
         }
 
         async function loadGallery(forceRefresh = false) {

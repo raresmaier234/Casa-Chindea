@@ -124,13 +124,40 @@ router.post(`/`, authenticateToken, async (req, res) => {
         };
 
         // Add offer info if present
+        // NOTĂ: Câmpurile offerId, offerTitle, offerPrice trebuie adăugate în PocketBase Admin UI
         if (offerId) {
             bookingData.offerId = offerId;
             bookingData.offerTitle = offerTitle || '';
-            bookingData.offerPrice = offerPrice || 0;
+            bookingData.offerPrice = parseInt(offerPrice) || 0;
+            console.log('🎁 Rezervare cu ofertă:', { offerId, offerTitle, offerPrice: bookingData.offerPrice });
         }
 
-        const pbResult = await pb.collection('booking').create(bookingData);
+        console.log('📋 Date rezervare pentru salvare:', bookingData);
+
+        let pbResult;
+        try {
+            pbResult = await pb.collection('booking').create(bookingData);
+            console.log('✅ Rezervare salvată în PocketBase:', pbResult.id, 'offerPrice:', pbResult.offerPrice);
+        } catch (pbError) {
+            // Dacă eroarea e legată de câmpuri necunoscute, încearcă fără câmpurile de ofertă
+            if (pbError.message && pbError.message.includes('offerId')) {
+                console.warn('⚠️ Câmpurile de ofertă nu există în PocketBase, salvez fără ele');
+                delete bookingData.offerId;
+                delete bookingData.offerTitle;
+                delete bookingData.offerPrice;
+
+                // Adaugă info ofertă în message
+                if (offerId && offerTitle) {
+                    bookingData.message = (bookingData.message || '') +
+                        `\n\n🎁 OFERTĂ: ${offerTitle} - ${offerPrice} RON`;
+                }
+
+                pbResult = await pb.collection('booking').create(bookingData);
+                console.log('✅ Rezervare salvată (fără câmpuri ofertă):', pbResult.id);
+            } else {
+                throw pbError;
+            }
+        }
 
 
         // Send WhatsApp message
@@ -150,9 +177,15 @@ router.post(`/`, authenticateToken, async (req, res) => {
 
         // Send WhatsApp to property owner only
         try {
-            await sendWhatsAppMessage(process.env.CONTACT_PHONE, whatsappData);
+            const ownerPhone = process.env.CONTACT_PHONE;
+            console.log('📱 Trimit WhatsApp notificare către gazdă:', ownerPhone);
+            console.log('📋 Date rezervare:', whatsappData);
+
+            await sendWhatsAppMessage(ownerPhone, whatsappData);
+            console.log('✅ WhatsApp trimis cu succes către gazdă');
         } catch (whatsappError) {
-            // Log WhatsApp error silently, don't show to user
+            // Log WhatsApp error, don't show to user
+            console.error('❌ Eroare la trimitere WhatsApp către gazdă:', whatsappError.message);
         }
 
 
