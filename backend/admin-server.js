@@ -26,14 +26,22 @@ router.use((req, res, next) => {
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 // Authenticate PocketBase as admin for server-side operations
+// Authenticate PocketBase as admin for server-side operations
 async function authPocketBaseAdmin() {
     try {
-        if (process.env.PB_ADMIN_EMAIL && process.env.PB_ADMIN_PASSWORD) {
-            await pb.collection('users').authWithPassword(
-                process.env.PB_ADMIN_EMAIL,
-                process.env.PB_ADMIN_PASSWORD
-            );
-            console.log('✅ PocketBase authenticated as admin');
+        const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
+        const password = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
+
+        if (email && password) {
+            // Try authenticating as superuser (admins) first
+            try {
+                await pb.admins.authWithPassword(email, password);
+                return;
+            } catch (e) {
+            }
+
+            // Fallback to regular user auth (legacy)
+            await pb.collection('users').authWithPassword(email, password);
         } else {
             console.log('⚠️ PocketBase admin credentials not set - some operations may fail');
         }
@@ -940,28 +948,34 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             surchargeHoliday
         } = req.body;
 
-        // Validare
-        if (!priceRoom || priceRoom <= 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Prețul per cameră este obligatoriu și trebuie să fie mai mare ca 0.'
-            });
-        }
+        // Validare strictă și conversie
+        const pRoom = parseInt(priceRoom);
+        const pEntire = parseInt(priceEntire);
+        const pBreakfast = parseInt(priceBreakfast) || 0;
+        const pBreakfastChild = parseInt(priceBreakfastChild) || 0;
+        const sWeekend = parseInt(surchargeWeekend) || 0;
+        const sHoliday = parseInt(surchargeHoliday) || 0;
 
-        if (!priceEntire || priceEntire <= 0) {
-            return res.status(400).json({
-                success: false,
-                error: 'Prețul pentru cabana întreagă este obligatoriu și trebuie să fie mai mare ca 0.'
-            });
+        if (isNaN(pRoom) || pRoom <= 0) {
+            return res.status(400).json({ success: false, error: 'Prețul per cameră este invalid (trebuie să fie număr > 0).' });
+        }
+        if (isNaN(pEntire) || pEntire <= 0) {
+            return res.status(400).json({ success: false, error: 'Prețul pentru cabana întreagă este invalid (trebuie să fie număr > 0).' });
+        }
+        if (sWeekend < 0 || sWeekend > 100) {
+            return res.status(400).json({ success: false, error: 'Procentul de weekend trebuie să fie între 0 și 100.' });
+        }
+        if (sHoliday < 0 || sHoliday > 100) {
+            return res.status(400).json({ success: false, error: 'Procentul de sărbători trebuie să fie între 0 și 100.' });
         }
 
         const pricesData = {
-            priceRoom: parseInt(priceRoom),
-            priceEntire: parseInt(priceEntire),
-            priceBreakfast: parseInt(priceBreakfast) || 0,
-            priceBreakfastChild: parseInt(priceBreakfastChild) || 0,
-            surchargeWeekend: parseInt(surchargeWeekend) || 0,
-            surchargeHoliday: parseInt(surchargeHoliday) || 0
+            priceRoom: pRoom,
+            priceEntire: pEntire,
+            priceBreakfast: pBreakfast,
+            priceBreakfastChild: pBreakfastChild,
+            surchargeWeekend: sWeekend,
+            surchargeHoliday: sHoliday
         };
 
         // Asigură-te că PocketBase este autentificat
@@ -999,10 +1013,11 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
                 prices: pricesData
             });
         } catch (pbErr) {
-            console.error('❌ PocketBase save failed:', pbErr.message, pbErr);
+            console.error('❌ PocketBase save failed:', pbErr.message, pbErr.data);
+            const detail = pbErr.data ? JSON.stringify(pbErr.data) : pbErr.message;
             res.status(500).json({
                 success: false,
-                error: 'Eroare la salvarea prețurilor în baza de date: ' + pbErr.message
+                error: 'Eroare la salvarea prețurilor în baza de date: ' + detail
             });
         }
     } catch (err) {
