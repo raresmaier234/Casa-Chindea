@@ -164,7 +164,17 @@
         try {
             const fetchDuration = Date.now() - fetchStartedAt;
             let fade;
-            if (fetchDuration < 200) fade = '0.18s';
+            // If a user interaction (click/tab change) happened very recently, skip animation to avoid distraction
+            const lastUser = window._cmsLastUserEventAt || 0;
+            const userAgo = Date.now() - lastUser;
+
+            // fast fetch threshold -> instant
+            if (fetchDuration < 120) {
+                fade = '0s';
+            } else if (userAgo < 500) {
+                // if user triggered navigation recently (within 500ms), reveal instantly
+                fade = '0s';
+            } else if (fetchDuration < 200) fade = '0.18s';
             else if (fetchDuration < 600) fade = '0.35s';
             else if (fetchDuration < 1500) fade = '0.5s';
             else fade = '0.75s';
@@ -249,6 +259,17 @@
     // Expose function globally for manual calls
     window.loadCMSContent = loadCMSContent;
     window.assignCMSIds = assignCMSIds;
+
+    // Track recent user interaction (clicks/keys/touches) so we can suppress animations during direct user navigation
+    (function trackUserInteraction() {
+        // Use a global timestamp; other scripts can set/check window._cmsLastUserEventAt
+        window._cmsLastUserEventAt = window._cmsLastUserEventAt || 0;
+        const handler = () => { window._cmsLastUserEventAt = Date.now(); };
+        // capture early interactions
+        ['pointerdown', 'mousedown', 'touchstart', 'keydown'].forEach(ev => {
+            document.addEventListener(ev, handler, { capture: true, passive: true });
+        });
+    })();
 
     // Start immediately
     init();
