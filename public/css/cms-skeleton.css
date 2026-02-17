@@ -1,0 +1,108 @@
+/* Shared CMS skeleton + smooth fade CSS
+   Taken from about/home critical CSS and applied site-wide.
+   Provides subtle delayed fade skeleton for [id^="cms-"] elements and
+   compatible shimmer classes for larger placeholders.
+*/
+
+/* Modern subtle text skeleton pulse */
+@keyframes pulse-subtle {
+  0%, 100% { opacity: 0.6; }
+  50% { opacity: 0.8; }
+}
+
+/* Delay appearance of skeleton (show nothing if loads < 400ms) */
+@keyframes delayedFadeIn {
+  0%, 40% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+/* Smooth fade for loaded content */
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Shimmer used by some placeholders */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+
+@keyframes skeleton-pulse {
+  0%, 100% { opacity: 0.4; }
+  50% { opacity: 0.7; }
+}
+
+/* Default subtle skeleton for CMS-updatable elements */
+[id^="cms-"]:not(.cms-loaded) {
+  background: rgba(229, 231, 235, 0.4); /* subtle gray */
+  color: transparent !important;
+  border-radius: 6px;
+  animation: delayedFadeIn 1s forwards; /* wait ~400ms then show */
+  min-height: 1em;
+  pointer-events: none;
+  /* slight blur for modern look */
+  backdrop-filter: blur(0.5px);
+}
+
+/* Image skeleton - keep source hidden until CMS swaps in real image */
+img[id^="cms-"]:not(.cms-loaded) {
+  background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
+  animation: delayedFadeIn 1s forwards;
+  content: "";
+  object-position: -9999px -9999px; /* hide sprite until loaded */
+}
+
+/* Loaded state - smooth cross-fade */
+[id^="cms-"].cms-loaded {
+  /* animation duration is adaptive via --cms-fade-duration set by loader JS */
+  animation: fadeIn var(--cms-fade-duration, 0.5s) ease-out forwards;
+  background: transparent;
+  color: inherit !important;
+  pointer-events: auto;
+}
+
+img[id^="cms-"].cms-loaded {
+  object-position: center center;
+  transition: opacity var(--cms-fade-duration, 0.5s) ease-out;
+}
+
+/* Hero slideshow: initial blur for first PocketBase image to hide green placeholder */
+.hero-slide { transition: opacity var(--cms-fade-duration, 0.5s) ease-out, filter 0.4s ease; }
+.hero-slide-blur { filter: blur(6px) scale(1.02); }
+
+/* Shimmer classes kept for larger placeholders (offers/gallery) */
+.skeleton-offer,
+.skeleton-image {
+  background: linear-gradient(90deg, #e5e7eb 25%, #f3f4f6 50%, #e5e7eb 75%);
+  background-size: 200% 100%;
+  animation: shimmer 1.2s ease-in-out infinite;
+  border-radius: 0.75rem;
+}
+
+.skeleton-offer { height: 300px; }
+
+/* Reduce animation duration on small screens */
+@media (max-width: 640px) {
+  .skeleton-offer,
+  .skeleton-image,
+  [id^="cms-"]:not(.cms-loaded) {
+    animation-duration: 0.8s !important;
+  }
+}
+
+/* Visual editor overrides - disable skeletons for editor UX */
+body.visual-editor-active [id^="cms-"]:not(.cms-loaded),
+body.visual-editor-active img[id^="cms-"]:not(.cms-loaded) {
+  animation: none !important;
+  background: transparent !important;
+  color: inherit !important;
+  object-position: center center !important;
+}
+
+body.visual-editor-active .about-img-skeleton,
+body.visual-editor-active .offer-img-skeleton,
+body.visual-editor-active .skeleton-image,
+body.visual-editor-active .skeleton-offer {
+  display: none !important;
+}

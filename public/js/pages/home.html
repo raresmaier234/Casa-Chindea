@@ -44,95 +44,12 @@
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
-    <style>
-        /* Modern subtle text skeleton pulse */
-        @keyframes pulse-subtle {
+    <!-- Shared critical CSS (preloaded) to prevent flash and enable smooth opacity transitions -->
+    <link rel="preload" href="/css/cms-skeleton.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="/css/cms-skeleton.css" rel="stylesheet">
+    </noscript>
 
-            0%,
-            100% {
-                opacity: 0.6;
-            }
-
-            50% {
-                opacity: 0.8;
-            }
-        }
-
-        /* Delay appearance of skeleton (show nothing if loads < 400ms) */
-        @keyframes delayedFadeIn {
-
-            0%,
-            40% {
-                opacity: 0;
-            }
-
-            /* 0-400ms: invisible */
-            100% {
-                opacity: 1;
-            }
-
-            /* >400ms: visible */
-        }
-
-        /* Hide CMS elements until loaded - polished skeleton */
-        [id^="cms-"]:not(.cms-loaded) {
-            background: rgba(229, 231, 235, 0.4);
-            /* Subtle gray static */
-            color: transparent !important;
-            border-radius: 6px;
-            animation: delayedFadeIn 1s forwards;
-            /* Wait 400ms then show */
-            min-height: 1em;
-            pointer-events: none;
-            backdrop-filter: blur(2px);
-        }
-
-        /* Images skeleton - brand gradient/blur */
-        img[id^="cms-"]:not(.cms-loaded) {
-            background: linear-gradient(135deg, #f3f4f6 0%, #e5e7eb 100%);
-            animation: delayedFadeIn 1s forwards;
-            content: "";
-            object-position: -9999px -9999px;
-        }
-
-        /* Loaded state - smooth cross-fade */
-        [id^="cms-"].cms-loaded {
-            animation: fadeIn 0.5s ease-out forwards;
-            background: transparent;
-            color: inherit !important;
-            pointer-events: auto;
-        }
-
-        /* Specific fix for images to remove background */
-        img[id^="cms-"].cms-loaded {
-            object-position: center center;
-            transition: opacity 0.5s ease-out;
-        }
-
-        @keyframes fadeIn {
-            from {
-                opacity: 0;
-            }
-
-            to {
-                opacity: 1;
-            }
-        }
-
-        /* Disable skeleton when visual editor is active */
-        body.visual-editor-active [id^="cms-"]:not(.cms-loaded),
-        body.visual-editor-active img[id^="cms-"]:not(.cms-loaded) {
-            animation: none !important;
-            background: transparent !important;
-            color: inherit !important;
-            object-position: center center !important;
-        }
-
-        body.visual-editor-active .skeleton-image,
-        body.visual-editor-active #hero-skeleton {
-            display: none !important;
-        }
-    </style>
 
     <!-- Critical CSS/JS -->
     <script src="https://cdn.tailwindcss.com"></script>
@@ -231,7 +148,8 @@
         <!-- Skeleton Overlay (z-10, sits on top of image until loaded) -->
         <script>
             if (!(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
-                document.write('<div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-br from-[#059669] to-[#047857] z-10 transition-opacity duration-300 ease-in-out"></div>');
+                // Use a neutral gray gradient for the skeleton to avoid a green flash
+                document.write('<div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-br from-gray-200 to-gray-300 z-10 transition-opacity duration-300 ease-in-out"></div>');
             }
         </script>
 
@@ -305,8 +223,14 @@
                 // We inject it
                 const img = document.createElement('img');
                 img.src = window._heroImageUrl;
-                img.className = "absolute inset-0 w-full h-full object-cover";
+                img.className = "hero-slide hero-slide-blur absolute inset-0 w-full h-full object-cover opacity-100";
                 img.alt = "Hero";
+
+                const onImgLoad = () => {
+                    img.classList.remove('hero-slide-blur');
+                    img.removeEventListener('load', onImgLoad);
+                };
+                img.addEventListener('load', onImgLoad);
 
                 img.onload = () => {
                     heroBg.appendChild(img);
@@ -349,6 +273,21 @@
                     class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
                     style="z-index:0;" alt="Hero ${idx + 1}">`;
             }).join('');
+
+            // Add blur to the first slide until it finishes loading to avoid green flash
+            const slides = heroBg.querySelectorAll('.hero-slide');
+            slides.forEach((img, idx) => {
+                if (idx === 0) {
+                    img.classList.add('hero-slide-blur');
+                    const onImgLoad = () => {
+                        img.classList.remove('hero-slide-blur');
+                        img.removeEventListener('load', onImgLoad);
+                    };
+                    if (img.complete) onImgLoad();
+                    else img.addEventListener('load', onImgLoad);
+                }
+            });
+
             let current = 0;
             setInterval(() => {
                 const slides = heroBg.querySelectorAll('.hero-slide');
