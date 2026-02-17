@@ -17,19 +17,26 @@
     <script src="/js/components/mobile-optimizations.js"></script>
 
     <!-- Early CMS data fetch with timeout -->
+    <!-- Early CMS data fetch + photos fetch with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        window._cmsPromise = window.fetchJsonWithTimeout
-            ? window.fetchJsonWithTimeout('/api/admin/cms/sections?page=about', {}, timeout)
-            : fetch('/api/admin/cms/sections?page=about').then(r => r.json()).catch(() => null);
+        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+
+        window._cmsPromise = fetchFn('/api/admin/cms/sections?page=about', {}, timeout);
+        window._photosPromise = fetchFn('/api/photos?limit=500', {}, timeout);
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
         /* Smooth shimmer animation */
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         /* Hide CMS elements until loaded - smooth shimmer */
@@ -44,7 +51,9 @@
 
         /* Faster animation on mobile */
         @media (max-width: 640px) {
-            [id^="cms-"]:not(.cms-loaded), img[id^="cms-"]:not(.cms-loaded) {
+
+            [id^="cms-"]:not(.cms-loaded),
+            img[id^="cms-"]:not(.cms-loaded) {
                 animation-duration: 0.8s !important;
             }
         }
@@ -72,8 +81,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0.7; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.7;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* Disable skeleton when visual editor is active */
@@ -84,6 +98,7 @@
             color: inherit !important;
             object-position: center center !important;
         }
+
         body.visual-editor-active .skeleton-image,
         body.visual-editor-active .about-img-skeleton {
             display: none !important;
@@ -93,8 +108,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -183,8 +201,20 @@
         // Load about photos from PocketBase
         async function loadAboutPhotos() {
             try {
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
+                // Use pre-fetched data if available
+                let data;
+                if (window._photosPromise) {
+                    if (window._photosPromise instanceof Promise) {
+                        data = await window._photosPromise;
+                    } else {
+                        data = window._photosPromise;
+                    }
+                }
+
+                if (!data) {
+                    const response = await fetch('/api/photos?limit=500');
+                    data = await response.json();
+                }
                 const allPhotos = data.items || [];
 
                 // Filter photos by description "about"
@@ -232,22 +262,20 @@
             // Create notification element
             const notification = document.createElement('div');
             notification.id = 'notification';
-            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                type === 'warning' ? 'bg-yellow-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                        type === 'warning' ? 'bg-yellow-500 text-white' :
+                            'bg-blue-500 text-white'
+                }`;
 
             notification.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <i class="fas ${
-                            type === 'success' ? 'fa-check-circle' :
-                            type === 'error' ? 'fa-exclamation-circle' :
-                            type === 'warning' ? 'fa-exclamation-triangle' :
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
                             'fa-info-circle'
-                        } mr-2"></i>
+                } mr-2"></i>
                         <span>${message}</span>
                     </div>
                     <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
@@ -297,32 +325,44 @@
                 </div>
                 <div class="grid grid-cols-2 gap-2" id="story-photo-grid">
                     <div class="relative w-64 h-48">
-                        <div class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg"></div>
+                        <div
+                            class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg">
+                        </div>
                         <img loading="lazy" id="cms-about-story-image-1"
-                             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                             alt="Casa Chindea exterior" class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
-                             onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
+                            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                            alt="Casa Chindea exterior"
+                            class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
+                            onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
                     </div>
                     <div class="relative w-64 h-48 mt-8">
-                        <div class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg"></div>
+                        <div
+                            class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg">
+                        </div>
                         <img loading="lazy" id="cms-about-story-image-2"
-                             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                             alt="Peisaj montan" class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
-                             onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
+                            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                            alt="Peisaj montan"
+                            class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
+                            onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
                     </div>
                     <div class="relative w-64 h-48 -mt-8">
-                        <div class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg"></div>
+                        <div
+                            class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg">
+                        </div>
                         <img loading="lazy" id="cms-about-story-image-3"
-                             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                             alt="Interior confortabil" class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
-                             onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
+                            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                            alt="Interior confortabil"
+                            class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
+                            onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
                     </div>
                     <div class="relative w-64 h-48">
-                        <div class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg"></div>
+                        <div
+                            class="about-img-skeleton absolute inset-0 bg-gradient-to-r from-gray-200 via-gray-100 to-gray-200 bg-[length:200%_100%] animate-pulse rounded-lg">
+                        </div>
                         <img loading="lazy" id="cms-about-story-image-4"
-                             src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
-                             alt="Terasă cu priveliște" class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
-                             onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
+                            src="data:image/gif;base64,R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7"
+                            alt="Terasă cu priveliște"
+                            class="about-lazy-img w-64 h-48 object-cover rounded-lg shadow-lg relative z-10 opacity-0 transition-opacity duration-300"
+                            onload="if(this.src.indexOf('data:image') === -1) { this.classList.add('opacity-100'); this.previousElementSibling.style.display='none'; }">
                     </div>
                 </div>
             </div>
@@ -412,9 +452,11 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și Condiții</a>
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica de Confidențialitate</a>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
                 </div>
             </div>
         </div>

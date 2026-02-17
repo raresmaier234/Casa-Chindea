@@ -17,19 +17,26 @@
     <script src="/js/components/mobile-optimizations.js"></script>
 
     <!-- Early CMS data fetch with timeout -->
+    <!-- Early CMS data fetch + config fetch with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        window._cmsPromise = window.fetchJsonWithTimeout
-            ? window.fetchJsonWithTimeout('/api/admin/cms/sections?page=contact', {}, timeout)
-            : fetch('/api/admin/cms/sections?page=contact').then(r => r.json()).catch(() => null);
+        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+
+        window._cmsPromise = fetchFn('/api/admin/cms/sections?page=contact', {}, timeout);
+        window._configPromise = fetchFn('/api/config', {}, timeout);
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
         /* Smooth shimmer animation */
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         /* Hide CMS elements until loaded - smooth shimmer */
@@ -44,7 +51,9 @@
 
         /* Faster animation on mobile */
         @media (max-width: 640px) {
-            [id^="cms-"]:not(.cms-loaded), img[id^="cms-"]:not(.cms-loaded) {
+
+            [id^="cms-"]:not(.cms-loaded),
+            img[id^="cms-"]:not(.cms-loaded) {
                 animation-duration: 0.8s !important;
             }
         }
@@ -72,8 +81,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0.7; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.7;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
     </style>
 
@@ -81,8 +95,11 @@
     <script src="https://smtpjs.com/v3/smtp.js"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -168,12 +185,14 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
                 <h1 id="cms-contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
-                <p id="cms-contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice întrebare</p>
+                <p id="cms-contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice
+                    întrebare</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <!-- Contact Info -->
                 <div>
-                    <h2 id="cms-contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact</h2>
+                    <h2 id="cms-contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact
+                    </h2>
                     <div class="space-y-6">
                         <div class="flex items-start">
                             <div
@@ -182,7 +201,8 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Adresa</h3>
-                                <p id="cms-contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România</p>
+                                <p id="cms-contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România
+                                </p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -212,7 +232,8 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Program</h3>
-                                <p id="cms-contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00</p>
+                                <p id="cms-contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00
+                                </p>
                             </div>
                         </div>
                     </div>
@@ -237,7 +258,8 @@
                 </div>
                 <!-- Contact Form -->
                 <div>
-                    <h2 id="cms-contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj</h2>
+                    <h2 id="cms-contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj
+                    </h2>
                     <form id="contact-form" class="space-y-6" onsubmit="event.preventDefault(); sendMail();">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">Nume</label>
@@ -270,7 +292,8 @@
             </div>
             <!-- Map -->
             <div class="mt-20">
-                <h2 id="cms-contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe Hartă</h2>
+                <h2 id="cms-contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe
+                    Hartă</h2>
                 <div class="h-96 bg-gray-300 rounded-lg overflow-hidden">
                     <iframe src="https://www.google.com/maps?q=46.7820948,25.8335092&z=15&output=embed" width="100%"
                         height="100%" style="border:0;" allowfullscreen="" loading="lazy">
@@ -315,9 +338,11 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și Condiții</a>
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica de Confidențialitate</a>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
                 </div>
             </div>
         </div>
@@ -328,8 +353,20 @@
         // Load configuration and get reCAPTCHA site key
         async function loadConfig() {
             try {
-                const response = await fetch('/api/config');
-                const config = await response.json();
+                // Use pre-fetched data if available
+                let config;
+                if (window._configPromise) {
+                    if (window._configPromise instanceof Promise) {
+                        config = await window._configPromise;
+                    } else {
+                        config = window._configPromise;
+                    }
+                }
+
+                if (!config) {
+                    const response = await fetch('/api/config');
+                    config = await response.json();
+                }
 
                 if (config.recaptcha && config.recaptcha.siteKey) {
                     recaptchaSiteKey = config.recaptcha.siteKey;
@@ -344,7 +381,7 @@
         }
 
         // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', function () {
             loadConfig();
         });
 
@@ -434,10 +471,10 @@
             try {
                 // Execute reCAPTCHA v3
                 const recaptchaToken = await new Promise((resolve, reject) => {
-                    grecaptcha.ready(function() {
-                        grecaptcha.execute(recaptchaSiteKey, {action: 'submit'}).then(function(token) {
+                    grecaptcha.ready(function () {
+                        grecaptcha.execute(recaptchaSiteKey, { action: 'submit' }).then(function (token) {
                             resolve(token);
-                        }).catch(function(error) {
+                        }).catch(function (error) {
                             reject(error);
                         });
                     });

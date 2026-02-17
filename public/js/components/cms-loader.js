@@ -1,7 +1,7 @@
 // CMS Content Loader v3.0 - Optimized for Production with Preload Support
 // Loads dynamic content from PocketBase with instant rendering
 
-(function() {
+(function () {
     'use strict';
 
     // Cache for CMS content (sessionStorage for faster subsequent loads)
@@ -23,7 +23,7 @@
                     return data.sections;
                 }
             }
-        } catch (e) {}
+        } catch (e) { }
         return null;
     }
 
@@ -34,7 +34,7 @@
                 timestamp: Date.now(),
                 sections: sections
             }));
-        } catch (e) {}
+        } catch (e) { }
     }
 
     // Apply content to element
@@ -45,7 +45,7 @@
             if (elem.tagName === 'IMG') {
                 // For images with skeleton overlay, load smoothly
                 const newImg = new Image();
-                newImg.onload = function() {
+                newImg.onload = function () {
                     elem.src = section.imageUrl;
                     elem.classList.add('opacity-100', 'cms-loaded');
                     // Hide skeleton overlay if exists
@@ -77,8 +77,8 @@
     // Find element by key
     function findElement(key) {
         return document.getElementById(`cms-${key}`) ||
-               document.getElementById(key) ||
-               document.querySelector(`[id$="${key}"]`);
+            document.getElementById(key) ||
+            document.querySelector(`[id$="${key}"]`);
     }
 
     // Apply all sections to page
@@ -133,8 +133,11 @@
         try {
             let data;
             if (window._cmsPromise) {
-                data = await window._cmsPromise;
-                window._cmsPromise = null; // Clear after use
+                if (window._cmsPromise instanceof Promise) {
+                    data = await window._cmsPromise;
+                } else {
+                    data = window._cmsPromise;
+                }
             }
 
             // Fallback to fresh fetch if no pre-fetched data
@@ -194,7 +197,7 @@
 
         if (document.readyState === 'loading') {
             // DOM not ready yet - wait for it
-            document.addEventListener('DOMContentLoaded', function() {
+            document.addEventListener('DOMContentLoaded', function () {
                 assignCMSIds();
                 if (cached) {
                     applySections(cached, pageName);

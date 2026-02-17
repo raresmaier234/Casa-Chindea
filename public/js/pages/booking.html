@@ -20,23 +20,25 @@
     <script>
         const t = Date.now();
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
 
         window._bookingDataPromises = {
             prices: fetchFn(`/api/prices?_t=${t}`, {}, timeout),
             availability: fetchFn(`/api/booking/booking-availability?_t=${t}`, {
                 cache: 'no-store',
                 headers: { 'Cache-Control': 'no-cache' }
-            }, timeout),
-            offers: fetchFn(`/api/admin/offers?_t=${t}`, {}, timeout)
+            }, timeout)
         };
     </script>
 
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -125,24 +127,28 @@
                 <form id="booking-form" class="space-y-6">
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Nume Complet <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nume Complet <span
+                                    class="text-red-500">*</span></label>
                             <input type="text" id="full-name" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Email <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email <span
+                                    class="text-red-500">*</span></label>
                             <input type="email" id="email" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                     </div>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Telefon <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Telefon <span
+                                    class="text-red-500">*</span></label>
                             <input type="tel" id="phone" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         </div>
                         <div>
-                            <label class="block text-sm font-medium text-gray-700 mb-2">Numărul de Persoane <span class="text-red-500">*</span></label>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Numărul de Persoane <span
+                                    class="text-red-500">*</span></label>
                             <select id="guests" required
                                 class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                                 <option value="">Selectează</option>
@@ -162,7 +168,8 @@
                         </div>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Perioada Cazării <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perioada Cazării <span
+                                class="text-red-500">*</span></label>
                         <input type="text" id="date-range" required placeholder="Se încarcă calendarul..."
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                         <input type="hidden" id="checkin">
@@ -170,7 +177,8 @@
                         <p class="mt-2 text-sm text-gray-500">Datele ocupate sunt dezactivate în calendar</p>
                     </div>
                     <div>
-                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip Închiriere <span class="text-red-500">*</span></label>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip Închiriere <span
+                                class="text-red-500">*</span></label>
                         <select id="rental-type" required
                             class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
                             <option value="">Selectează tipul</option>
@@ -247,9 +255,11 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și Condiții</a>
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica de Confidențialitate</a>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
                 </div>
             </div>
         </div>
@@ -258,7 +268,7 @@
         let unavailableDateRanges = [];
         let unavailableDateRangesNormalized = []; // [{start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', type, reason}]
 
-        function pad(n){ return String(n).padStart(2, '0'); }
+        function pad(n) { return String(n).padStart(2, '0'); }
 
         // Convert an ISO/UTC date string from server into local YYYY-MM-DD
         function toLocalDateStringFromISO(isoOrDateStr) {
@@ -394,7 +404,7 @@
             }
 
             // Add event listener for rental type change
-            document.getElementById('rental-type').addEventListener('change', function() {
+            document.getElementById('rental-type').addEventListener('change', function () {
                 // Clear offer if user changes rental type manually
                 if (selectedOffer) {
                     clearSpecialOffer();
@@ -857,20 +867,18 @@
             // Create notification element
             const notification = document.createElement('div');
             notification.id = 'notification';
-            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
-                type === 'success' ? 'bg-green-500 text-white' :
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
                 type === 'error' ? 'bg-red-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
+                    'bg-blue-500 text-white'
+                }`;
 
             notification.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <i class="fas ${
-                            type === 'success' ? 'fa-check-circle' :
-                            type === 'error' ? 'fa-exclamation-circle' :
-                            'fa-info-circle'
-                        } mr-2"></i>
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-info-circle'
+                } mr-2"></i>
                         <span>${message}</span>
                     </div>
                     <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
