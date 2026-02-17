@@ -193,7 +193,7 @@
         const cached = getCachedContent(pageName);
 
         // Fallback: mark all elements as loaded after 3s max (prevents infinite skeleton)
-        setTimeout(markAllCMSElementsLoaded, 3000);
+        setTimeout(markAllCMSElementsLoaded, 5000);
 
         if (document.readyState === 'loading') {
             // DOM not ready yet - wait for it
