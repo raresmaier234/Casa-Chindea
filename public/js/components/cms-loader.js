@@ -171,8 +171,8 @@
             // fast fetch threshold -> instant
             if (fetchDuration < 120) {
                 fade = '0s';
-            } else if (userAgo < 500) {
-                // if user triggered navigation recently (within 500ms), reveal instantly
+            } else if (userAgo < 1000) {
+                // if user triggered navigation recently (within 1000ms), reveal instantly
                 fade = '0s';
             } else if (fetchDuration < 200) fade = '0.18s';
             else if (fetchDuration < 600) fade = '0.35s';
