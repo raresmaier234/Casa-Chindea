@@ -192,8 +192,8 @@
         // Try to apply cached content immediately (before DOM ready)
         const cached = getCachedContent(pageName);
 
-        // Fallback: mark all elements as loaded after 300ms max (faster UX)
-        setTimeout(markAllCMSElementsLoaded, 300);
+        // Fallback: mark all elements as loaded after 3s max (prevents infinite skeleton)
+        setTimeout(markAllCMSElementsLoaded, 3000);
 
         if (document.readyState === 'loading') {
             // DOM not ready yet - wait for it
