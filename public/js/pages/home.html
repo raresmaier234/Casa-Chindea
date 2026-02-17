@@ -15,12 +15,14 @@
     <!-- Mobile optimizations - load first -->
     <script src="/js/components/mobile-optimizations.js"></script>
 
-    <!-- Early CMS data fetch with timeout + preload hero image -->
+    <!-- Early CMS data fetch with timeout + preload hero image + photos -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        window._cmsPromise = window.fetchJsonWithTimeout
-            ? window.fetchJsonWithTimeout('/api/admin/cms/sections?page=home', {}, timeout)
-            : fetch('/api/admin/cms/sections?page=home').then(r => r.json()).catch(() => null);
+        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+
+        // Fetch CMS + photos in parallel (single fetch, reused by hero + gallery)
+        window._cmsPromise = fetchFn('/api/admin/cms/sections?page=home', {}, timeout);
+        window._photosPromise = fetchFn('/api/photos?limit=500', {}, timeout);
 
         // Preload hero image as soon as CMS data arrives
         window._cmsPromise.then(data => {
@@ -33,7 +35,6 @@
                     link.href = heroSection.imageUrl;
                     link.fetchpriority = 'high';
                     document.head.appendChild(link);
-                    // Also start loading immediately
                     window._heroImageUrl = heroSection.imageUrl;
                     const img = new Image();
                     img.src = heroSection.imageUrl;
@@ -228,6 +229,22 @@
             loadCMSContent('home');
         });
 
+        // Shared function to get photos (uses early-fetched promise, no duplicate API calls)
+        async function getHomePhotos() {
+            let data;
+            if (window._photosPromise) {
+                data = await window._photosPromise;
+                // Don't null it out - gallery also needs it
+            }
+            if (!data) {
+                const response = await fetch('/api/photos?limit=500');
+                data = await response.json();
+            }
+            return (data?.items || []).filter(photo =>
+                photo.description && photo.description.toLowerCase() === 'home'
+            );
+        }
+
         async function loadHeroImages() {
             const heroBg = document.getElementById('hero-bg');
             const heroSkeleton = document.getElementById('hero-skeleton');
@@ -240,46 +257,46 @@
                     heroBg.innerHTML = `<img src="${window._heroImageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-100" alt="Hero">`;
                 };
                 preloadedImg.src = window._heroImageUrl;
-                // Still load other images for slideshow in background
-                loadHeroSlideshow(heroBg, heroSkeleton);
-                return;
             }
 
             try {
-                // Request all photos with a high limit to ensure we get everything
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
-                // Filter only photos with description "home"
-                const photos = (data.items || []).filter(photo =>
-                    photo.description && photo.description.toLowerCase() === 'home'
-                );
+                const photos = await getHomePhotos();
 
                 if (photos.length > 0) {
-                    // Preload first image before showing
-                    const firstImg = new Image();
-                    firstImg.onload = function() {
-                        if (heroSkeleton) heroSkeleton.style.display = 'none';
-                        heroBg.innerHTML = photos.map((photo, idx) => {
-                            return `<img src="${photo.imageUrl}"
-                            class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
-                            style="z-index:0;" alt="Hero ${idx + 1}">`;
-                        }).join('');
-                        let current = 0;
-                        setInterval(() => {
-                            const slides = heroBg.querySelectorAll('.hero-slide');
-                            slides.forEach((img, i) => img.classList.toggle('opacity-100', i === current));
-                            slides.forEach((img, i) => img.classList.toggle('opacity-0', i !== current));
-                            current = (current + 1) % slides.length;
-                        }, 3500);
-                    };
-                    firstImg.src = photos[0].imageUrl;
-                } else {
-                    // Load default with preload
+                    // If no CMS hero was preloaded, show first photo immediately
+                    if (!window._heroImageUrl) {
+                        const firstImg = new Image();
+                        firstImg.onload = function() {
+                            if (heroSkeleton) heroSkeleton.style.display = 'none';
+                            applySlideshow(heroBg, photos);
+                        };
+                        firstImg.src = photos[0].imageUrl;
+                    } else {
+                        // CMS hero already showing — start slideshow after a short delay
+                        setTimeout(() => applySlideshow(heroBg, photos), 2000);
+                    }
+                } else if (!window._heroImageUrl) {
                     showDefaultHero(heroBg, heroSkeleton);
                 }
             } catch (e) {
-                showDefaultHero(heroBg, heroSkeleton);
+                if (!window._heroImageUrl) showDefaultHero(heroBg, heroSkeleton);
             }
+        }
+
+        function applySlideshow(heroBg, photos) {
+            if (photos.length <= 1) return;
+            heroBg.innerHTML = photos.map((photo, idx) => {
+                return `<img src="${photo.imageUrl}"
+                    class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
+                    style="z-index:0;" alt="Hero ${idx + 1}">`;
+            }).join('');
+            let current = 0;
+            setInterval(() => {
+                const slides = heroBg.querySelectorAll('.hero-slide');
+                slides.forEach((img, i) => img.classList.toggle('opacity-100', i === current));
+                slides.forEach((img, i) => img.classList.toggle('opacity-0', i !== current));
+                current = (current + 1) % slides.length;
+            }, 3500);
         }
 
         function showDefaultHero(heroBg, heroSkeleton) {
@@ -291,43 +308,10 @@
             defaultImg.src = 'https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200';
         }
 
-        async function loadHeroSlideshow(heroBg, heroSkeleton) {
-            try {
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
-                const photos = (data.items || []).filter(photo =>
-                    photo.description && photo.description.toLowerCase() === 'home'
-                );
-                if (photos.length > 1) {
-                    // Replace with slideshow after a delay
-                    setTimeout(() => {
-                        heroBg.innerHTML = photos.map((photo, idx) => {
-                            return `<img src="${photo.imageUrl}"
-                            class="hero-slide absolute inset-0 w-full h-full object-cover opacity-0 transition-opacity duration-1000 ${idx === 0 ? 'opacity-100' : ''}"
-                            style="z-index:0;" alt="Hero ${idx + 1}">`;
-                        }).join('');
-                        let current = 0;
-                        setInterval(() => {
-                            const slides = heroBg.querySelectorAll('.hero-slide');
-                            slides.forEach((img, i) => img.classList.toggle('opacity-100', i === current));
-                            slides.forEach((img, i) => img.classList.toggle('opacity-0', i !== current));
-                            current = (current + 1) % slides.length;
-                        }, 3500);
-                    }, 100);
-                }
-            } catch (e) {}
-        }
-
         async function loadHomeGallery() {
             try {
-                // Request all photos with a high limit to ensure we get everything
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
-                // Filter only photos with description "home" and limit to 10
-                const allPhotos = (data.items || []).filter(photo =>
-                    photo.description && photo.description.toLowerCase() === 'home'
-                );
-                const photos = allPhotos.slice(0, 10); // Limit to 10 photos
+                const allPhotos = await getHomePhotos();
+                const photos = allPhotos.slice(0, 10);
                 const gallery = document.getElementById('photo-gallery');
                 if (photos.length > 0) {
                     gallery.innerHTML = photos.map((photo, idx) => `

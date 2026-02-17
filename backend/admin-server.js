@@ -990,6 +990,9 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             pricesCache = null;
             pricesCacheTimestamp = 0;
 
+            // Invalidează cache-ul public
+            try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'prices' }) }); } catch (e) { }
+
             res.json({
                 success: true,
                 message: 'Prețurile au fost salvate în baza de date!',
@@ -1128,6 +1131,9 @@ router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
 
         const result = await pb.collection('offers').create(offerData);
 
+        // Invalidează cache-ul public
+        try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
+
         res.json({
             success: true,
             message: 'Oferta a fost creată cu succes!',
@@ -1159,6 +1165,10 @@ router.put('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
         };
 
         const result = await pb.collection('offers').update(id, offerData);
+
+        // Invalidează cache-ul public
+        try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
+
         res.json({ success: true, message: 'Oferta a fost actualizată!', offer: result });
     } catch (err) {
         console.error('Error updating offer:', err);
@@ -1174,6 +1184,10 @@ router.delete('/offers/:id', authenticateToken, requireAdmin, async (req, res) =
     try {
         const { id } = req.params;
         await pb.collection('offers').delete(id);
+
+        // Invalidează cache-ul public
+        try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
+
         res.json({ success: true, message: 'Oferta a fost ștearsă!' });
     } catch (err) {
         console.error('Error deleting offer:', err);
