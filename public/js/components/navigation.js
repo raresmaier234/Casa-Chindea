@@ -86,6 +86,8 @@ class CasaChindeaNav {
 
         // Clear any cached profile data
         sessionStorage.removeItem('profile_cache');
+        localStorage.removeItem('user_profile_cache');
+        localStorage.removeItem('user_bookings_cache');
 
         // Clear CMS cache (for admin users)
         Object.keys(sessionStorage).forEach(key => {

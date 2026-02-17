@@ -578,10 +578,11 @@
                     // Render Fresh Data
                     renderProfile(data.user);
 
-                } else if (data && (data.status === 401 || data.status === 403)) { // Check data status if from fetchFn return
+                } else if (data?._status === 401 || data?._status === 403) {
+                    // Token invalid, redirect to login
                     logout();
-                } else if (!data) {
-                    // fetchFn might return null
+                } else if (data && !data.user) {
+                    showNotification('Nu s-au putut încărca informațiile profilului.', 'error');
                 }
 
                 // Handle direct 401 response object if step above wasn't used? 
