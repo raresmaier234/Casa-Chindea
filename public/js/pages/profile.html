@@ -21,7 +21,11 @@
         const token = sessionStorage.getItem('auth_token');
         if (token) {
             const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-            const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+            const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(async r => {
+                const d = await r.json().catch(() => ({}));
+                if (d && typeof d === 'object') d._status = r.status;
+                return d;
+            }).catch(() => null));
             const cacheBuster = Date.now();
 
             window._profileDataPromises = {
@@ -38,6 +42,20 @@
                     }
                 }, timeout)
             };
+
+            // Instant render from LocalStorage (Stale-While-Revalidate)
+            try {
+                const cachedProfile = localStorage.getItem('user_profile_cache');
+                if (cachedProfile) {
+                    window._cachedProfile = JSON.parse(cachedProfile);
+                }
+                const cachedBookings = localStorage.getItem('user_bookings_cache');
+                if (cachedBookings) {
+                    window._cachedBookings = JSON.parse(cachedBookings);
+                }
+            } catch (e) {
+                console.error('Error reading from localStorage cache', e);
+            }
         }
     </script>
 
@@ -470,10 +488,64 @@
             }
         }
 
+        // Helper to render profile data
+        function renderProfile(user) {
+            // Store user ID globally for avatar functionality
+            currentUserId = user.id;
+
+            // Update UI with user data
+            document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
+            document.getElementById('profile-email').textContent = user.email;
+
+            // Populate form fields
+            document.getElementById('email').value = user.email;
+            document.getElementById('phone').value = user.phone || '';
+
+            // Update phone display in header
+            const phoneText = document.getElementById('profile-phone-text');
+            if (phoneText) {
+                phoneText.textContent = user.phone || 'Nesetat';
+            }
+
+            // Load avatar - prioritize PocketBase, fallback to localStorage
+            const avatarImg = document.getElementById('avatar-img');
+            const avatarIcon = document.getElementById('avatar-icon');
+
+            if (user.avatar && user.avatar.trim() !== '') {
+                // Use avatar from PocketBase (preferred)
+                avatarImg.src = user.avatar;
+                avatarImg.classList.remove('hidden');
+                avatarIcon.classList.add('hidden');
+
+                // Clear localStorage since we have it in PocketBase
+                localStorage.removeItem(`avatar_${user.id}`);
+            } else {
+                // Fallback to localStorage if PocketBase doesn't have avatar
+                const localAvatar = localStorage.getItem(`avatar_${user.id}`);
+
+                if (localAvatar) {
+                    avatarImg.src = localAvatar;
+                    avatarImg.classList.remove('hidden');
+                    avatarIcon.classList.add('hidden');
+                } else {
+                    // No avatar - show default icon
+                    avatarImg.classList.add('hidden');
+                    avatarIcon.classList.remove('hidden');
+                }
+            }
+        }
+
         async function loadUserProfile() {
             try {
                 const token = sessionStorage.getItem('auth_token');
 
+                // 1. Render Cached Data Immediately (Instant UI)
+                if (window._cachedProfile?.user) {
+                    console.log('⚡ Rendering cached profile');
+                    renderProfile(window._cachedProfile.user);
+                }
+
+                // 2. Fetch Fresh Data (Background Update)
                 // Use pre-fetched data if available
                 let data;
                 if (window._profileDataPromises?.profile) {
@@ -500,58 +572,27 @@
                 }
 
                 if (data?.user) {
-                    const user = data.user;
+                    // Update Cache
+                    localStorage.setItem('user_profile_cache', JSON.stringify(data));
 
-                    // Store user ID globally for avatar functionality
-                    currentUserId = user.id;
+                    // Render Fresh Data
+                    renderProfile(data.user);
 
-                    // Update UI with user data
-                    document.getElementById('profile-name').textContent = user.name || user.email.split('@')[0];
-                    document.getElementById('profile-email').textContent = user.email;
-
-                    // Populate form fields
-                    document.getElementById('email').value = user.email;
-                    document.getElementById('phone').value = user.phone || '';
-
-                    // Update phone display in header
-                    const phoneText = document.getElementById('profile-phone-text');
-                    if (phoneText) {
-                        phoneText.textContent = user.phone || 'Nesetat';
-                    }
-
-                    // Load avatar - prioritize PocketBase, fallback to localStorage
-                    const avatarImg = document.getElementById('avatar-img');
-                    const avatarIcon = document.getElementById('avatar-icon');
-
-                    if (user.avatar && user.avatar.trim() !== '') {
-                        // Use avatar from PocketBase (preferred)
-                        avatarImg.src = user.avatar;
-                        avatarImg.classList.remove('hidden');
-                        avatarIcon.classList.add('hidden');
-
-                        // Clear localStorage since we have it in PocketBase
-                        localStorage.removeItem(`avatar_${user.id}`);
-                    } else {
-                        // Fallback to localStorage if PocketBase doesn't have avatar
-                        const localAvatar = localStorage.getItem(`avatar_${user.id}`);
-
-                        if (localAvatar) {
-                            avatarImg.src = localAvatar;
-                            avatarImg.classList.remove('hidden');
-                            avatarIcon.classList.add('hidden');
-                        } else {
-                            // No avatar - show default icon
-                            avatarImg.classList.add('hidden');
-                            avatarIcon.classList.remove('hidden');
-                        }
-                    }
-                } else if (response.status === 401 || response.status === 403) {
-                    // Token invalid, redirect to login
+                } else if (data && (data.status === 401 || data.status === 403)) { // Check data status if from fetchFn return
                     logout();
+                } else if (!data) {
+                    // fetchFn might return null
                 }
+
+                // Handle direct 401 response object if step above wasn't used? 
+                // data from fetchFn is the JSON body. 
+
             } catch (error) {
-                showNotification('Nu s-au putut încărca informațiile profilului.', 'error');
-                logout();
+                console.warn('Error loading profile:', error);
+                // Don't show error notification if we have cached data visible
+                if (!window._cachedProfile) {
+                    showNotification('Nu s-au putut încărca informațiile profilului.', 'error');
+                }
             }
         }
 
@@ -619,6 +660,16 @@
                     return;
                 }
 
+                // 1. Render Cached Bookings Immediately
+                if (window._cachedBookings?.bookings) {
+                    console.log('⚡ Rendering cached bookings');
+                    loadingEl.classList.add('hidden');
+                    containerEl.classList.remove('hidden');
+                    document.getElementById('bookings-count').textContent = window._cachedBookings.bookings.length;
+                    displayBookings(window._cachedBookings.bookings);
+                }
+
+                // 2. Fetch Fresh Data logic...
                 // Use pre-fetched data if available
                 let data;
                 if (window._profileDataPromises?.bookings) {
@@ -655,6 +706,9 @@
                 loadingEl.classList.add('hidden');
 
                 if (data?.success && data?.bookings) {
+                    // Update Cache
+                    localStorage.setItem('user_bookings_cache', JSON.stringify(data));
+
                     document.getElementById('bookings-count').textContent = data.bookings.length;
                     displayBookings(data.bookings);
                     containerEl.classList.remove('hidden');

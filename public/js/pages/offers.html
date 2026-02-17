@@ -19,7 +19,7 @@
     <!-- Early data fetch for instant render with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
 
         window._offersPromise = fetchFn('/api/offers', {}, timeout);
         window._photosPromise = fetchFn('/api/photos?limit=500', {}, timeout);

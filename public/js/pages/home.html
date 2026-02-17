@@ -18,7 +18,7 @@
     <!-- Early CMS data fetch with timeout + preload hero image + photos -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
 
         // Fetch CMS + photos in parallel (single fetch, reused by hero + gallery)
         window._cmsPromise = fetchFn('/api/admin/cms/sections?page=home', {}, timeout);
@@ -40,15 +40,20 @@
                     img.src = heroSection.imageUrl;
                 }
             }
-        }).catch(() => {});
+        }).catch(() => { });
     </script>
 
     <!-- Critical CSS - prevent flash of default content -->
     <style>
         /* Smooth shimmer animation */
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         /* Hide CMS elements until loaded - smooth shimmer */
@@ -91,8 +96,13 @@
         }
 
         @keyframes fadeIn {
-            from { opacity: 0.7; }
-            to { opacity: 1; }
+            from {
+                opacity: 0.7;
+            }
+
+            to {
+                opacity: 1;
+            }
         }
 
         /* Disable skeleton when visual editor is active */
@@ -103,6 +113,7 @@
             color: inherit !important;
             object-position: center center !important;
         }
+
         body.visual-editor-active .skeleton-image,
         body.visual-editor-active #hero-skeleton {
             display: none !important;
@@ -113,8 +124,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -199,11 +213,12 @@
     <section class="relative h-screen flex items-center justify-center overflow-hidden">
         <div id="hero-bg" class="absolute inset-0 w-full h-full">
             <!-- Skeleton while loading -->
-            <script>if(!(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))){document.write('<div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-pulse"></div>');}</script>
+            <script>if (!(window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) { document.write('<div id="hero-skeleton" class="absolute inset-0 bg-gradient-to-r from-gray-300 via-gray-200 to-gray-300 bg-[length:200%_100%] animate-pulse"></div>'); }</script>
         </div>
         <div class="absolute inset-0 bg-black opacity-30"></div>
         <div class="relative z-10 text-center text-white px-4">
-            <h1 id="cms-home-hero-title" class="text-5xl md:text-7xl font-semibold mb-6" style="font-weight:600; letter-spacing:-1px;">
+            <h1 id="cms-home-hero-title" class="text-5xl md:text-7xl font-semibold mb-6"
+                style="font-weight:600; letter-spacing:-1px;">
                 Casa Chindea
             </h1>
             <p id="cms-home-hero-subtitle" class="text-xl md:text-2xl mb-8">
@@ -221,8 +236,8 @@
     </section>
     <script>
         function isVisualEditorActive() {
-  return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
-}
+            return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+        }
 
         // Load CMS content when page loads
         document.addEventListener('DOMContentLoaded', () => {
@@ -252,7 +267,7 @@
             // Check if we already have preloaded hero image from early fetch
             if (window._heroImageUrl) {
                 const preloadedImg = new Image();
-                preloadedImg.onload = function() {
+                preloadedImg.onload = function () {
                     if (heroSkeleton) heroSkeleton.style.display = 'none';
                     heroBg.innerHTML = `<img src="${window._heroImageUrl}" class="absolute inset-0 w-full h-full object-cover opacity-100" alt="Hero">`;
                 };
@@ -266,7 +281,7 @@
                     // If no CMS hero was preloaded, show first photo immediately
                     if (!window._heroImageUrl) {
                         const firstImg = new Image();
-                        firstImg.onload = function() {
+                        firstImg.onload = function () {
                             if (heroSkeleton) heroSkeleton.style.display = 'none';
                             applySlideshow(heroBg, photos);
                         };
@@ -301,7 +316,7 @@
 
         function showDefaultHero(heroBg, heroSkeleton) {
             const defaultImg = new Image();
-            defaultImg.onload = function() {
+            defaultImg.onload = function () {
                 if (heroSkeleton) heroSkeleton.style.display = 'none';
                 heroBg.innerHTML = `<img src='https://images.pexels.com/photos/258154/pexels-photo-258154.jpeg?auto=compress&cs=tinysrgb&w=1200' class='absolute inset-0 w-full h-full object-cover opacity-100' alt='Hero Default'>`;
             };
@@ -429,7 +444,8 @@
                         <i class="fas fa-fire text-2xl"></i>
                     </div>
                     <h3 id="cms-home-feature-2-title" class="text-xl font-semibold mb-2">Foișor & Grătar</h3>
-                    <p id="cms-home-feature-2-text" class="text-gray-600">Spațiu perfect pentru relaxare și mese în aer liber</p>
+                    <p id="cms-home-feature-2-text" class="text-gray-600">Spațiu perfect pentru relaxare și mese în aer
+                        liber</p>
                 </div>
                 <div class="text-center p-6 rounded-lg hover:shadow-lg transition-shadow duration-300">
                     <div
@@ -544,39 +560,41 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și Condiții</a>
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica de Confidențialitate</a>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
                 </div>
             </div>
         </div>
     </footer>
     <script>
         // Hide hero skeleton if visual editor becomes active after page load
-        (function(){
-  function hideHeroSkeletonIfEditor() {
-    var sk = document.getElementById('hero-skeleton');
-    if(sk && (window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
-      sk.style.display = 'none';
-    }
-  }
-  // Check now
-  hideHeroSkeletonIfEditor();
-  // And on any class change
-  const observer = new MutationObserver(hideHeroSkeletonIfEditor);
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-})();
+        (function () {
+            function hideHeroSkeletonIfEditor() {
+                var sk = document.getElementById('hero-skeleton');
+                if (sk && (window.isVisualEditor || document.body.classList.contains('visual-editor-active'))) {
+                    sk.style.display = 'none';
+                }
+            }
+            // Check now
+            hideHeroSkeletonIfEditor();
+            // And on any class change
+            const observer = new MutationObserver(hideHeroSkeletonIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
         // Observer global pentru ascundere skeleton-uri
-(function(){
-  function hideAllSkeletonsIfEditor() {
-    if(isVisualEditorActive()) {
-      document.querySelectorAll('.skeleton-image, #hero-skeleton').forEach(el => el.style.display = 'none');
-    }
-  }
-  hideAllSkeletonsIfEditor();
-  const observer = new MutationObserver(hideAllSkeletonsIfEditor);
-  observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
-})();
+        (function () {
+            function hideAllSkeletonsIfEditor() {
+                if (isVisualEditorActive()) {
+                    document.querySelectorAll('.skeleton-image, #hero-skeleton').forEach(el => el.style.display = 'none');
+                }
+            }
+            hideAllSkeletonsIfEditor();
+            const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
     </script>
 </body>
 
