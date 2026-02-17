@@ -90,6 +90,21 @@
             }
         }
 
+        @keyframes shimmer {
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
+        }
+
+        body.visual-editor-active .skeleton-image,
+        body.visual-editor-active .about-img-skeleton {
+            display: none !important;
+        }
+
         /* Disable skeleton when visual editor is active */
         body.visual-editor-active [id^="cms-"]:not(.cms-loaded),
         body.visual-editor-active img[id^="cms-"]:not(.cms-loaded) {
@@ -97,11 +112,6 @@
             background: transparent !important;
             color: inherit !important;
             object-position: center center !important;
-        }
-
-        body.visual-editor-active .skeleton-image,
-        body.visual-editor-active .about-img-skeleton {
-            display: none !important;
         }
     </style>
 
