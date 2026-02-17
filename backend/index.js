@@ -5,6 +5,7 @@ import compression from 'compression';
 import dotenv from 'dotenv';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
+import PocketBase from 'pocketbase';
 import bookingRouter from './booking-server.js';
 import contactRouter from './contact-server.js';
 import galleryRouter from './gallery-server.js';
@@ -17,6 +18,83 @@ dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 
+// ── Shared PocketBase instance (created once, reused across all requests) ──
+const pb = new PocketBase(process.env.POCKET_BASE_URL);
+
+// ── In-memory cache for public endpoints ──
+const cache = {
+    prices: { data: null, timestamp: 0, ttl: 2 * 60 * 1000 },   // 2 min
+    offers: { data: null, timestamp: 0, ttl: 60 * 1000 },        // 1 min
+};
+
+const DEFAULT_PRICES = {
+    priceRoom: 150,
+    priceEntire: 500,
+    priceBreakfast: 35,
+    priceBreakfastChild: 20,
+    surchargeWeekend: 0,
+    surchargeHoliday: 0
+};
+
+async function fetchPrices() {
+    try {
+        const records = await pb.collection('prices').getFullList(200, {
+            sort: '-created',
+            $autoCancel: false
+        });
+        if (records.length > 0) {
+            const p = records[0];
+            return {
+                priceRoom: p.priceRoom,
+                priceEntire: p.priceEntire,
+                priceBreakfast: p.priceBreakfast,
+                priceBreakfastChild: p.priceBreakfastChild,
+                surchargeWeekend: p.surchargeWeekend,
+                surchargeHoliday: p.surchargeHoliday
+            };
+        }
+    } catch (err) {
+        console.error('Error fetching prices from PocketBase:', err.message);
+    }
+    return DEFAULT_PRICES;
+}
+
+async function fetchOffers() {
+    try {
+        const records = await pb.collection('offers').getFullList(200, {
+            filter: 'active = true',
+            sort: 'startDate',
+            $autoCancel: false
+        });
+        return records.filter(o => new Date(o.endDate) >= new Date());
+    } catch (err) {
+        console.error('Error fetching offers from PocketBase:', err.message);
+    }
+    return [];
+}
+
+function getCached(key, fetchFn) {
+    const entry = cache[key];
+    const now = Date.now();
+    if (entry.data !== null && (now - entry.timestamp) < entry.ttl) {
+        return { data: entry.data, fresh: false };
+    }
+    // Stale-while-revalidate: return stale data immediately, refresh in background
+    const staleData = entry.data;
+    const refreshPromise = fetchFn().then(data => {
+        cache[key].data = data;
+        cache[key].timestamp = Date.now();
+        return data;
+    });
+    if (staleData !== null) {
+        // Return stale data, refresh in background
+        refreshPromise.catch(() => { }); // swallow errors on background refresh
+        return { data: staleData, fresh: false };
+    }
+    // No stale data — must await
+    return { promise: refreshPromise };
+}
+
 // Enable Gzip/Brotli compression for all responses
 app.use(compression({
     filter: (req, res) => {
@@ -25,7 +103,7 @@ app.use(compression({
         }
         return compression.filter(req, res);
     },
-    level: 6 // Compression level (0-9, 6 is balanced)
+    level: 6
 }));
 
 // Configure CORS for Vercel frontend
@@ -42,27 +120,21 @@ app.use(express.json());
 
 // Serve static files with cache headers
 app.use(express.static(join(__dirname, "js"), {
-    maxAge: '1d', // Cache for 1 day
+    maxAge: '1d',
     etag: true,
     lastModified: true
 }));
 
-// Add cache control headers for API responses - optimized for mobile
+// Add cache control headers for API responses
 app.use('/api', (req, res, next) => {
-    // Don't cache POST/PUT/DELETE requests
     if (req.method === 'GET') {
-        // Check if it's a mobile/slow connection
         const saveData = req.headers['save-data'] === 'on';
         const isSlowConnection = req.headers['x-slow-connection'] === 'true';
-
-        // More aggressive caching for mobile/slow connections
         if (saveData || isSlowConnection) {
-            res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=300'); // 10 min + 5 min stale
+            res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=300');
         } else {
-            res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60'); // 5 min + 1 min stale
+            res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60');
         }
-
-        // Add Vary header for proper caching
         res.set('Vary', 'Accept-Encoding, Save-Data');
     } else {
         res.set('Cache-Control', 'no-store');
@@ -81,67 +153,52 @@ app.use(contactRouter);
 app.use(galleryRouter);
 app.use('/api/admin', adminRouter);
 
-// Public prices endpoint
+// ── Public prices endpoint (cached) ──
 app.get('/api/prices', async (req, res) => {
-    const defaultPrices = {
-        priceRoom: 150,
-        priceEntire: 500,
-        priceBreakfast: 35,
-        priceBreakfastChild: 20,
-        surchargeWeekend: 0,
-        surchargeHoliday: 0
-    };
-
     try {
-        const PocketBase = (await import('pocketbase')).default;
-        const pb = new PocketBase(process.env.POCKET_BASE_URL);
-
-        const records = await pb.collection('prices').getFullList(200, {
-            sort: '-created',
-            $autoCancel: false
-        });
-
-        if (records.length > 0) {
-            const prices = records[0];
-            res.json({
-                success: true,
-                prices: {
-                    priceRoom: prices.priceRoom,
-                    priceEntire: prices.priceEntire,
-                    priceBreakfast: prices.priceBreakfast,
-                    priceBreakfastChild: prices.priceBreakfastChild,
-                    surchargeWeekend: prices.surchargeWeekend,
-                    surchargeHoliday: prices.surchargeHoliday
-                }
-            });
-        } else {
-            res.json({ success: true, prices: defaultPrices });
-        }
+        const result = getCached('prices', fetchPrices);
+        const prices = result.data ?? await result.promise;
+        res.json({ success: true, prices });
     } catch (err) {
-        console.error('Error fetching prices:', err.message);
-        res.json({ success: true, prices: defaultPrices });
+        console.error('Error in /api/prices:', err.message);
+        res.json({ success: true, prices: DEFAULT_PRICES });
     }
 });
 
-// Public offers endpoint
+// ── Public offers endpoint (cached) ──
 app.get('/api/offers', async (req, res) => {
     try {
-        const PocketBase = (await import('pocketbase')).default;
-        const pb = new PocketBase(process.env.POCKET_BASE_URL);
-
-        const records = await pb.collection('offers').getFullList(200, {
-            filter: 'active = true',
-            sort: 'startDate',
-            $autoCancel: false
-        });
-
-        const activeOffers = records.filter(o => new Date(o.endDate) >= new Date());
-        res.json({ success: true, offers: activeOffers });
+        const result = getCached('offers', fetchOffers);
+        const offers = result.data ?? await result.promise;
+        res.json({ success: true, offers });
     } catch (err) {
-        console.error('Error fetching offers:', err.message);
+        console.error('Error in /api/offers:', err.message);
         res.json({ success: true, offers: [] });
     }
 });
 
+// ── Cache invalidation endpoint (called by admin after updates) ──
+app.post('/api/cache/invalidate', (req, res) => {
+    const { key } = req.body;
+    if (key && cache[key]) {
+        cache[key].data = null;
+        cache[key].timestamp = 0;
+        console.log(`🔄 Cache invalidated: ${key}`);
+    } else {
+        // Invalidate all
+        Object.keys(cache).forEach(k => {
+            cache[k].data = null;
+            cache[k].timestamp = 0;
+        });
+        console.log('🔄 All caches invalidated');
+    }
+    res.json({ success: true });
+});
+
 const PORT = process.env.PORT || 3001;
-app.listen(PORT, '0.0.0.0')
+app.listen(PORT, '0.0.0.0', () => {
+    console.log(`🚀 Server running on port ${PORT}`);
+    // Warm caches on startup so the first request is instant
+    fetchPrices().then(data => { cache.prices.data = data; cache.prices.timestamp = Date.now(); console.log('💰 Prices cache warmed'); }).catch(() => { });
+    fetchOffers().then(data => { cache.offers.data = data; cache.offers.timestamp = Date.now(); console.log('🎁 Offers cache warmed'); }).catch(() => { });
+});
