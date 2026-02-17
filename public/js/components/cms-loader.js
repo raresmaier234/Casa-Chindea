@@ -60,6 +60,7 @@
                 elem.style.backgroundImage = `url(${section.imageUrl})`;
                 elem.style.backgroundSize = 'cover';
                 elem.style.backgroundPosition = 'center';
+                // mark as loaded immediately for background images
                 elem.classList.add('cms-loaded');
             }
         } else if (section.content) {
@@ -68,9 +69,11 @@
             } else {
                 elem.textContent = section.content;
             }
-            elem.classList.add('cms-loaded');
+            // Don't reveal immediately — mark as applied and let the loader reveal after fetch completes
+            elem.setAttribute('data-cms-applied', 'true');
         } else {
-            elem.classList.add('cms-loaded');
+            // For elements without explicit content, mark as applied so they will be revealed when loader finishes
+            elem.setAttribute('data-cms-applied', 'true');
         }
     }
 
@@ -123,9 +126,12 @@
 
         // Try cache first for instant rendering
         const cached = getCachedContent(pageName);
+        // Track fetch start time to adapt fade duration
+        let fetchStartedAt = Date.now();
         if (cached) {
             applySections(cached, pageName);
-            markAllCMSElementsLoaded();
+            // Reveal immediately when using cache (fast path)
+            markAllCMSElementsLoaded(true);
             return; // Use cache, skip fetch
         }
 
@@ -154,23 +160,52 @@
             // Silent fail - use default content
         }
 
-        // Mark all CMS elements as loaded to remove skeleton
-        markAllCMSElementsLoaded();
+        // Choose fade duration based on how long the fetch took
+        try {
+            const fetchDuration = Date.now() - fetchStartedAt;
+            let fade = '0.5s';
+            if (fetchDuration < 200) fade = '0.18s';
+            else if (fetchDuration < 600) fade = '0.35s';
+            else if (fetchDuration < 1500) fade = '0.5s';
+            else fade = '0.75s';
+            document.documentElement.style.setProperty('--cms-fade-duration', fade);
+        } catch (e) { }
+
+        // Mark all CMS elements as loaded and reveal applied content now that fetch is finished
+        markAllCMSElementsLoaded(true);
     }
 
     // Mark all CMS elements as loaded and load default images
-    function markAllCMSElementsLoaded() {
+    function markAllCMSElementsLoaded(fetchCompleted) {
+        // If fetchCompleted is true we reveal applied content; otherwise behave conservatively
         document.querySelectorAll('[id^="cms-"]').forEach(elem => {
-            // For images that weren't updated by CMS, just mark as loaded (keep skeleton visible)
-            if (elem.tagName === 'IMG' && !elem.classList.contains('cms-loaded')) {
-                // Don't load placeholder images - keep skeleton visible until real image loads
-                // Only mark as loaded if there's no skeleton overlay
-                const skeleton = elem.previousElementSibling;
-                if (!skeleton || !skeleton.classList.contains('about-img-skeleton')) {
-                    elem.classList.add('cms-loaded');
+            // Images: if IMG and not already loaded by CMS, only mark loaded when safe
+            if (elem.tagName === 'IMG') {
+                if (!elem.classList.contains('cms-loaded')) {
+                    const skeleton = elem.previousElementSibling;
+                    if (!skeleton || !skeleton.classList.contains('about-img-skeleton')) {
+                        // no overlay skeleton — reveal immediately
+                        elem.classList.add('cms-loaded');
+                    }
+                    // if there's a skeleton overlay, we leave it until an actual image load triggers reveal
                 }
             } else {
-                elem.classList.add('cms-loaded');
+                // Non-image elements: reveal only if content was applied or fetch completed
+                if (fetchCompleted) {
+                    // Reveal elements that have been applied by CMS
+                    if (elem.hasAttribute('data-cms-applied')) {
+                        // Use double RAF to ensure browser painted the new content before fading in
+                        requestAnimationFrame(() => requestAnimationFrame(() => {
+                            elem.classList.add('cms-loaded');
+                            elem.removeAttribute('data-cms-applied');
+                        }));
+                    } else {
+                        // No specific CMS content applied — safe to reveal
+                        elem.classList.add('cms-loaded');
+                    }
+                } else {
+                    // Conservative path: if not sure, leave as-is to allow skeleton to show
+                }
             }
         });
 
@@ -222,4 +257,3 @@
     // Start immediately
     init();
 })();
-
