@@ -54,14 +54,14 @@ app.use('/api', (req, res, next) => {
         // Check if it's a mobile/slow connection
         const saveData = req.headers['save-data'] === 'on';
         const isSlowConnection = req.headers['x-slow-connection'] === 'true';
-        
+
         // More aggressive caching for mobile/slow connections
         if (saveData || isSlowConnection) {
             res.set('Cache-Control', 'public, max-age=600, stale-while-revalidate=300'); // 10 min + 5 min stale
         } else {
             res.set('Cache-Control', 'public, max-age=300, stale-while-revalidate=60'); // 5 min + 1 min stale
         }
-        
+
         // Add Vary header for proper caching
         res.set('Vary', 'Accept-Encoding, Save-Data');
     } else {
@@ -92,24 +92,11 @@ app.get('/api/prices', async (req, res) => {
         surchargeHoliday: 0
     };
 
-    // Try to read from JSON file first (most reliable)
-    const pricesFilePath = join(__dirname, 'prices.json');
-    try {
-        const fs = await import('fs');
-        if (fs.existsSync(pricesFilePath)) {
-            const fileData = fs.readFileSync(pricesFilePath, 'utf8');
-            const prices = JSON.parse(fileData);
-            return res.json({ success: true, prices });
-        }
-    } catch (fileErr) {
-    }
-
-    // Fallback to PocketBase
     try {
         const PocketBase = (await import('pocketbase')).default;
         const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-        const records = await pb.collection('prices').getFullList({
+        const records = await pb.collection('prices').getFullList(200, {
             sort: '-created',
             $autoCancel: false
         });
@@ -138,26 +125,11 @@ app.get('/api/prices', async (req, res) => {
 
 // Public offers endpoint
 app.get('/api/offers', async (req, res) => {
-    const offersFilePath = join(__dirname, 'offers.json');
-
-    // Try to read from JSON file first
-    try {
-        const fs = await import('fs');
-        if (fs.existsSync(offersFilePath)) {
-            const fileData = fs.readFileSync(offersFilePath, 'utf8');
-            const offers = JSON.parse(fileData);
-            const activeOffers = offers.filter(o => o.active && new Date(o.endDate) >= new Date());
-            return res.json({ success: true, offers: activeOffers });
-        }
-    } catch (fileErr) {
-    }
-
-    // Fallback to PocketBase
     try {
         const PocketBase = (await import('pocketbase')).default;
         const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-        const records = await pb.collection('offers').getFullList({
+        const records = await pb.collection('offers').getFullList(200, {
             filter: 'active = true',
             sort: 'startDate',
             $autoCancel: false
