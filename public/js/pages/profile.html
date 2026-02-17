@@ -582,7 +582,9 @@
                     // Token invalid, redirect to login
                     logout();
                 } else if (data && !data.user) {
-                    showNotification('Nu s-au putut încărca informațiile profilului.', 'error');
+                    if (!window._cachedProfile) {
+                        showNotification('Nu s-au putut încărca informațiile profilului.', 'error');
+                    }
                 }
 
                 // Handle direct 401 response object if step above wasn't used? 
