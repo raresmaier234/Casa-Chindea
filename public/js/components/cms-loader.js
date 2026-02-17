@@ -163,7 +163,7 @@
         // Choose fade duration based on how long the fetch took
         try {
             const fetchDuration = Date.now() - fetchStartedAt;
-            let fade = '0.5s';
+            let fade;
             if (fetchDuration < 200) fade = '0.18s';
             else if (fetchDuration < 600) fade = '0.35s';
             else if (fetchDuration < 1500) fade = '0.5s';
@@ -209,15 +209,11 @@
             }
         });
 
-        // Handle about-lazy-img - don't load placeholders, keep skeleton
-        document.querySelectorAll('.about-lazy-img').forEach(img => {
-            // Don't auto-load placeholder - wait for CMS image
-        });
+        // Handle about-lazy-img - don't load placeholders, keep skeleton (no-op loops removed)
+        document.querySelectorAll('.about-lazy-img').forEach(function () { /* noop */ });
 
-        // Handle offer-lazy-img - don't load placeholders, keep skeleton
-        document.querySelectorAll('.offer-lazy-img').forEach(img => {
-            // Don't auto-load placeholder - wait for real image
-        });
+        // Handle offer-lazy-img - don't load placeholders, keep skeleton (no-op loops removed)
+        document.querySelectorAll('.offer-lazy-img').forEach(function () { /* noop */ });
     }
 
     // Initialize immediately when script loads

@@ -53,6 +53,11 @@ img[id^="cms-"]:not(.cms-loaded) {
   object-position: -9999px -9999px; /* hide sprite until loaded */
 }
 
+:root {
+  /* default fade duration, can be overridden at runtime by JS */
+  --cms-fade-duration: 0.5s;
+}
+
 /* Loaded state - smooth cross-fade */
 [id^="cms-"].cms-loaded {
   /* animation duration is adaptive via --cms-fade-duration set by loader JS */
@@ -68,8 +73,8 @@ img[id^="cms-"].cms-loaded {
 }
 
 /* Hero slideshow: initial blur for first PocketBase image to hide green placeholder */
-.hero-slide { transition: opacity var(--cms-fade-duration, 0.5s) ease-out, filter 0.4s ease; }
-.hero-slide-blur { filter: blur(6px) scale(1.02); }
+.hero-slide { transition: opacity var(--cms-fade-duration, 0.5s) ease-out, filter 0.4s ease, transform 0.4s ease; }
+.hero-slide-blur { filter: blur(6px); transform: scale(1.02); will-change: filter, transform; }
 
 /* Shimmer classes kept for larger placeholders (offers/gallery) */
 .skeleton-offer,
