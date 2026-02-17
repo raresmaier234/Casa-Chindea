@@ -31,7 +31,7 @@
                         'Cache-Control': 'no-cache'
                     }
                 }, timeout),
-                bookings: fetchFn(`/api/booking/my-bookings?_t=${cacheBuster}`, {
+                bookings: fetchFn(`/api/user/booking?_t=${cacheBuster}`, {
                     headers: {
                         'Authorization': `Bearer ${token}`,
                         'Cache-Control': 'no-cache'
@@ -44,8 +44,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -112,6 +115,7 @@
                 opacity: 0;
                 transform: translateY(20px);
             }
+
             to {
                 opacity: 1;
                 transform: translateY(0);
@@ -189,13 +193,16 @@
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 sm:py-8">
             <!-- Header -->
             <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-8 mb-4 sm:mb-8">
-                <div class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
+                <div
+                    class="flex flex-col sm:flex-row items-center sm:items-start text-center sm:text-left gap-4 sm:gap-6">
                     <div class="relative group">
-                        <div id="profile-avatar" class="w-20 h-20 sm:w-24 sm:h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
+                        <div id="profile-avatar"
+                            class="w-20 h-20 sm:w-24 sm:h-24 bg-primary rounded-full flex items-center justify-center overflow-hidden cursor-pointer transition-all duration-300 group-hover:ring-4 group-hover:ring-primary/30">
                             <i class="fas fa-user text-white text-2xl sm:text-3xl" id="avatar-icon"></i>
                             <img loading="lazy" id="avatar-img" class="hidden w-full h-full object-cover" alt="Avatar">
                         </div>
-                        <label for="avatar-upload" class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
+                        <label for="avatar-upload"
+                            class="absolute bottom-0 right-0 bg-secondary hover:bg-primary text-white rounded-full w-7 h-7 sm:w-8 sm:h-8 flex items-center justify-center cursor-pointer shadow-lg transition-all duration-300 hover:scale-110">
                             <i class="fas fa-camera text-xs sm:text-sm"></i>
                             <input type="file" id="avatar-upload" class="hidden" accept="image/*">
                         </label>
@@ -224,12 +231,14 @@
                         </h2>
                         <form id="profile-form" class="space-y-3 sm:space-y-4">
                             <div>
-                                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Email</label>
+                                <label
+                                    class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Email</label>
                                 <input type="email" id="email" disabled
                                     class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 text-gray-500 cursor-not-allowed text-sm sm:text-base">
                             </div>
                             <div>
-                                <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Telefon</label>
+                                <label
+                                    class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Telefon</label>
                                 <div class="relative">
                                     <input type="tel" id="phone" placeholder="Ex: +40 123 456 789" disabled
                                         class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 bg-gray-100 text-gray-500 cursor-not-allowed pr-24 sm:pr-20 text-sm sm:text-base">
@@ -303,12 +312,14 @@
                             <div class="flex items-center justify-between mb-4 p-3 bg-gray-50 rounded-lg">
                                 <span class="text-sm text-gray-600">
                                     <i class="fas fa-list mr-2"></i>
-                                    Total rezervări: <span id="bookings-count" class="font-semibold text-primary">0</span>
+                                    Total rezervări: <span id="bookings-count"
+                                        class="font-semibold text-primary">0</span>
                                 </span>
                             </div>
-                            
+
                             <!-- Scrollable Bookings List -->
-                            <div id="bookings-list" class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
+                            <div id="bookings-list"
+                                class="space-y-4 max-h-[600px] overflow-y-auto pr-2 custom-scrollbar">
                                 <!-- Bookings will be dynamically inserted here -->
                             </div>
                         </div>
@@ -319,9 +330,12 @@
     </main>
 
     <!-- Change Password Modal -->
-    <div id="password-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
-        <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 relative animate-slide-up max-h-[90vh] overflow-y-auto">
-            <button id="close-password-modal" class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600">
+    <div id="password-modal"
+        class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div
+            class="bg-white rounded-2xl shadow-2xl max-w-md w-full p-5 sm:p-8 relative animate-slide-up max-h-[90vh] overflow-y-auto">
+            <button id="close-password-modal"
+                class="absolute top-3 right-3 sm:top-4 sm:right-4 text-gray-400 hover:text-gray-600">
                 <i class="fas fa-times text-lg sm:text-xl"></i>
             </button>
 
@@ -332,7 +346,8 @@
 
             <form id="password-form" class="space-y-3 sm:space-y-4">
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Parola Actuală</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Parola
+                        Actuală</label>
                     <input type="password" id="current-password" required
                         class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                 </div>
@@ -345,7 +360,8 @@
                 </div>
 
                 <div>
-                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Confirmă Parola Nouă</label>
+                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-1 sm:mb-2">Confirmă Parola
+                        Nouă</label>
                     <input type="password" id="confirm-password" required minlength="8"
                         class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base">
                 </div>
@@ -440,7 +456,7 @@
             const savePhoneBtn = document.getElementById('save-phone-btn');
 
             if (editPhoneBtn && phoneInput && savePhoneBtn) {
-                editPhoneBtn.addEventListener('click', function() {
+                editPhoneBtn.addEventListener('click', function () {
                     // Enable phone input
                     phoneInput.disabled = false;
                     phoneInput.classList.remove('bg-gray-100', 'text-gray-500', 'cursor-not-allowed');
@@ -461,7 +477,11 @@
                 // Use pre-fetched data if available
                 let data;
                 if (window._profileDataPromises?.profile) {
-                    data = await window._profileDataPromises.profile;
+                    if (window._profileDataPromises.profile instanceof Promise) {
+                        data = await window._profileDataPromises.profile;
+                    } else {
+                        data = window._profileDataPromises.profile;
+                    }
                     window._profileDataPromises.profile = null;
                 }
 
@@ -544,22 +564,20 @@
 
             const notification = document.createElement('div');
             notification.id = 'notification';
-            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
-                type === 'success' ? 'bg-green-500 text-white' :
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
                 type === 'error' ? 'bg-red-500 text-white' :
-                type === 'warning' ? 'bg-yellow-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
+                    type === 'warning' ? 'bg-yellow-500 text-white' :
+                        'bg-blue-500 text-white'
+                }`;
 
             notification.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <i class="fas ${
-                            type === 'success' ? 'fa-check-circle' :
-                            type === 'error' ? 'fa-exclamation-circle' :
-                            type === 'warning' ? 'fa-exclamation-triangle' :
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
                             'fa-info-circle'
-                        } mr-2"></i>
+                } mr-2"></i>
                         <span>${message}</span>
                     </div>
                     <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
@@ -604,9 +622,13 @@
                 // Use pre-fetched data if available
                 let data;
                 if (window._profileDataPromises?.bookings) {
-                    const response = await window._profileDataPromises.bookings;
+                    const promiseOrValue = window._profileDataPromises.bookings;
+                    if (promiseOrValue instanceof Promise) {
+                        data = await promiseOrValue;
+                    } else {
+                        data = promiseOrValue;
+                    }
                     window._profileDataPromises.bookings = null;
-                    data = response;
                 }
 
                 // Fallback to fresh fetch
@@ -686,7 +708,7 @@
                 const bookingEl = document.createElement('div');
                 bookingEl.className = `booking-card rounded-xl p-3 sm:p-6 bg-gradient-to-r ${isUpcoming ? 'from-blue-50 to-indigo-50' : 'from-gray-50 to-slate-50'}`;
                 bookingEl.style.animationDelay = `${index * 0.1}s`;
-                
+
                 // Calculate number of nights
                 const checkinDate = new Date(booking.checkin);
                 const checkoutDate = new Date(booking.checkout);
@@ -873,7 +895,7 @@
         // Avatar Upload Functionality
         function setupAvatarUpload() {
             const avatarUpload = document.getElementById('avatar-upload');
-            avatarUpload.addEventListener('change', async function(e) {
+            avatarUpload.addEventListener('change', async function (e) {
                 const file = e.target.files[0];
                 if (!file) return;
 
@@ -891,7 +913,7 @@
 
                 // Preview image immediately
                 const reader = new FileReader();
-                reader.onload = function(event) {
+                reader.onload = function (event) {
                     const avatarImg = document.getElementById('avatar-img');
                     const avatarIcon = document.getElementById('avatar-icon');
                     const avatarDataUrl = event.target.result;
@@ -954,18 +976,18 @@
             const closeModalBtn = document.getElementById('close-password-modal');
             const passwordForm = document.getElementById('password-form');
 
-            changePasswordBtn.addEventListener('click', function() {
+            changePasswordBtn.addEventListener('click', function () {
                 passwordModal.classList.remove('hidden');
             });
 
-            closeModalBtn.addEventListener('click', function() {
+            closeModalBtn.addEventListener('click', function () {
                 passwordModal.classList.add('hidden');
                 passwordForm.reset();
                 document.getElementById('password-error').classList.add('hidden');
             });
 
             // Close modal on outside click
-            passwordModal.addEventListener('click', function(e) {
+            passwordModal.addEventListener('click', function (e) {
                 if (e.target === passwordModal) {
                     passwordModal.classList.add('hidden');
                     passwordForm.reset();
@@ -973,7 +995,7 @@
                 }
             });
 
-            passwordForm.addEventListener('submit', async function(e) {
+            passwordForm.addEventListener('submit', async function (e) {
                 e.preventDefault();
 
                 const currentPassword = document.getElementById('current-password').value;
@@ -1032,4 +1054,3 @@
 </body>
 
 </html>
-

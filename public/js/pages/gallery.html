@@ -29,13 +29,25 @@
     <style>
         /* Skeleton loading animation */
         @keyframes skeleton-pulse {
-            0%, 100% { opacity: 0.4; }
-            50% { opacity: 0.7; }
+
+            0%,
+            100% {
+                opacity: 0.4;
+            }
+
+            50% {
+                opacity: 0.7;
+            }
         }
 
         @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
+            0% {
+                background-position: -200% 0;
+            }
+
+            100% {
+                background-position: 200% 0;
+            }
         }
 
         .skeleton-image {
@@ -47,7 +59,9 @@
 
         /* Faster animation on mobile */
         @media (max-width: 640px) {
-            .skeleton-image, [id^="cms-"]:not(.cms-loaded) {
+
+            .skeleton-image,
+            [id^="cms-"]:not(.cms-loaded) {
                 animation-duration: 1s !important;
             }
         }
@@ -68,7 +82,8 @@
             background-size: 200% 100%;
             animation: skeleton-pulse 1.5s ease-in-out infinite;
             content: "";
-            object-position: -9999px -9999px; /* Hide the actual image */
+            object-position: -9999px -9999px;
+            /* Hide the actual image */
         }
 
         /* Loaded state */
@@ -81,7 +96,8 @@
         img[id^="cms-"].cms-loaded {
             animation: none;
             background: transparent;
-            object-position: center center; /* Restore normal position */
+            object-position: center center;
+            /* Restore normal position */
         }
 
         /* Disable skeleton when visual editor is active */
@@ -92,6 +108,7 @@
             color: inherit !important;
             object-position: center center !important;
         }
+
         body.visual-editor-active .skeleton-image {
             display: none !important;
         }
@@ -100,8 +117,11 @@
     <script src="https://cdn.tailwindcss.com"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -198,7 +218,8 @@
                     class="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
                 <button id="lightbox-prev"
                     class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8592;</button>
-                <img loading="lazy" id="lightbox-img" src="" alt="Poza mărită" class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
+                <img loading="lazy" id="lightbox-img" src="" alt="Poza mărită"
+                    class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
                 <button id="lightbox-next"
                     class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8594;</button>
             </div>
@@ -207,7 +228,7 @@
     </section>
     <script>
         function isVisualEditorActive() {
-          return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+            return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
         }
 
         // Show skeleton while loading
@@ -227,8 +248,13 @@
                 // Use pre-fetched data if available
                 let data;
                 if (window._galleryPromise) {
-                    data = await window._galleryPromise;
-                    window._galleryPromise = null; // Clear after use
+                    if (window._galleryPromise instanceof Promise) {
+                        data = await window._galleryPromise;
+                    } else {
+                        // Already resolved data if someone modified the strategy
+                        data = window._galleryPromise;
+                    }
+                    // Don't null it out - let others use it if needed, or rely on browser cache for subsequent calls
                 }
 
                 // Fallback to fresh fetch if no pre-fetched data
@@ -340,22 +366,20 @@
 
             const notification = document.createElement('div');
             notification.id = 'notification';
-            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${
-                type === 'success' ? 'bg-green-500 text-white' :
-                type === 'error' ? 'bg-red-500 text-white' :
-                type === 'warning' ? 'bg-yellow-500 text-white' :
-                'bg-blue-500 text-white'
-            }`;
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                        type === 'warning' ? 'bg-yellow-500 text-white' :
+                            'bg-blue-500 text-white'
+                }`;
 
             notification.innerHTML = `
                 <div class="flex items-center justify-between">
                     <div class="flex items-center">
-                        <i class="fas ${
-                            type === 'success' ? 'fa-check-circle' :
-                            type === 'error' ? 'fa-exclamation-circle' :
-                            type === 'warning' ? 'fa-exclamation-triangle' :
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
                             'fa-info-circle'
-                        } mr-2"></i>
+                } mr-2"></i>
                         <span>${message}</span>
                     </div>
                     <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
@@ -377,15 +401,15 @@
         });
 
         // Observer global pentru ascundere skeleton-uri
-        (function(){
-          function hideAllSkeletonsIfEditor() {
-            if(isVisualEditorActive()) {
-              document.querySelectorAll('.skeleton-image').forEach(el => el.style.display = 'none');
+        (function () {
+            function hideAllSkeletonsIfEditor() {
+                if (isVisualEditorActive()) {
+                    document.querySelectorAll('.skeleton-image').forEach(el => el.style.display = 'none');
+                }
             }
-          }
-          hideAllSkeletonsIfEditor();
-          const observer = new MutationObserver(hideAllSkeletonsIfEditor);
-          observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+            hideAllSkeletonsIfEditor();
+            const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
         })();
     </script>
 
@@ -425,9 +449,11 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și Condiții</a>
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica de Confidențialitate</a>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
                 </div>
             </div>
         </div>
