@@ -20,7 +20,7 @@
     <!-- Early CMS data fetch + photos fetch with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
 
         window._cmsPromise = fetchFn('/api/admin/cms/sections?page=about', {}, timeout);
         window._photosPromise = fetchFn('/api/photos?limit=500', {}, timeout);
@@ -263,9 +263,9 @@
             const notification = document.createElement('div');
             notification.id = 'notification';
             notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
-                    type === 'error' ? 'bg-red-500 text-white' :
-                        type === 'warning' ? 'bg-yellow-500 text-white' :
-                            'bg-blue-500 text-white'
+                type === 'error' ? 'bg-red-500 text-white' :
+                    type === 'warning' ? 'bg-yellow-500 text-white' :
+                        'bg-blue-500 text-white'
                 }`;
 
             notification.innerHTML = `

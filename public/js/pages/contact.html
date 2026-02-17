@@ -20,7 +20,7 @@
     <!-- Early CMS data fetch + config fetch with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
-        const fetchFn = window.fetchJsonWithTimeout || ((url) => fetch(url).then(r => r.json()).catch(() => null));
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
 
         window._cmsPromise = fetchFn('/api/admin/cms/sections?page=contact', {}, timeout);
         window._configPromise = fetchFn('/api/config', {}, timeout);
