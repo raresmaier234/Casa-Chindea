@@ -193,7 +193,11 @@
         const email = urlParams.get('email') || localStorage.getItem('verification_email');
         const prefilledCode = urlParams.get('code');
 
-        if (!email) {
+        // Guard: only allow access if register flow set the sessionStorage flags
+        const verificationPending = sessionStorage.getItem('verification_pending');
+        const verificationEmail = sessionStorage.getItem('verification_email');
+
+        if (!email || !verificationPending || verificationEmail !== email) {
             window.location.href = '/js/pages/register.html';
         }
 
@@ -316,8 +320,10 @@
                 const data = await res.json();
 
                 if (res.ok && data.success) {
-                    // IMPORTANT: Clear ALL tokens and user data to force fresh login
+                    // Clear verification flags and tokens
                     localStorage.removeItem('verification_email');
+                    sessionStorage.removeItem('verification_pending');
+                    sessionStorage.removeItem('verification_email');
                     sessionStorage.removeItem('auth_token');
                     sessionStorage.removeItem('user_info');
                     localStorage.removeItem('auth_token');
@@ -423,4 +429,5 @@
 </body>
 
 </html>
+
 

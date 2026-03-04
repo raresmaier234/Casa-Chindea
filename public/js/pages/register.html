@@ -793,6 +793,10 @@
                     // Store email for verification page
                     localStorage.setItem('verification_email', email);
 
+                    // Set session flags so verify-email.html allows access
+                    sessionStorage.setItem('verification_pending', 'true');
+                    sessionStorage.setItem('verification_email', email);
+
                     // Show success state
                     registerForm.classList.add('hidden');
                     registerSuccess.classList.remove('hidden');
