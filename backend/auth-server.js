@@ -34,10 +34,19 @@ async function ensurePocketBaseAuth() {
         // Authenticate as admin using email/password
         // You need to have POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD in .env
         if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
-            await pb.admins.authWithPassword(
-                process.env.POCKETBASE_ADMIN_EMAIL,
-                process.env.POCKETBASE_ADMIN_PASSWORD
-            );
+            // PocketBase 0.23+ uses _superusers collection instead of pb.admins
+            try {
+                await pb.collection('_superusers').authWithPassword(
+                    process.env.POCKETBASE_ADMIN_EMAIL,
+                    process.env.POCKETBASE_ADMIN_PASSWORD
+                );
+            } catch (e) {
+                // Fallback for older versions
+                await pb.admins.authWithPassword(
+                    process.env.POCKETBASE_ADMIN_EMAIL,
+                    process.env.POCKETBASE_ADMIN_PASSWORD
+                );
+            }
             console.log('✅ PocketBase authenticated as admin');
             return true;
         }
@@ -294,10 +303,11 @@ async function sendVerificationEmail(email, code, name) {
 // NEW: Check if email exists (called before registration)
 app.post('/api/auth/check-email', async (req, res) => {
     const { email } = req.body;
+    const normalizedEmail = email ? email.trim().toLowerCase() : null;
 
-    console.log('🔍 Checking email availability:', email);
+    console.log('🔍 Checking email availability:', normalizedEmail);
 
-    if (!email) {
+    if (!normalizedEmail) {
         return res.status(400).json({
             success: false,
             error: 'Email este obligatoriu.'
@@ -305,21 +315,29 @@ app.post('/api/auth/check-email', async (req, res) => {
     }
 
     try {
-        // Use getFirstListItem which throws error if not found
-        try {
-            const existingUser = await pb.collection('users').getFirstListItem(`email="${email}"`);
+        // ✅ FIX: Ensure PocketBase is authenticated before querying
+        const authOk = await ensurePocketBaseAuth();
+        if (!authOk) {
+            console.error('❌ Cannot check email: PocketBase admin auth failed');
+            // Fail safe: block registration attempt if we can't verify
+            return res.status(503).json({
+                success: false,
+                error: 'Serviciu temporar indisponibil. Te rugăm să încerci din nou.'
+            });
+        }
 
-            // If we get here, user exists
-            console.log('❌ Email already exists:', email, '- User ID:', existingUser.id);
+        try {
+            const existingUser = await pb.collection('users').getFirstListItem(`email="${normalizedEmail}"`);
+
+            console.log('❌ Email already exists:', normalizedEmail, '- User ID:', existingUser.id);
             return res.status(200).json({
                 success: false,
                 exists: true,
                 message: 'Acest email este deja înregistrat. Te rugăm să te autentifici sau să folosești alt email.'
             });
         } catch (notFoundErr) {
-            // Error 404 or "not found" means email doesn't exist - this is what we want
-            if (notFoundErr.status === 404 || notFoundErr.message?.includes('not found')) {
-                console.log('✅ Email available:', email);
+            if (notFoundErr.status === 404 || notFoundErr.message?.includes('not found') || notFoundErr.message?.includes('No record')) {
+                console.log('✅ Email available:', normalizedEmail);
                 return res.status(200).json({
                     success: true,
                     exists: false,
@@ -327,18 +345,12 @@ app.post('/api/auth/check-email', async (req, res) => {
                 });
             }
 
-            // Some other error (e.g., 400 - bad request with filter syntax)
-            console.error('⚠️ Unexpected error checking email:', notFoundErr);
+            console.error('⚠️ Unexpected error checking email:', notFoundErr.status, notFoundErr.message);
             throw notFoundErr;
         }
 
     } catch (err) {
         console.error('❌ Error checking email:', err);
-        console.error('❌ Error details:', {
-            status: err.status,
-            message: err.message,
-            data: err.data
-        });
 
         return res.status(500).json({
             success: false,
@@ -349,7 +361,8 @@ app.post('/api/auth/check-email', async (req, res) => {
 
 // Register endpoint - Step 1: Send verification code
 app.post('/api/auth/register', async (req, res) => {
-    const { email, password, name } = req.body;
+    const { password, name } = req.body;
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
 
     console.log('📧 Registration attempt for:', email);
 
@@ -368,28 +381,36 @@ app.post('/api/auth/register', async (req, res) => {
     }
 
     try {
+        // Always re-authenticate before querying
+        const authOk = await ensurePocketBaseAuth();
+        if (!authOk) {
+            return res.status(503).json({
+                success: false,
+                error: 'Serviciu temporar indisponibil. Te rugăm să încerci din nou.'
+            });
+        }
+
         // Check if email already exists in PocketBase
         try {
-            const existingUsers = await pb.collection('users').getList(1, 1, {
-                filter: `email="${email}"`
+            const existingUser = await pb.collection('users').getFirstListItem(`email="${email}"`);
+            // If we reach here, user exists — return 409 Conflict
+            console.log('❌ Email already exists in database:', email, '- User ID:', existingUser.id);
+            return res.status(409).json({
+                success: false,
+                emailExists: true,
+                error: 'Acest email este deja înregistrat. Te rugăm să te autentifici sau să folosești alt email.'
             });
-
-            if (existingUsers && existingUsers.items && existingUsers.items.length > 0) {
-                console.log('❌ Email already exists in database:', email);
-                return res.status(400).json({
+        } catch (checkErr) {
+            if (checkErr.status === 404 || checkErr.message?.includes('not found') || checkErr.message?.includes('No record')) {
+                console.log('✅ Email available:', email);
+                // Good — email doesn't exist, continue
+            } else {
+                console.error('❌ Unexpected error while checking email existence:', checkErr.message, checkErr.status);
+                return res.status(500).json({
                     success: false,
-                    error: 'Acest email este deja înregistrat. Te rugăm să te autentifici sau să folosești alt email.'
+                    error: 'Eroare la verificarea email-ului. Te rugăm să încerci din nou.'
                 });
             }
-
-            console.log('✅ Email available:', email);
-        } catch (err) {
-            // If it's a 404, email doesn't exist (which is good)
-            // Any other error, we'll log it but continue
-            if (err.status !== 404) {
-                console.log('⚠️ Warning checking email existence:', err.message);
-            }
-            console.log('✅ Email available (no existing user found)');
         }
 
         // Also check if there's a pending verification for this email
@@ -496,6 +517,29 @@ app.post('/api/auth/verify-email', async (req, res) => {
                 success: false,
                 error: `Cod incorect. Mai ai ${5 - verificationData.attempts} încercări.`
             });
+        }
+
+        // Final duplicate-email check before creating the user (guard against race conditions)
+        try {
+            await ensurePocketBaseAuth();
+            const existingUser = await pb.collection('users').getFirstListItem(`email="${email}"`);
+            // If we get here the user already exists — abort
+            console.log('❌ Email already taken at verify step:', email, '- User ID:', existingUser.id);
+            verificationCodes.delete(email);
+            return res.status(400).json({
+                success: false,
+                error: 'Acest email este deja înregistrat. Te rugăm să te autentifici.'
+            });
+        } catch (dupErr) {
+            if (dupErr.status === 404 || dupErr.message?.includes('not found') || dupErr.message?.includes('No record')) {
+                // Good — email still free, proceed to create account
+            } else {
+                console.error('❌ Error during final email check:', dupErr.message);
+                return res.status(500).json({
+                    success: false,
+                    error: 'Eroare la verificarea email-ului. Te rugăm să încerci din nou.'
+                });
+            }
         }
 
         // Create user in PocketBase
