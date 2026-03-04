@@ -66,7 +66,15 @@ async function fetchOffers() {
             sort: 'startDate',
             $autoCancel: false
         });
-        return records.filter(o => new Date(o.endDate) >= new Date());
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        return records
+            .filter(o => new Date(o.endDate) >= new Date())
+            .map(offer => ({
+                ...offer,
+                imageUrl: offer.image
+                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    : null
+            }));
     } catch (err) {
         console.error('Error fetching offers from PocketBase:', err.message);
     }

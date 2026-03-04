@@ -571,6 +571,110 @@ function cancelEdit() {
 
 // Save edit
 async function saveEdit(page, key, type, elemId) {
+    const elem = document.getElementById(elemId);
+    const offerId = elem && elem.dataset.offerId;
+    const photoId = elem && elem.dataset.photoId;
+
+    // ── Offer image: update directly via offer PUT ──
+    if (offerId && (type === 'image' || type === 'background')) {
+        if (!window._pendingImageFile) {
+            showToast('Selectează o imagine pentru a o înlocui', 'error');
+            return;
+        }
+        try {
+            const token = sessionStorage.getItem('auth_token');
+
+            // Fetch current offer fields so we don't lose any data
+            const offerRes = await fetch(`/api/admin/offers/${offerId}`, {
+                headers: { 'Authorization': `Bearer ${token}` }
+            });
+            const offerData = await offerRes.json();
+            if (!offerData.success) throw new Error('Nu s-a putut încărca oferta');
+            const offer = offerData.offer;
+
+            const formData = new FormData();
+            formData.append('type', offer.type);
+            formData.append('title', offer.title);
+            formData.append('startDate', offer.startDate);
+            formData.append('endDate', offer.endDate);
+            formData.append('totalPrice', offer.totalPrice);
+            formData.append('roomPrice', offer.roomPrice || 0);
+            formData.append('nights', offer.nights);
+            formData.append('details', offer.details || '');
+            formData.append('includes', offer.includes || '');
+            formData.append('active', offer.active ? 'true' : 'false');
+            formData.append('image', window._pendingImageFile);
+
+            const response = await fetch(`/api/admin/offers/${offerId}`, {
+                method: 'PUT',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                window._pendingImageFile = null;
+
+                if (elem && result.offer) {
+                    const newUrl = result.offer.imageUrl ||
+                        (result.offer.image ? `/api/files/offers/${offerId}/${result.offer.image}` : null);
+                    if (newUrl) {
+                        elem.src = newUrl + '?t=' + Date.now();
+                        elem.classList.add('opacity-100');
+                    }
+                }
+                showToast('✅ Imaginea ofertei a fost actualizată!', 'success');
+                cancelEdit();
+            } else {
+                const err = await response.json();
+                throw new Error(err.error || 'Eroare la salvare');
+            }
+        } catch (error) {
+            showToast(`Eroare: ${error.message}`, 'error');
+        }
+        return;
+    }
+
+    // ── Gallery photo image: replace file directly via PATCH ──
+    if (photoId && (type === 'image' || type === 'background')) {
+        if (!window._pendingImageFile) {
+            showToast('Selectează o imagine pentru a o înlocui', 'error');
+            return;
+        }
+        try {
+            const token = sessionStorage.getItem('auth_token');
+            const formData = new FormData();
+            formData.append('image', window._pendingImageFile);
+
+            const response = await fetch(`/api/admin/photos/${photoId}/image`, {
+                method: 'PATCH',
+                headers: { 'Authorization': `Bearer ${token}` },
+                body: formData
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                window._pendingImageFile = null;
+
+                if (elem && result.photo && result.photo.imageUrl) {
+                    // Update src and also data-src (for lazy loaded images)
+                    elem.src = result.photo.imageUrl + '?t=' + Date.now();
+                    if (elem.dataset.src) elem.dataset.src = result.photo.imageUrl + '?t=' + Date.now();
+                    elem.classList.add('opacity-100');
+                }
+                showToast('✅ Imaginea a fost actualizată!', 'success');
+                cancelEdit();
+            } else {
+                const err = await response.json();
+                throw new Error(err.error || 'Eroare la salvare');
+            }
+        } catch (error) {
+            showToast(`Eroare: ${error.message}`, 'error');
+        }
+        return;
+    }
+
+    // ── Default: save to CMS sections (text, background, non-photo images) ──
     const formData = new FormData();
     formData.append('page', page);
     formData.append('section', 'main');

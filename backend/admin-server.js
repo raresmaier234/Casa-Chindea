@@ -512,6 +512,46 @@ router.put('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+// Înlocuiește imaginea unei poze (fișierul)
+router.patch('/photos/:id/image', authenticateToken, requireAdmin, upload.single('image'), async (req, res) => {
+    try {
+        const { id } = req.params;
+        if (!req.file) {
+            return res.status(400).json({ success: false, error: 'Nu a fost furnizată nicio imagine.' });
+        }
+
+        // Get existing record to keep description
+        const existing = await pb.collection('photos').getOne(id, { $autoCancel: false });
+
+        const fileBuffer = fs.readFileSync(req.file.path);
+        const formData = new FormData();
+        formData.append('image', new Blob([fileBuffer], { type: req.file.mimetype }), req.file.originalname);
+        // Keep existing description
+        formData.append('description', existing.description || '');
+
+        const updated = await pb.collection('photos').update(id, formData);
+
+        // Clean up temp file
+        fs.unlink(req.file.path, () => {});
+
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        res.json({
+            success: true,
+            message: 'Imaginea a fost actualizată.',
+            photo: {
+                id: updated.id,
+                description: updated.description,
+                imageUrl: updated.image ? `${pbUrl}/api/files/photos/${updated.id}/${updated.image}` : null,
+                updated: updated.updated
+            }
+        });
+    } catch (err) {
+        console.error('Error replacing photo image:', err);
+        if (req.file) fs.unlink(req.file.path, () => {});
+        res.status(500).json({ success: false, error: 'Eroare la actualizarea imaginii.' });
+    }
+});
+
 // **BLOCĂRI CALENDAR**
 
 // Obține toate blocările de calendar
@@ -1089,6 +1129,7 @@ router.get('/offers', authenticateToken, requireAdmin, async (req, res) => {
             $autoCancel: false
         });
 
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
         res.json({
             success: true,
             offers: records.map(offer => ({
@@ -1102,7 +1143,10 @@ router.get('/offers', authenticateToken, requireAdmin, async (req, res) => {
                 nights: offer.nights,
                 details: offer.details,
                 includes: offer.includes,
-                active: offer.active
+                active: offer.active,
+                imageUrl: offer.image
+                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    : null
             }))
         });
     } catch (err) {
@@ -1116,7 +1160,16 @@ router.get('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const offer = await pb.collection('offers').getOne(id, { $autoCancel: false });
-        res.json({ success: true, offer });
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        res.json({
+            success: true,
+            offer: {
+                ...offer,
+                imageUrl: offer.image
+                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    : null
+            }
+        });
     } catch (err) {
         console.error('Error fetching offer:', err);
         if (err.status === 404) {
@@ -1127,24 +1180,31 @@ router.get('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 // Creează o ofertă nouă
-router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
+router.post('/offers', authenticateToken, requireAdmin, upload.single('image'), async (req, res) => {
     try {
         const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
 
-        const offerData = {
-            type,
-            title,
-            startDate,
-            endDate,
-            totalPrice: parseInt(totalPrice) || 0,
-            roomPrice: parseInt(roomPrice) || 0,
-            nights: parseInt(nights) || 1,
-            details,
-            includes,
-            active: active !== false
-        };
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('title', title);
+        formData.append('startDate', startDate);
+        formData.append('endDate', endDate);
+        formData.append('totalPrice', parseInt(totalPrice) || 0);
+        formData.append('roomPrice', parseInt(roomPrice) || 0);
+        formData.append('nights', parseInt(nights) || 1);
+        formData.append('details', details || '');
+        formData.append('includes', includes || '');
+        formData.append('active', active !== 'false' && active !== false ? 'true' : 'false');
 
-        const result = await pb.collection('offers').create(offerData);
+        if (req.file) {
+            const fileBuffer = fs.readFileSync(req.file.path);
+            const blob = new Blob([fileBuffer], { type: req.file.mimetype });
+            formData.append('image', blob, req.file.originalname);
+            // Clean up temp file
+            fs.unlink(req.file.path, () => {});
+        }
+
+        const result = await pb.collection('offers').create(formData);
 
         // Invalidează cache-ul public
         try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
@@ -1161,30 +1221,45 @@ router.post('/offers', authenticateToken, requireAdmin, async (req, res) => {
 });
 
 // Actualizează o ofertă
-router.put('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
+router.put('/offers/:id', authenticateToken, requireAdmin, upload.single('image'), async (req, res) => {
     try {
         const { id } = req.params;
         const { type, title, startDate, endDate, totalPrice, roomPrice, nights, details, includes, active } = req.body;
 
-        const offerData = {
-            type,
-            title,
-            startDate,
-            endDate,
-            totalPrice: parseInt(totalPrice) || 0,
-            roomPrice: parseInt(roomPrice) || 0,
-            nights: parseInt(nights) || 1,
-            details,
-            includes,
-            active: active !== false
-        };
+        const formData = new FormData();
+        formData.append('type', type);
+        formData.append('title', title);
+        formData.append('startDate', startDate);
+        formData.append('endDate', endDate);
+        formData.append('totalPrice', parseInt(totalPrice) || 0);
+        formData.append('roomPrice', parseInt(roomPrice) || 0);
+        formData.append('nights', parseInt(nights) || 1);
+        formData.append('details', details || '');
+        formData.append('includes', includes || '');
+        formData.append('active', active !== 'false' && active !== false ? 'true' : 'false');
 
-        const result = await pb.collection('offers').update(id, offerData);
+        if (req.file) {
+            const fileBuffer = fs.readFileSync(req.file.path);
+            const blob = new Blob([fileBuffer], { type: req.file.mimetype });
+            formData.append('image', blob, req.file.originalname);
+            // Clean up temp file
+            fs.unlink(req.file.path, () => {});
+        }
+
+        const result = await pb.collection('offers').update(id, formData);
 
         // Invalidează cache-ul public
         try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
 
-        res.json({ success: true, message: 'Oferta a fost actualizată!', offer: result });
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        res.json({
+            success: true,
+            message: 'Oferta a fost actualizată!',
+            offer: {
+                ...result,
+                imageUrl: result.image ? `${pbUrl}/api/files/offers/${result.id}/${result.image}` : null
+            }
+        });
     } catch (err) {
         console.error('Error updating offer:', err);
         if (err.status === 404) {
