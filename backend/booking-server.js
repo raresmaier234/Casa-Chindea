@@ -175,16 +175,17 @@ router.post(`/`, authenticateToken, async (req, res) => {
             message: message || 'Niciun mesaj adițional'
         };
 
-        // Send WhatsApp to property owner only
+        // Send WhatsApp to property owner (always to owner's real number)
         try {
-            const ownerPhone = process.env.CONTACT_PHONE;
-            console.log('📱 Trimit WhatsApp notificare către gazdă:', ownerPhone);
-            console.log('📋 Date rezervare:', whatsappData);
-
-            await sendWhatsAppMessage(ownerPhone, whatsappData);
-            console.log('✅ WhatsApp trimis cu succes către gazdă');
+            const ownerPhone = process.env.OWNER_WHATSAPP_PHONE || process.env.CONTACT_PHONE;
+            if (ownerPhone) {
+                console.log('📱 Trimit WhatsApp notificare rezervare nouă către gazdă:', ownerPhone);
+                await sendWhatsAppMessage(ownerPhone, whatsappData);
+                console.log('✅ WhatsApp trimis cu succes către gazdă');
+            } else {
+                console.warn('⚠️ OWNER_WHATSAPP_PHONE nu este setat — notificarea WA nu a fost trimisă');
+            }
         } catch (whatsappError) {
-            // Log WhatsApp error, don't show to user
             console.error('❌ Eroare la trimitere WhatsApp către gazdă:', whatsappError.message);
         }
 

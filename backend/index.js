@@ -11,6 +11,7 @@ import contactRouter from './contact-server.js';
 import galleryRouter from './gallery-server.js';
 import authRouter from './auth-server.js';
 import adminRouter from './admin-server.js';
+import paymentRouter from './payment-server.js';
 
 // Load .env from parent directory (root of project)
 const __dirname = dirname(fileURLToPath(import.meta.url));
@@ -33,7 +34,9 @@ const DEFAULT_PRICES = {
     priceBreakfast: 35,
     priceBreakfastChild: 20,
     surchargeWeekend: 0,
-    surchargeHoliday: 0
+    surchargeHoliday: 0,
+    paymentMode: 'none',
+    depositPercent: 30
 };
 
 async function fetchPrices() {
@@ -50,7 +53,9 @@ async function fetchPrices() {
                 priceBreakfast: p.priceBreakfast,
                 priceBreakfastChild: p.priceBreakfastChild,
                 surchargeWeekend: p.surchargeWeekend,
-                surchargeHoliday: p.surchargeHoliday
+                surchargeHoliday: p.surchargeHoliday,
+                paymentMode: p.paymentMode || 'none',
+                depositPercent: p.depositPercent || 30
             };
         }
     } catch (err) {
@@ -157,6 +162,7 @@ app.get('/api/health', (req, res) => {
 
 app.use(authRouter);
 app.use('/api/booking', bookingRouter);
+app.use('/api/payment', paymentRouter);
 app.use(contactRouter);
 app.use(galleryRouter);
 app.use('/api/admin', adminRouter);
