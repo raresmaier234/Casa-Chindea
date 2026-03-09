@@ -17,24 +17,13 @@
     <script src="/js/components/mobile-optimizations.js"></script>
 
     <!-- Early CMS data fetch with timeout -->
-    <!-- Early CMS data fetch + config fetch with timeout -->
     <script>
         const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
         const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
-
         window._cmsPromise = fetchFn('/api/admin/cms/sections?page=contact', {}, timeout);
-        window._configPromise = fetchFn('/api/config', {}, timeout);
     </script>
 
-    <!-- Critical CSS - prevent flash of default content -->
-    <!-- Shared critical CSS (preloaded) to prevent flash and enable smooth opacity transitions -->
-    <link rel="preload" href="/css/cms-skeleton.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript>
-        <link href="/css/cms-skeleton.css" rel="stylesheet">
-    </noscript>
-
     <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://smtpjs.com/v3/smtp.js"></script>
 
     <!-- Font Awesome - deferred for faster FCP -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
@@ -45,9 +34,6 @@
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
-
-    <!-- CMS Loader - load early for instant content -->
-    <script src="/js/components/cms-loader.js"></script>
 
     <script>
         tailwind.config = {
@@ -62,8 +48,9 @@
             }
         }
     </script>
-    <!-- reCAPTCHA v3 - will be loaded dynamically -->
-    <script id="recaptcha-script"></script>
+
+    <!-- reCAPTCHA v3 loaded directly with the public site key -->
+    <script src="https://www.google.com/recaptcha/api.js?render=6LdPSWgsAAAAAAJn5PdzMIHalB6weUAoSU_1GH_r" async defer></script>
 </head>
 
 <body class="bg-gray-50">
@@ -121,19 +108,18 @@
 
     <!-- Include navigation component -->
     <script src="/js/components/navigation.js"></script>
-    <script src="/js/components/visual-editor.js"></script>
 
     <section class="py-20 bg-white">
         <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div class="text-center mb-16">
-                <h1 id="cms-contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
-                <p id="cms-contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice
+                <h1 id="contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
+                <p id="contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice
                     întrebare</p>
             </div>
             <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
                 <!-- Contact Info -->
                 <div>
-                    <h2 id="cms-contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact
+                    <h2 id="contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de Contact
                     </h2>
                     <div class="space-y-6">
                         <div class="flex items-start">
@@ -143,7 +129,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Adresa</h3>
-                                <p id="cms-contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România
+                                <p id="contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România
                                 </p>
                             </div>
                         </div>
@@ -154,7 +140,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Telefon</h3>
-                                <p id="cms-contact-phone" class="text-gray-600">+40 XXX XXX XXX</p>
+                                <p id="contact-phone" class="text-gray-600">+40 XXX XXX XXX</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -164,7 +150,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Email</h3>
-                                <p id="cms-contact-email" class="text-gray-600">contact@casachindea.ro</p>
+                                <p id="contact-email" class="text-gray-600">contact@casachindea.ro</p>
                             </div>
                         </div>
                         <div class="flex items-start">
@@ -174,7 +160,7 @@
                             </div>
                             <div>
                                 <h3 class="text-lg font-semibold text-gray-900">Program</h3>
-                                <p id="cms-contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00
+                                <p id="contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00
                                 </p>
                             </div>
                         </div>
@@ -200,7 +186,7 @@
                 </div>
                 <!-- Contact Form -->
                 <div>
-                    <h2 id="cms-contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj
+                    <h2 id="contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un Mesaj
                     </h2>
                     <form id="contact-form" class="space-y-6" onsubmit="event.preventDefault(); sendMail();">
                         <div>
@@ -234,7 +220,7 @@
             </div>
             <!-- Map -->
             <div class="mt-20">
-                <h2 id="cms-contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe
+                <h2 id="contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe
                     Hartă</h2>
                 <div class="h-96 bg-gray-300 rounded-lg overflow-hidden">
                     <iframe src="https://www.google.com/maps?q=46.7820948,25.8335092&z=15&output=embed" width="100%"
@@ -290,46 +276,12 @@
         </div>
     </footer>
     <script>
-        let recaptchaSiteKey = null;
-
-        // Load configuration and get reCAPTCHA site key
-        async function loadConfig() {
-            try {
-                // Use pre-fetched data if available
-                let config;
-                if (window._configPromise) {
-                    if (window._configPromise instanceof Promise) {
-                        config = await window._configPromise;
-                    } else {
-                        config = window._configPromise;
-                    }
-                }
-
-                if (!config) {
-                    const response = await fetch('/api/config');
-                    config = await response.json();
-                }
-
-                if (config.recaptcha && config.recaptcha.siteKey) {
-                    recaptchaSiteKey = config.recaptcha.siteKey;
-
-                    // Dynamically load reCAPTCHA script with the correct site key
-                    const script = document.getElementById('recaptcha-script');
-                    script.src = `https://www.google.com/recaptcha/api.js?render=${recaptchaSiteKey}`;
-                }
-            } catch (error) {
-                console.error('Failed to load configuration:', error);
-            }
-        }
-
-        // Initialize when page loads
-        document.addEventListener('DOMContentLoaded', function () {
-            loadConfig();
-        });
+        // reCAPTCHA v3 public site key (safe to expose in frontend)
+        const recaptchaSiteKey = '6LdPSWgsAAAAAAJn5PdzMIHalB6weUAoSU_1GH_r';
 
         // Spam prevention: max 3 messages per 5 minutes
-        const SPAM_WINDOW_MS = 5 * 60 * 1000; // 5 minutes
-        const MAX_MESSAGES_TOTAL = 3; // Max 3 messages per window
+        const SPAM_WINDOW_MS = 5 * 60 * 1000;
+        const MAX_MESSAGES_TOTAL = 3;
 
         function showMessage(type, text) {
             const msgDiv = document.getElementById('form-message');
@@ -343,12 +295,8 @@
             }
             msgDiv.textContent = text;
             msgDiv.classList.remove('hidden');
-
-            // Auto-hide success messages after 5 seconds
             if (type === 'success') {
-                setTimeout(() => {
-                    msgDiv.classList.add('hidden');
-                }, 5000);
+                setTimeout(() => msgDiv.classList.add('hidden'), 5000);
             }
         }
 
@@ -375,7 +323,6 @@
             let tries = JSON.parse(localStorage.getItem('contactTries') || '[]');
             tries = tries.filter(ts => now - ts < SPAM_WINDOW_MS);
 
-            // Check if user has exceeded total limit
             if (tries.length >= MAX_MESSAGES_TOTAL) {
                 const waitTime = Math.ceil((SPAM_WINDOW_MS - (now - tries[0])) / 60000);
                 showMessage('error', `Ai trimis prea multe mesaje. Încearcă din nou în ${waitTime} minute.`);
@@ -388,41 +335,34 @@
             const subject = form.querySelectorAll('input[type="text"]')[1].value.trim();
             const message = form.querySelector('textarea').value.trim();
 
-            // Basic validation
             if (!name || !email || !subject || !message) {
                 showMessage('error', 'Te rugăm să completezi toate câmpurile.');
                 return;
             }
 
-            // Email validation
             const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
             if (!emailRegex.test(email)) {
                 showMessage('error', 'Te rugăm să introduci o adresă de email validă.');
                 return;
             }
 
-            // Check if site key is loaded
-            if (!recaptchaSiteKey) {
-                showMessage('error', 'reCAPTCHA nu s-a încărcat. Te rugăm să reîncarci pagina.');
-                return;
-            }
-
-            // Set loading state
             setButtonLoading(true);
 
             try {
                 // Execute reCAPTCHA v3
-                const recaptchaToken = await new Promise((resolve, reject) => {
-                    grecaptcha.ready(function () {
-                        grecaptcha.execute(recaptchaSiteKey, { action: 'submit' }).then(function (token) {
-                            resolve(token);
-                        }).catch(function (error) {
-                            reject(error);
+                let recaptchaToken = '';
+                try {
+                    recaptchaToken = await new Promise((resolve, reject) => {
+                        if (typeof grecaptcha === 'undefined') return resolve('');
+                        grecaptcha.ready(() => {
+                            grecaptcha.execute(recaptchaSiteKey, { action: 'submit' })
+                                .then(resolve).catch(reject);
                         });
                     });
-                });
+                } catch (e) {
+                    console.warn('reCAPTCHA failed, continuing without token:', e.message);
+                }
 
-                // Submit form with reCAPTCHA token
                 const response = await fetch('/api/contact', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -443,7 +383,7 @@
             } catch (error) {
                 setButtonLoading(false);
                 console.error('Error submitting form:', error);
-                showMessage('error', 'Eroare de conexiune sau reCAPTCHA. Te rugăm să reîncarci pagina și să încerci din nou.');
+                showMessage('error', 'Eroare de conexiune. Te rugăm să încerci din nou.');
             }
         }
     </script>
