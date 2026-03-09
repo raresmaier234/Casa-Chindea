@@ -19,6 +19,7 @@
         "node-fetch": "^3.3.1",
         "nodemailer": "^6.9.1",
         "pocketbase": "^0.8.0",
-        "sharp": "^0.34.5"
+        "sharp": "^0.34.5",
+        "stripe": "^20.4.1"
     }
 }

@@ -30,9 +30,9 @@ if command -v lsof &> /dev/null; then
 fi
 
 # Load environment variables from .env.local
-if [ -f .env.local ]; then
+if [ -f .env ]; then
     echo -e "${YELLOW}Loading environment variables from .env.local...${NC}"
-    export $(grep -v '^#' .env.local | grep -v '^$' | xargs)
+    export $(grep -v '^#' .env | grep -v '^$' | xargs)
 else
     echo -e "${YELLOW}Warning: .env.local file not found!${NC}"
 fi

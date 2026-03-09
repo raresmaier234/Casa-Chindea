@@ -253,6 +253,10 @@ router.get('/booking', authenticateToken, requireAdmin, async (req, res) => {
                 numberOfRooms: booking.numberOfRooms || 1,
                 message: booking.message,
                 status: booking.status || 'pending',
+                paymentStatus: booking.paymentStatus || null,
+                paymentMethod: booking.paymentMethod || null,
+                paidAmount: booking.paidAmount || null,
+                totalAmount: booking.totalAmount || null,
                 created: booking.created,
                 updated: booking.updated
             }))
@@ -948,6 +952,7 @@ router.get('/prices', authenticateToken, requireAdmin, async (req, res) => {
 
         if (records.length > 0) {
             const prices = records[0];
+            const paymentFallback = global._paymentSettings || {};
             res.json({
                 success: true,
                 prices: {
@@ -957,6 +962,8 @@ router.get('/prices', authenticateToken, requireAdmin, async (req, res) => {
                     priceBreakfastChild: prices.priceBreakfastChild,
                     surchargeWeekend: prices.surchargeWeekend,
                     surchargeHoliday: prices.surchargeHoliday,
+                    paymentMode: prices.paymentMode || paymentFallback.paymentMode || 'none',
+                    depositPercent: prices.depositPercent || paymentFallback.depositPercent || 30,
                     updated: prices.updated
                 }
             });
@@ -985,7 +992,9 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             priceBreakfast,
             priceBreakfastChild,
             surchargeWeekend,
-            surchargeHoliday
+            surchargeHoliday,
+            paymentMode,
+            depositPercent
         } = req.body;
 
         // Validare strictă și conversie
@@ -995,6 +1004,8 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
         const pBreakfastChild = parseInt(priceBreakfastChild) || 0;
         const sWeekend = parseInt(surchargeWeekend) || 0;
         const sHoliday = parseInt(surchargeHoliday) || 0;
+        const pMode = ['none', 'full', 'deposit'].includes(paymentMode) ? paymentMode : 'none';
+        const dPercent = Math.min(99, Math.max(1, parseInt(depositPercent) || 30));
 
         if (isNaN(pRoom) || pRoom <= 0) {
             return res.status(400).json({ success: false, error: 'Prețul per cameră este invalid (trebuie să fie număr > 0).' });
@@ -1015,7 +1026,9 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             priceBreakfast: pBreakfast,
             priceBreakfastChild: pBreakfastChild,
             surchargeWeekend: sWeekend,
-            surchargeHoliday: sHoliday
+            surchargeHoliday: sHoliday,
+            paymentMode: pMode,
+            depositPercent: dPercent
         };
 
         // Asigură-te că PocketBase este autentificat
@@ -1030,11 +1043,48 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             });
 
             let result;
+            const saveToDb = async (data) => {
+                if (existingRecords.length > 0) {
+                    return await pb.collection('prices').update(existingRecords[0].id, data);
+                } else {
+                    return await pb.collection('prices').create(data);
+                }
+            };
+
+            try {
+                // First attempt: save with payment fields (needs migration applied)
+                result = await saveToDb(pricesData);
+                console.log('✅ Prețuri salvate în PocketBase (cu câmpuri plată):', result.id);
+            } catch (firstErr) {
+                // If PocketBase rejects because paymentMode/depositPercent fields don't exist yet,
+                // fall back to saving only the core price fields
+                const isUnknownField = firstErr.message && (
+                    firstErr.message.includes('paymentMode') ||
+                    firstErr.message.includes('depositPercent') ||
+                    firstErr.status === 400
+                );
+                if (isUnknownField) {
+                    console.warn('⚠️ Câmpurile de plată nu există în PocketBase (migrare nepublicată). Salvez fără ele.');
+                    const fallbackData = {
+                        priceRoom: pRoom,
+                        priceEntire: pEntire,
+                        priceBreakfast: pBreakfast,
+                        priceBreakfastChild: pBreakfastChild,
+                        surchargeWeekend: sWeekend,
+                        surchargeHoliday: sHoliday
+                    };
+                    result = await saveToDb(fallbackData);
+                    // Store payment settings in process memory as fallback
+                    global._paymentSettings = { paymentMode: pMode, depositPercent: dPercent };
+                    console.log('✅ Prețuri salvate (fără câmpuri plată), setări plată în memorie:', global._paymentSettings);
+                } else {
+                    throw firstErr;
+                }
+            }
+
             if (existingRecords.length > 0) {
-                result = await pb.collection('prices').update(existingRecords[0].id, pricesData);
                 console.log('✅ Prețuri actualizate în PocketBase:', result.id);
             } else {
-                result = await pb.collection('prices').create(pricesData);
                 console.log('✅ Prețuri create în PocketBase:', result.id);
             }
 
