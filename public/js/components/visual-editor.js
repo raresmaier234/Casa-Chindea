@@ -617,7 +617,7 @@ async function saveEdit(page, key, type, elemId) {
 
                 if (elem && result.offer) {
                     const newUrl = result.offer.imageUrl ||
-                        (result.offer.image ? `/api/files/offers/${offerId}/${result.offer.image}` : null);
+                        (result.offer.image ? `${window.API_BASE || ''}/api/files/offers/${offerId}/${result.offer.image}` : null);
                     if (newUrl) {
                         elem.src = newUrl + '?t=' + Date.now();
                         elem.classList.add('opacity-100');

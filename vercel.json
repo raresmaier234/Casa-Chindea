@@ -8,7 +8,7 @@
     "rewrites": [
         {
             "source": "/api/:path*",
-            "destination": "https://casa-chindea.onrender.com/api/:path*"
+            "destination": "https://api.casachindea.ro/api/:path*"
         },
         {
             "source": "/",

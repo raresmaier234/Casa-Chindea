@@ -167,7 +167,8 @@ app.use(cors({
         'http://localhost:8080',
         'https://casa-chindea.vercel.app',
         'https://casachindea.ro',
-        'https://*.vercel.app'
+        'https://www.casachindea.ro',
+        /\.vercel\.app$/
     ],
     credentials: true
 }));
