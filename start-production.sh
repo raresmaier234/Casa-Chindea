@@ -50,6 +50,22 @@ for i in $(seq 1 30); do
     sleep 1
 done
 
+# ── Ensure superuser exists ──────────────────────────────────
+# Create or update the PocketBase superuser so the backend can authenticate.
+# Uses PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD (or POCKETBASE_ADMIN_*) env vars.
+SU_EMAIL="${PB_ADMIN_EMAIL:-$POCKETBASE_ADMIN_EMAIL}"
+SU_PASS="${PB_ADMIN_PASSWORD:-$POCKETBASE_ADMIN_PASSWORD}"
+
+if [ -n "$SU_EMAIL" ] && [ -n "$SU_PASS" ]; then
+    echo "🔑 Ensuring superuser exists: $SU_EMAIL"
+    $PB_BIN superuser upsert "$SU_EMAIL" "$SU_PASS" \
+        --dir="$PB_DATA_DIR" 2>&1 || \
+    echo "⚠️  superuser upsert returned non-zero (may already exist — continuing)"
+    echo "✅ Superuser ready"
+else
+    echo "⚠️  No PB_ADMIN_EMAIL / PB_ADMIN_PASSWORD set — skipping superuser setup"
+fi
+
 # ── Start Node.js Backend ───────────────────────────────────
 echo "🚀 Starting Node.js backend..."
 
