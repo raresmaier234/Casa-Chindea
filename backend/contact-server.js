@@ -80,25 +80,59 @@ router.post('/api/contact', async (req, res) => {
             replyTo: email,
             subject: `🏡 Casa Chindea | Mesaj nou: ${subject} — de la ${name}`,
             html: `
-                <div style="font-family:Arial,sans-serif;max-width:600px;margin:0 auto;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;">
-                    <div style="background:#059669;padding:20px 24px;">
-                        <h2 style="color:#fff;margin:0;font-size:20px;">🏡 Casa Chindea — Mesaj nou de contact</h2>
-                    </div>
-                    <div style="padding:24px;">
-                        <table style="width:100%;border-collapse:collapse;">
-                            <tr><td style="padding:8px 0;color:#6b7280;width:100px;font-size:14px;">Nume</td><td style="padding:8px 0;font-weight:600;font-size:14px;">${name}</td></tr>
-                            <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">Email</td><td style="padding:8px 0;font-size:14px;"><a href="mailto:${email}" style="color:#059669;">${email}</a></td></tr>
-                            <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;">Subiect</td><td style="padding:8px 0;font-size:14px;">${subject}</td></tr>
-                        </table>
-                        <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
-                        <p style="color:#6b7280;font-size:13px;margin:0 0 8px;">Mesaj:</p>
-                        <p style="background:#f9fafb;border-left:4px solid #059669;padding:12px 16px;border-radius:4px;font-size:14px;color:#111827;white-space:pre-wrap;">${message}</p>
-                        <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Răspunde direct la acest email pentru a contacta persoana.</p>
-                    </div>
-                    <div style="background:#f3f4f6;padding:12px 24px;text-align:center;">
-                        <p style="margin:0;font-size:12px;color:#9ca3af;">Casa Chindea • Hășmaș, Harghita</p>
-                    </div>
-                </div>
+                <!DOCTYPE html>
+                <html>
+                <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+                <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
+                        <tr>
+                            <td align="center">
+                                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
+                                    <!-- Header -->
+                                    <tr>
+                                        <td style="background-color:#059669;padding:20px 30px;">
+                                            <h2 style="color:#ffffff;margin:0;font-size:20px;font-weight:bold;">🏡 Casa Chindea — Mesaj nou de contact</h2>
+                                        </td>
+                                    </tr>
+                                    <!-- Body -->
+                                    <tr>
+                                        <td style="padding:24px 30px;">
+                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+                                                <tr>
+                                                    <td style="padding:8px 0;color:#6b7280;width:100px;font-size:14px;vertical-align:top;">Nume</td>
+                                                    <td style="padding:8px 0;font-weight:600;font-size:14px;color:#111827;">${name}</td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Email</td>
+                                                    <td style="padding:8px 0;font-size:14px;"><a href="mailto:${email}" style="color:#059669;text-decoration:none;">${email}</a></td>
+                                                </tr>
+                                                <tr>
+                                                    <td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Subiect</td>
+                                                    <td style="padding:8px 0;font-size:14px;color:#111827;">${subject}</td>
+                                                </tr>
+                                            </table>
+                                            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+                                            <p style="color:#6b7280;font-size:13px;margin:0 0 8px;">Mesaj:</p>
+                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+                                                <tr>
+                                                    <td style="background-color:#f9fafb;border-left:4px solid #059669;padding:12px 16px;border-radius:4px;font-size:14px;color:#111827;white-space:pre-wrap;">${message}</td>
+                                                </tr>
+                                            </table>
+                                            <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Răspunde direct la acest email pentru a contacta persoana.</p>
+                                        </td>
+                                    </tr>
+                                    <!-- Footer -->
+                                    <tr>
+                                        <td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
+                                            <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+                                        </td>
+                                    </tr>
+                                </table>
+                            </td>
+                        </tr>
+                    </table>
+                </body>
+                </html>
             `
         });
 
