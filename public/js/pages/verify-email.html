@@ -194,12 +194,22 @@
         const email = urlParams.get('email') || localStorage.getItem('verification_email');
         const prefilledCode = urlParams.get('code');
 
+        // If user came from email link (has both email + code in URL), allow direct access
+        const fromEmailLink = urlParams.get('email') && urlParams.get('code');
+
         // Guard: only allow access if register flow set the sessionStorage flags
+        // OR if user arrived via email link with code
         const verificationPending = sessionStorage.getItem('verification_pending');
         const verificationEmail = sessionStorage.getItem('verification_email');
 
-        if (!email || !verificationPending || verificationEmail !== email) {
+        if (!email || (!fromEmailLink && !verificationPending)) {
             window.location.href = '/js/pages/register.html';
+        }
+
+        // If from email link, set sessionStorage so resend/refresh works
+        if (fromEmailLink) {
+            sessionStorage.setItem('verification_pending', 'true');
+            sessionStorage.setItem('verification_email', email);
         }
 
         document.getElementById('user-email').textContent = email;

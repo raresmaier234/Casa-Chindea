@@ -16,6 +16,7 @@ async function sendEmail({ to, subject, html, from, replyTo }) {
 
     // 1. MailerSend HTTP API (production — works on Render)
     if (apiKey) {
+        console.log(`📧 MailerSend: from=${fromEmail}, to=${to}`);
         const body = {
             from: { email: fromEmail, name: fromName },
             to: [{ email: to }],
@@ -35,6 +36,10 @@ async function sendEmail({ to, subject, html, from, replyTo }) {
 
         if (!resp.ok) {
             const errBody = await resp.text().catch(() => '');
+            console.error(`❌ MailerSend error: ${resp.status} from=${fromEmail}`);
+            if (resp.status === 422 && errBody.includes('MS42207')) {
+                throw new Error(`MailerSend: domeniul "${fromEmail.split('@')[1]}" nu e verificat. Setează MAILERSEND_FROM la adresa de pe domeniul trial (ex: casachindea@trial-xxx.mlsender.net)`);
+            }
             throw new Error(`MailerSend API ${resp.status}: ${errBody}`);
         }
         // 202 = accepted
