@@ -166,10 +166,60 @@ app.use(cors({
         'http://localhost:3000',
         'http://localhost:8080',
         'https://casa-chindea.vercel.app',
+        'https://casachindea.ro',
         'https://*.vercel.app'
     ],
     credentials: true
 }));
+
+// ── Proxy PocketBase Admin Dashboard & API ──────────────────────────────────
+// Access PocketBase admin at https://casa-chindea.onrender.com/_/
+// MUST be before express.json() to preserve raw body for multipart uploads.
+const pbProxy = async (req, res) => {
+    try {
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        const targetUrl = `${pbUrl}${req.originalUrl}`;
+
+        const headers = {};
+        // Forward only safe headers
+        if (req.headers['authorization']) headers['authorization'] = req.headers['authorization'];
+        if (req.headers['content-type']) headers['content-type'] = req.headers['content-type'];
+        if (req.headers['accept']) headers['accept'] = req.headers['accept'];
+        if (req.headers['cookie']) headers['cookie'] = req.headers['cookie'];
+
+        const fetchOpts = { method: req.method, headers };
+
+        // Forward raw body for non-GET requests
+        if (req.method !== 'GET' && req.method !== 'HEAD') {
+            const rawBody = await new Promise((resolve, reject) => {
+                const chunks = [];
+                req.on('data', chunk => chunks.push(chunk));
+                req.on('end', () => resolve(Buffer.concat(chunks)));
+                req.on('error', reject);
+            });
+            if (rawBody.length > 0) fetchOpts.body = rawBody;
+        }
+
+        const pbResp = await fetch(targetUrl, fetchOpts);
+        res.status(pbResp.status);
+
+        for (const [key, value] of pbResp.headers.entries()) {
+            if (!['transfer-encoding', 'connection', 'content-encoding'].includes(key.toLowerCase())) {
+                res.set(key, value);
+            }
+        }
+
+        const buffer = Buffer.from(await pbResp.arrayBuffer());
+        res.send(buffer);
+    } catch (err) {
+        console.error('PB proxy error:', err.message);
+        res.status(502).json({ error: 'PocketBase proxy error' });
+    }
+};
+app.all('/_/*', pbProxy);
+app.get('/_/', pbProxy);
+
+// Parse JSON body (after PB proxy routes to avoid consuming raw body)
 app.use(express.json());
 
 // Serve static files with cache headers
@@ -223,6 +273,7 @@ app.get('/api/files/*', async (req, res) => {
         res.status(502).json({ error: 'File proxy error' });
     }
 });
+
 
 app.use(authRouter);
 app.use('/api/booking', bookingRouter);
