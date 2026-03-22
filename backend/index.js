@@ -219,6 +219,19 @@ const pbProxy = async (req, res) => {
 app.all('/_/*', pbProxy);
 app.get('/_/', pbProxy);
 
+// Proxy PocketBase internal API routes used by the admin dashboard
+// (superuser login, collections CRUD, settings, logs, backups, etc.)
+// These MUST be before express.json() and before our own /api/* routes.
+app.all('/api/admins/*', pbProxy);
+app.all('/api/collections/*', pbProxy);
+app.all('/api/settings', pbProxy);
+app.all('/api/settings/*', pbProxy);
+app.all('/api/logs', pbProxy);
+app.all('/api/logs/*', pbProxy);
+app.all('/api/backups', pbProxy);
+app.all('/api/backups/*', pbProxy);
+app.all('/api/realtime', pbProxy);
+
 // Parse JSON body (after PB proxy routes to avoid consuming raw body)
 app.use(express.json());
 
