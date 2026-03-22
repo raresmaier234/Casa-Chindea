@@ -173,161 +173,14 @@ function generateVerificationCode() {
     return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
-// Helper function to send verification email
-async function sendVerificationEmail(email, code, name) {
-    console.log('📧 sendVerificationEmail called with:', { email, code, name });
-
-    // Determine which SMTP service to use
-    const useMailerSend = process.env.MAILERSEND_SMTP_USER && process.env.MAILERSEND_SMTP_PASS;
-    const useSendGrid = process.env.SENDGRID_API_KEY;
-
-    console.log('📧 Email service:', useMailerSend ? 'MailerSend' : useSendGrid ? 'SendGrid' : 'Gmail SMTP');
-
+// Helper function to send verification email — delegates to shared email.js
+async function sendVerificationEmailFn(email, code, name) {
+    console.log('📧 sendVerificationEmail called:', { email, name });
     try {
-        let transporter;
-        let fromAddress;
-
-        if (useMailerSend) {
-            // MailerSend SMTP (PRODUCTION)
-            transporter = nodemailer.createTransport({
-                host: 'smtp.mailersend.net',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.MAILERSEND_SMTP_USER,
-                    pass: process.env.MAILERSEND_SMTP_PASS
-                },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 15000
-            });
-            fromAddress = process.env.MAILERSEND_FROM || process.env.SMTP_USER;
-        } else if (useSendGrid) {
-            // SendGrid (legacy)
-            transporter = nodemailer.createTransport({
-                host: 'smtp.sendgrid.net',
-                port: 587,
-                secure: false,
-                auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 15000
-            });
-            fromAddress = process.env.SMTP_USER;
-        } else {
-            // Gmail (development only)
-            transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
-                },
-                connectionTimeout: 10000,
-                greetingTimeout: 10000,
-                socketTimeout: 15000
-            });
-            fromAddress = process.env.SMTP_USER;
-        }
-
-        console.log('✅ Transporter created');
-
-        const mailOptions = {
-            from: `"Casa Chindea" <${fromAddress}>`,
-            to: email,
-            subject: '🏡 Casa Chindea | Confirmă-ți contul',
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-                <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
-                        <tr>
-                            <td align="center">
-                                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
-                                    <!-- Header -->
-                                    <tr>
-                                        <td style="background-color:#059669;padding:24px 30px;text-align:center;">
-                                            <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:bold;">🏡 Casa Chindea</h1>
-                                            <p style="color:#d1fae5;margin:8px 0 0;font-size:14px;">Bine ai venit!</p>
-                                        </td>
-                                    </tr>
-                                    <!-- Body -->
-                                    <tr>
-                                        <td style="padding:30px;">
-                                            <h2 style="color:#111827;margin:0 0 16px;font-size:20px;font-weight:600;">Salut, ${name}! 👋</h2>
-                                            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Mulțumim pentru că ai ales să creezi un cont la Casa Chindea!</p>
-                                            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 20px;">Pentru a finaliza înregistrarea, te rugăm să introduci codul de verificare de mai jos:</p>
-                                            
-                                            <!-- Code Box -->
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                                <tr>
-                                                    <td align="center">
-                                                        <div style="background-color:#f0fdf4;border:2px solid #059669;padding:20px;text-align:center;font-size:32px;font-weight:bold;color:#059669;letter-spacing:8px;border-radius:8px;font-family:monospace;">${code}</div>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                            
-                                            <p style="text-align:center;color:#6b7280;font-size:13px;margin:20px 0 12px;">Sau dă click pe butonul de mai jos:</p>
-                                            
-                                            <!-- Button -->
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                                <tr>
-                                                    <td align="center" style="padding:8px 0 24px;">
-                                                        <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/verify-email.html?email=${encodeURIComponent(email)}&code=${code}" 
-                                                           style="display:inline-block;background-color:#059669;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;mso-padding-alt:0;text-align:center;">
-                                                            <!--[if mso]><i style="letter-spacing:32px;mso-font-width:-100%;mso-text-raise:21pt">&nbsp;</i><![endif]-->
-                                                            Verifică Contul
-                                                            <!--[if mso]><i style="letter-spacing:32px;mso-font-width:-100%">&nbsp;</i><![endif]-->
-                                                        </a>
-                                                    </td>
-                                                </tr>
-                                            </table>
-                                            
-                                            <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;">
-                                            <p style="color:#374151;font-size:13px;line-height:1.6;margin:0 0 12px;"><strong>Important:</strong> Acest cod este valabil 15 minute și poate fi folosit o singură dată.</p>
-                                            <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 20px;">Dacă nu ai solicitat crearea acestui cont, te rugăm să ignori acest email.</p>
-                                            <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
-                                        </td>
-                                    </tr>
-                                    <!-- Footer -->
-                                    <tr>
-                                        <td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-                                            <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
-                                            <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-                </body>
-                </html>
-            `
-        };
-
-        console.log('📤 Sending email to:', email);
-
-        // Add timeout wrapper to prevent hanging
-        const sendWithTimeout = (mailOptions, timeoutMs = 30000) => {
-            return Promise.race([
-                transporter.sendMail(mailOptions),
-                new Promise((_, reject) =>
-                    setTimeout(() => reject(new Error('Email sending timeout after ' + timeoutMs + 'ms')), timeoutMs)
-                )
-            ]);
-        };
-
-        const info = await sendWithTimeout(mailOptions, 30000);
-        console.log('✅ Email sent successfully! MessageId:', info.messageId);
-
-        return true;
+        const { sendVerificationEmail } = await import('./email.js');
+        return await sendVerificationEmail(email, name, code);
     } catch (err) {
-        console.error('❌ Error sending verification email:', err);
-        console.error('❌ Error details:', {
-            message: err.message,
-            code: err.code,
-            command: err.command
-        });
+        console.error('❌ Error sending verification email:', err.message);
         return false;
     }
 }
@@ -472,7 +325,7 @@ app.post('/api/auth/register', async (req, res) => {
 
         // Send verification email
         console.log('📤 Attempting to send email...');
-        const emailSent = await sendVerificationEmail(email, verificationCode, name || email.split('@')[0]);
+        const emailSent = await sendVerificationEmailFn(email, verificationCode, name || email.split('@')[0]);
 
         if (!emailSent) {
             console.error('❌ Failed to send verification email');
@@ -686,7 +539,7 @@ app.post('/api/auth/resend-code', async (req, res) => {
         verificationData.attempts = 0;
 
         // Send new verification email
-        const emailSent = await sendVerificationEmail(email, newCode, verificationData.name);
+        const emailSent = await sendVerificationEmailFn(email, newCode, verificationData.name);
 
         if (!emailSent) {
             return res.status(500).json({

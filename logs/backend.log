@@ -5,7 +5,7 @@
 ✅ ENV loaded | POCKET_BASE_URL = http://127.0.0.1:8090 | NODE_ENV = development
 Using 'form_post' for response_mode may cause issues for you logging in over http, see https://github.com/auth0/express-openid-connect/blob/master/FAQ.md
 🚀 Server running on port 3001
-🎁 Offers cache warmed
 💰 Prices cache warmed
-✅ PocketBase authenticated as admin
+🎁 Offers cache warmed
 ✅ PB auth via _superusers
+✅ PocketBase authenticated as admin

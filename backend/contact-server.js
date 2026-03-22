@@ -1,9 +1,9 @@
 // backend/contact-server.js
 import express from 'express';
 import cors from 'cors';
-import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
+import { sendContactEmail } from './email.js';
 
 // dotenv loaded by index.js → env.js
 
@@ -44,7 +44,6 @@ router.post('/api/contact', async (req, res) => {
                 });
             }
 
-            // Only block clear bots (score < 0.3)
             if (recaptchaData.score !== undefined && recaptchaData.score < 0.3) {
                 return res.status(400).json({
                     success: false,
@@ -53,10 +52,8 @@ router.post('/api/contact', async (req, res) => {
             }
         } catch (err) {
             console.warn('reCAPTCHA verification failed, continuing:', err.message);
-            // Non-blocking — let the email go through even if reCAPTCHA check fails
         }
     } else {
-        // No token — only block in production
         if (process.env.NODE_ENV === 'production') {
             return res.status(400).json({
                 success: false,
@@ -66,92 +63,7 @@ router.post('/api/contact', async (req, res) => {
     }
 
     try {
-        let transporter;
-        let fromAddress;
-
-        if (process.env.MAILERSEND_SMTP_USER && process.env.MAILERSEND_SMTP_PASS) {
-            transporter = nodemailer.createTransport({
-                host: 'smtp.mailersend.net',
-                port: 587,
-                secure: false,
-                auth: {
-                    user: process.env.MAILERSEND_SMTP_USER,
-                    pass: process.env.MAILERSEND_SMTP_PASS
-                }
-            });
-            fromAddress = process.env.MAILERSEND_FROM || process.env.SMTP_USER;
-        } else {
-            transporter = nodemailer.createTransport({
-                service: 'gmail',
-                auth: {
-                    user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS
-                }
-            });
-            fromAddress = process.env.SMTP_USER;
-        }
-
-        await transporter.sendMail({
-            from: `"Casa Chindea" <${fromAddress}>`,
-            to: process.env.CONTACT_TO,
-            replyTo: email,
-            subject: `🏡 Casa Chindea | Mesaj nou: ${subject} — de la ${name}`,
-            html: `
-                <!DOCTYPE html>
-                <html>
-                <head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
-                <body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
-                    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
-                        <tr>
-                            <td align="center">
-                                <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
-                                    <!-- Header -->
-                                    <tr>
-                                        <td style="background-color:#059669;padding:20px 30px;">
-                                            <h2 style="color:#ffffff;margin:0;font-size:20px;font-weight:bold;">🏡 Casa Chindea — Mesaj nou de contact</h2>
-                                        </td>
-                                    </tr>
-                                    <!-- Body -->
-                                    <tr>
-                                        <td style="padding:24px 30px;">
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
-                                                <tr>
-                                                    <td style="padding:8px 0;color:#6b7280;width:100px;font-size:14px;vertical-align:top;">Nume</td>
-                                                    <td style="padding:8px 0;font-weight:600;font-size:14px;color:#111827;">${name}</td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Email</td>
-                                                    <td style="padding:8px 0;font-size:14px;"><a href="mailto:${email}" style="color:#059669;text-decoration:none;">${email}</a></td>
-                                                </tr>
-                                                <tr>
-                                                    <td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Subiect</td>
-                                                    <td style="padding:8px 0;font-size:14px;color:#111827;">${subject}</td>
-                                                </tr>
-                                            </table>
-                                            <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
-                                            <p style="color:#6b7280;font-size:13px;margin:0 0 8px;">Mesaj:</p>
-                                            <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
-                                                <tr>
-                                                    <td style="background-color:#f9fafb;border-left:4px solid #059669;padding:12px 16px;border-radius:4px;font-size:14px;color:#111827;white-space:pre-wrap;">${message}</td>
-                                                </tr>
-                                            </table>
-                                            <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Răspunde direct la acest email pentru a contacta persoana.</p>
-                                        </td>
-                                    </tr>
-                                    <!-- Footer -->
-                                    <tr>
-                                        <td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-                                            <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
-                                        </td>
-                                    </tr>
-                                </table>
-                            </td>
-                        </tr>
-                    </table>
-                </body>
-                </html>
-            `
-        });
+        await sendContactEmail({ name, email, subject, message });
 
         res.json({
             success: true,
@@ -166,4 +78,3 @@ router.post('/api/contact', async (req, res) => {
 });
 
 export default router;
-

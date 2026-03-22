@@ -1,67 +1,74 @@
 // backend/email.js — Shared email utility for booking notifications
+// Uses MailerSend HTTP API (production) or nodemailer/Gmail (development)
+// Render blocks SMTP ports (587, 465) so we MUST use HTTP API for production.
 import nodemailer from 'nodemailer';
 
+// ─── Core send function ────────────────────────────────────────────────────
+
 /**
- * Create a configured nodemailer transporter
- * Priority: MailerSend SMTP → SendGrid → Gmail (dev)
+ * Send an email via MailerSend HTTP API or nodemailer (fallback)
+ * @param {{ to: string, subject: string, html: string, from?: string, replyTo?: string }} opts
  */
-function createTransporter() {
-    // 1. MailerSend SMTP (recommended for production)
-    if (process.env.MAILERSEND_SMTP_USER && process.env.MAILERSEND_SMTP_PASS) {
-        console.log('📧 Using MailerSend SMTP');
-        return nodemailer.createTransport({
-            host: 'smtp.mailersend.net',
-            port: 587,
-            secure: false,
-            auth: {
-                user: process.env.MAILERSEND_SMTP_USER,
-                pass: process.env.MAILERSEND_SMTP_PASS
+async function sendEmail({ to, subject, html, from, replyTo }) {
+    const apiKey = process.env.MAILERSEND_API_KEY;
+    const fromEmail = from || process.env.MAILERSEND_FROM || process.env.SMTP_USER;
+    const fromName = 'Casa Chindea';
+
+    // 1. MailerSend HTTP API (production — works on Render)
+    if (apiKey) {
+        const body = {
+            from: { email: fromEmail, name: fromName },
+            to: [{ email: to }],
+            subject,
+            html
+        };
+        if (replyTo) body.reply_to = [{ email: replyTo }];
+
+        const resp = await fetch('https://api.mailersend.com/v1/email', {
+            method: 'POST',
+            headers: {
+                'Authorization': `Bearer ${apiKey}`,
+                'Content-Type': 'application/json'
             },
+            body: JSON.stringify(body)
+        });
+
+        if (!resp.ok) {
+            const errBody = await resp.text().catch(() => '');
+            throw new Error(`MailerSend API ${resp.status}: ${errBody}`);
+        }
+        // 202 = accepted
+        return { provider: 'mailersend', status: resp.status };
+    }
+
+    // 2. Nodemailer Gmail fallback (development)
+    if (process.env.SMTP_USER && process.env.SMTP_PASS) {
+        const transporter = nodemailer.createTransport({
+            service: 'gmail',
+            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
             connectionTimeout: 10000,
             greetingTimeout: 10000,
             socketTimeout: 15000
         });
+
+        const mailOpts = {
+            from: `"${fromName}" <${process.env.SMTP_USER}>`,
+            to,
+            subject,
+            html
+        };
+        if (replyTo) mailOpts.replyTo = replyTo;
+
+        const info = await transporter.sendMail(mailOpts);
+        return { provider: 'gmail', messageId: info.messageId };
     }
 
-    // 2. SendGrid (legacy)
-    if (process.env.SENDGRID_API_KEY) {
-        console.log('📧 Using SendGrid SMTP');
-        return nodemailer.createTransport({
-            host: 'smtp.sendgrid.net',
-            port: 587,
-            secure: false,
-            auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 15000
-        });
-    }
-
-    // 3. Gmail (development only)
-    console.log('📧 Using Gmail SMTP (dev)');
-    return nodemailer.createTransport({
-        service: 'gmail',
-        auth: {
-            user: process.env.SMTP_USER,
-            pass: process.env.SMTP_PASS
-        },
-        connectionTimeout: 10000,
-        greetingTimeout: 10000,
-        socketTimeout: 15000
-    });
+    console.warn('⚠️ No email provider configured (set MAILERSEND_API_KEY or SMTP_USER+SMTP_PASS)');
+    return null;
 }
 
-/**
- * Get the "from" address based on configured service
- */
-function getFromAddress() {
-    if (process.env.MAILERSEND_FROM) return `"Casa Chindea" <${process.env.MAILERSEND_FROM}>`;
-    return `"Casa Chindea" <${process.env.SMTP_USER}>`;
-}
+// ─── Helpers ────────────────────────────────────────────────────────────────
 
-/**
- * Format a date string to Romanian locale
- */
 function formatDate(dateStr) {
     try {
         return new Date(dateStr).toLocaleDateString('ro-RO', {
@@ -70,16 +77,9 @@ function formatDate(dateStr) {
     } catch { return dateStr; }
 }
 
-/**
- * Send email notification to owner when a NEW booking is created
- */
-export async function sendBookingEmailToOwner(bookingData) {
-    const hasMailer = process.env.MAILERSEND_SMTP_USER || (process.env.SMTP_USER && process.env.SMTP_PASS);
-    if (!hasMailer) {
-        console.warn('⚠️ SMTP not configured — owner email not sent');
-        return;
-    }
+// ─── Booking: new reservation → email to OWNER ─────────────────────────────
 
+export async function sendBookingEmailToOwner(bookingData) {
     const { name, email, phone, guests, checkin, checkout, roomType, numberOfRooms, message, offerTitle, offerPrice } = bookingData;
 
     const roomDisplay = roomType === 'entire'
@@ -90,12 +90,10 @@ export async function sendBookingEmailToOwner(bookingData) {
         ? `<tr><td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Ofertă</td><td style="padding:8px 0;font-size:14px;color:#111827;font-weight:600;">🎁 ${offerTitle}${offerPrice ? ` — ${offerPrice} RON` : ''}</td></tr>`
         : '';
 
-    const to = process.env.CONTACT_TO || process.env.SMTP_USER;
+    const to = process.env.CONTACT_TO || process.env.MAILERSEND_FROM || process.env.SMTP_USER;
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
-            from: getFromAddress(),
+        const result = await sendEmail({
             to,
             replyTo: email,
             subject: `🏡 Casa Chindea | Rezervare nouă de la ${name}`,
@@ -135,31 +133,25 @@ export async function sendBookingEmailToOwner(bookingData) {
 </td></tr></table>
 </body></html>`
         });
-        console.log('✅ Email de rezervare nouă trimis către gazdă:', to);
+        console.log('✅ Email rezervare nouă trimis către gazdă:', to, result?.provider);
     } catch (err) {
-        console.error('❌ Eroare email rezervare nouă către gazdă:', err.message);
+        console.error('❌ Eroare email rezervare nouă:', err.message);
     }
 }
 
-/**
- * Send email to CLIENT when booking is CONFIRMED
- */
+// ─── Booking confirmed → email to CLIENT ────────────────────────────────────
+
 export async function sendBookingConfirmedEmail(booking, totalPrice) {
-    const hasMailer = process.env.MAILERSEND_SMTP_USER || (process.env.SMTP_USER && process.env.SMTP_PASS);
-    if (!hasMailer || !booking.email) return;
+    if (!booking.email) return;
 
     const roomDisplay = booking.roomType === 'entire' ? 'Casa Întreagă'
         : booking.roomType === 'room' ? `${booking.numberOfRooms || 1} Cameră(e)` : booking.roomType || 'Standard';
 
-    const checkinDate = new Date(booking.checkin);
-    const checkoutDate = new Date(booking.checkout);
-    const nights = Math.round((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+    const nights = Math.round((new Date(booking.checkout) - new Date(booking.checkin)) / (1000 * 60 * 60 * 24));
     const contactPhone = process.env.CONTACT_PHONE || '+40 744 308 651';
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
-            from: getFromAddress(),
+        const result = await sendEmail({
             to: booking.email,
             subject: `🏡 Casa Chindea | Rezervarea ta a fost confirmată! ✅`,
             html: `<!DOCTYPE html>
@@ -175,8 +167,7 @@ export async function sendBookingConfirmedEmail(booking, totalPrice) {
   <tr><td style="padding:30px;">
     <h2 style="color:#111827;margin:0 0 16px;font-size:20px;">Salut, ${booking.name}! 🎉</h2>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 20px;">Rezervarea ta la Casa Chindea a fost <strong style="color:#059669;">confirmată</strong>! Te așteptăm cu drag.</p>
-    
-    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;padding:0;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;">
       <tr><td style="padding:20px;">
         <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
           <tr><td style="padding:6px 0;color:#6b7280;width:120px;font-size:14px;">📅 Check-in</td><td style="padding:6px 0;font-weight:600;font-size:14px;color:#111827;">${formatDate(booking.checkin)}</td></tr>
@@ -188,39 +179,33 @@ export async function sendBookingConfirmedEmail(booking, totalPrice) {
         </table>
       </td></tr>
     </table>
-
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 8px;">📍 <strong>Adresă:</strong> Hășmaș, județul Harghita, România</p>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">📞 <strong>Contact:</strong> <a href="tel:${contactPhone}" style="color:#059669;text-decoration:none;">${contactPhone}</a></p>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
-    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
   </td></tr>
 </table>
 </td></tr></table>
 </body></html>`
         });
-        console.log('✅ Email confirmare trimis către client:', booking.email);
+        console.log('✅ Email confirmare trimis către:', booking.email, result?.provider);
     } catch (err) {
-        console.error('❌ Eroare email confirmare către client:', err.message);
+        console.error('❌ Eroare email confirmare:', err.message);
     }
 }
 
-/**
- * Send email to CLIENT when booking is DECLINED
- */
+// ─── Booking declined → email to CLIENT ─────────────────────────────────────
+
 export async function sendBookingDeclinedEmail(booking, reason) {
-    const hasMailer = process.env.MAILERSEND_SMTP_USER || (process.env.SMTP_USER && process.env.SMTP_PASS);
-    if (!hasMailer || !booking.email) return;
+    if (!booking.email) return;
 
     const contactPhone = process.env.CONTACT_PHONE || '+40 744 308 651';
 
     try {
-        const transporter = createTransporter();
-        await transporter.sendMail({
-            from: getFromAddress(),
+        const result = await sendEmail({
             to: booking.email,
             subject: `🏡 Casa Chindea | Actualizare rezervare`,
             html: `<!DOCTYPE html>
@@ -236,18 +221,16 @@ export async function sendBookingDeclinedEmail(booking, reason) {
   <tr><td style="padding:30px;">
     <h2 style="color:#111827;margin:0 0 16px;font-size:20px;">Salut, ${booking.name}!</h2>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Din păcate, rezervarea ta pentru perioada <strong>${formatDate(booking.checkin)}</strong> — <strong>${formatDate(booking.checkout)}</strong> nu a putut fi confirmată.</p>
-    
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr><td style="background-color:#fef2f2;border-left:4px solid #ef4444;padding:16px;border-radius:4px;">
         <p style="color:#991b1b;font-size:14px;margin:0;"><strong>Motiv:</strong> ${reason || 'Perioada solicitată nu este disponibilă.'}</p>
       </td></tr>
     </table>
-
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
-    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 12px;">Te invităm să încerci alte date! Poți face o nouă rezervare oricând:</p>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 12px;">Te invităm să încerci alte date!</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr><td align="center" style="padding:8px 0 20px;">
-        <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/booking.html" 
+        <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/booking.html"
            style="display:inline-block;background-color:#059669;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">
           Fă o nouă rezervare
         </a>
@@ -257,16 +240,113 @@ export async function sendBookingDeclinedEmail(booking, reason) {
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`
+        });
+        console.log('✅ Email respingere trimis către:', booking.email, result?.provider);
+    } catch (err) {
+        console.error('❌ Eroare email respingere:', err.message);
+    }
+}
+
+// ─── Verification code email (used by auth-server) ──────────────────────────
+
+export async function sendVerificationEmail(email, name, code) {
+    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/verify-email.html?email=${encodeURIComponent(email)}&code=${code}`;
+
+    const result = await sendEmail({
+        to: email,
+        subject: '🏡 Casa Chindea | Confirmă-ți contul',
+        html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
+  <tr><td style="background-color:#059669;padding:24px 30px;text-align:center;">
+    <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:bold;">🏡 Casa Chindea</h1>
+    <p style="color:#d1fae5;margin:8px 0 0;font-size:14px;">Bine ai venit!</p>
+  </td></tr>
+  <tr><td style="padding:30px;">
+    <h2 style="color:#111827;margin:0 0 16px;font-size:20px;font-weight:600;">Salut, ${name}! 👋</h2>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">Mulțumim pentru că ai ales să creezi un cont la Casa Chindea!</p>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 20px;">Pentru a finaliza înregistrarea, te rugăm să introduci codul de verificare de mai jos:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <div style="background-color:#f0fdf4;border:2px solid #059669;padding:20px;text-align:center;font-size:32px;font-weight:bold;color:#059669;letter-spacing:8px;border-radius:8px;font-family:monospace;">${code}</div>
+      </td></tr>
+    </table>
+    <p style="text-align:center;color:#6b7280;font-size:13px;margin:20px 0 12px;">Sau dă click pe butonul de mai jos:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center" style="padding:8px 0 24px;">
+        <a href="${verifyUrl}" style="display:inline-block;background-color:#059669;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Verifică Contul</a>
+      </td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;">
+    <p style="color:#374151;font-size:13px;line-height:1.6;margin:0 0 12px;"><strong>Important:</strong> Acest cod este valabil 15 minute și poate fi folosit o singură dată.</p>
+    <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 20px;">Dacă nu ai solicitat crearea acestui cont, te rugăm să ignori acest email.</p>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
+  </td></tr>
+  <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
     <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
     <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
   </td></tr>
 </table>
 </td></tr></table>
 </body></html>`
-        });
-        console.log('✅ Email respingere trimis către client:', booking.email);
-    } catch (err) {
-        console.error('❌ Eroare email respingere către client:', err.message);
+    });
+
+    if (result) {
+        console.log('✅ Verification email sent to:', email, 'via', result.provider);
+        return true;
     }
+    return false;
+}
+
+// ─── Contact form email (used by contact-server) ────────────────────────────
+
+export async function sendContactEmail({ name, email, subject, message }) {
+    const to = process.env.CONTACT_TO || process.env.MAILERSEND_FROM || process.env.SMTP_USER;
+
+    const result = await sendEmail({
+        to,
+        replyTo: email,
+        subject: `🏡 Casa Chindea | Mesaj nou: ${subject} — de la ${name}`,
+        html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
+  <tr><td style="background-color:#059669;padding:20px 30px;">
+    <h2 style="color:#ffffff;margin:0;font-size:20px;">🏡 Casa Chindea — Mesaj nou de contact</h2>
+  </td></tr>
+  <tr><td style="padding:24px 30px;">
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;">
+      <tr><td style="padding:8px 0;color:#6b7280;width:100px;font-size:14px;vertical-align:top;">Nume</td><td style="padding:8px 0;font-weight:600;font-size:14px;color:#111827;">${name}</td></tr>
+      <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Email</td><td style="padding:8px 0;font-size:14px;"><a href="mailto:${email}" style="color:#059669;text-decoration:none;">${email}</a></td></tr>
+      <tr><td style="padding:8px 0;color:#6b7280;font-size:14px;vertical-align:top;">Subiect</td><td style="padding:8px 0;font-size:14px;color:#111827;">${subject}</td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
+    <p style="color:#6b7280;font-size:13px;margin:0 0 8px;">Mesaj:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
+      <td style="background-color:#f9fafb;border-left:4px solid #059669;padding:12px 16px;border-radius:4px;font-size:14px;color:#111827;white-space:pre-wrap;">${message}</td>
+    </tr></table>
+    <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Răspunde direct la acest email pentru a contacta persoana.</p>
+  </td></tr>
+  <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`
+    });
+
+    if (!result) throw new Error('No email provider configured');
+    console.log('✅ Contact email sent via', result.provider);
+    return result;
 }
 
