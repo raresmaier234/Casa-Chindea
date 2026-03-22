@@ -49,8 +49,7 @@
         }
     </script>
 
-    <!-- reCAPTCHA v3 loaded directly with the public site key -->
-    <script src="https://www.google.com/recaptcha/api.js?render=6LdPSWgsAAAAAAJn5PdzMIHalB6weUAoSU_1GH_r" async defer></script>
+    <!-- reCAPTCHA v3 — loaded dynamically if key is valid -->
 </head>
 
 <body class="bg-gray-50">
@@ -276,8 +275,10 @@
     </div>
 </footer>
 <script>
-    // reCAPTCHA v3 public site key (safe to expose in frontend)
-    const recaptchaSiteKey = '6LdPSWgsAAAAAAJn5PdzMIHalB6weUAoSU_1GH_r';
+    // reCAPTCHA is optional — form is protected by backend rate limiter
+    // To enable: create a reCAPTCHA v3 key at https://www.google.com/recaptcha/admin
+    // and set RECAPTCHA_SITE_KEY in .env (must be v3, NOT v2)
+    const recaptchaSiteKey = '6LcVoJMsAAAAAO5hIxWZG9M9uxdIn9MUuZqDUvIQ'; // Leave empty to skip reCAPTCHA
 
     // Spam prevention: max 3 messages per 5 minutes
     const SPAM_WINDOW_MS = 5 * 60 * 1000;
@@ -349,18 +350,20 @@
         setButtonLoading(true);
 
         try {
-            // Execute reCAPTCHA v3
             let recaptchaToken = '';
-            try {
-                recaptchaToken = await new Promise((resolve, reject) => {
-                    if (typeof grecaptcha === 'undefined') return resolve('');
-                    grecaptcha.ready(() => {
-                        grecaptcha.execute(recaptchaSiteKey, { action: 'submit' })
-                            .then(resolve).catch(reject);
+
+            // Only try reCAPTCHA if a valid v3 key is set and script is loaded
+            if (recaptchaSiteKey && typeof grecaptcha !== 'undefined') {
+                try {
+                    recaptchaToken = await new Promise((resolve, reject) => {
+                        grecaptcha.ready(() => {
+                            grecaptcha.execute(recaptchaSiteKey, { action: 'submit' })
+                                .then(resolve).catch(reject);
+                        });
                     });
-                });
-            } catch (e) {
-                console.warn('reCAPTCHA failed, continuing without token:', e.message);
+                } catch (e) {
+                    console.warn('reCAPTCHA failed, continuing without:', e.message);
+                }
             }
 
             const response = await fetch('/api/contact', {
