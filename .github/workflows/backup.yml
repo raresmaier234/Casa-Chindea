@@ -64,16 +64,28 @@ jobs:
 
           echo "Downloading $BACKUP_NAME..."
 
-          # PocketBase download endpoint uses /api/backups/<key> with a token query param
-          curl -sf -o "$BACKUP_NAME" \
-            "$PB_URL/api/backups/$BACKUP_NAME" \
-            -H "Authorization: Bearer $TOKEN"
+          # PocketBase requires a short-lived file token for downloads
+          FILE_TOKEN=$(curl -sf -X POST "$PB_URL/api/files/token" \
+            -H "Authorization: Bearer $TOKEN" | jq -r '.token')
 
-          # If Bearer header didn't work, try with token query param
-          if [ ! -s "$BACKUP_NAME" ]; then
-            echo "Retrying with token param..."
+          echo "Got file token: ${FILE_TOKEN:0:10}..."
+
+          # Download using the file token
+          HTTP_CODE=$(curl -s -w "%{http_code}" -o "$BACKUP_NAME" \
+            "$PB_URL/api/backups/$BACKUP_NAME?token=$FILE_TOKEN")
+
+          echo "HTTP response: $HTTP_CODE"
+
+          if [ "$HTTP_CODE" != "200" ] || [ ! -s "$BACKUP_NAME" ]; then
+            echo "File token method failed, trying direct auth..."
             curl -sf -o "$BACKUP_NAME" \
-              "$PB_URL/api/backups/$BACKUP_NAME?token=$TOKEN"
+              "$PB_URL/api/backups/$BACKUP_NAME" \
+              -H "Authorization: Bearer $TOKEN" || true
+          fi
+
+          if [ ! -s "$BACKUP_NAME" ]; then
+            echo "❌ Download failed"
+            exit 1
           fi
 
           ls -lh "$BACKUP_NAME"
