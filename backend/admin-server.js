@@ -10,7 +10,7 @@ import { authenticateToken } from './auth-server.js';
 import { sendWhatsAppBookingConfirmed, sendWhatsAppBookingDeclined } from './whatsapp.js';
 import dotenv from 'dotenv';
 
-dotenv.config();
+// dotenv loaded by index.js → env.js
 
 const router = express.Router();
 

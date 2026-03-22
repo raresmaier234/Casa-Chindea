@@ -9,7 +9,7 @@ import { auth } from 'express-openid-connect';
 import multer from 'multer';
 import nodemailer from 'nodemailer';
 
-dotenv.config();
+// dotenv loaded by index.js → env.js
 
 const app = express();
 app.use(cors());

@@ -4,7 +4,7 @@ import dotenv from 'dotenv';
 import PocketBase from 'pocketbase';
 import { sendWhatsAppMessage } from './whatsapp.js';
 import { authenticateToken } from './auth-server.js';
-dotenv.config();
+// dotenv loaded by index.js → env.js
 
 const router = express.Router();
 

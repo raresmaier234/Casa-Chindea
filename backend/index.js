@@ -1,8 +1,8 @@
 // backend/index.js
+import './env.js'; // ← MUST be first — loads root .env before other modules
 import express from 'express';
 import cors from 'cors';
 import compression from 'compression';
-import dotenv from 'dotenv';
 import { dirname, join } from "path";
 import { fileURLToPath } from "url";
 import PocketBase from 'pocketbase';
@@ -13,9 +13,7 @@ import authRouter from './auth-server.js';
 import adminRouter from './admin-server.js';
 import paymentRouter from './payment-server.js';
 
-// Load .env from parent directory (root of project)
 const __dirname = dirname(fileURLToPath(import.meta.url));
-dotenv.config({ path: join(__dirname, '..', '.env') });
 
 const app = express();
 

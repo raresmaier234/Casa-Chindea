@@ -5,7 +5,7 @@ import nodemailer from 'nodemailer';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 
-dotenv.config();
+// dotenv loaded by index.js → env.js
 
 const router = express.Router();
 

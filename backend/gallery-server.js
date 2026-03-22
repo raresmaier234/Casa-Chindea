@@ -6,7 +6,7 @@ import multer from 'multer';
 import PocketBase from 'pocketbase';
 import sharp from 'sharp';
 
-dotenv.config();
+// dotenv loaded by index.js → env.js
 
 const app = express();
 app.use(cors());
