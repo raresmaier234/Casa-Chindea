@@ -5,14 +5,22 @@
     "installCommand": null,
     "outputDirectory": "public",
     "framework": null,
+    "redirects": [
+        {
+            "source": "/",
+            "destination": "/js/pages/home.html",
+            "permanent": false
+        },
+        {
+            "source": "/index.html",
+            "destination": "/js/pages/home.html",
+            "permanent": false
+        }
+    ],
     "rewrites": [
         {
             "source": "/api/:path*",
             "destination": "https://api.casachindea.ro/api/:path*"
-        },
-        {
-            "source": "/",
-            "destination": "/index.html"
         },
         {
             "source": "/js/pages/:match*",
