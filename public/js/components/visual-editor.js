@@ -52,7 +52,7 @@ function initVisualEditor() {
         <button onclick="toggleEditMode()" 
             class="bg-primary hover:bg-secondary text-white px-4 py-2 sm:px-6 sm:py-3 rounded-full shadow-lg flex items-center space-x-2 transition-all text-sm sm:text-base">
             <i class="fas fa-edit"></i>
-            <span id="edit-mode-text" class="hidden sm:inline">Activează Editare</span>
+            <span id="edit-mode-text" class="hidden sm:inline">Activează editare</span>
             <span id="edit-mode-text-mobile" class="sm:hidden">Edit</span>
         </button>
     `;
@@ -86,7 +86,7 @@ function createEditorSidebar() {
             <!-- Header -->
             <div class="bg-primary text-white p-3 sm:p-4 flex items-center justify-between ${isMobile ? 'rounded-t-2xl' : ''}">
                 <h3 class="font-bold text-base sm:text-lg flex items-center">
-                    <i class="fas fa-edit mr-2"></i>Editor Vizual
+                    <i class="fas fa-edit mr-2"></i>Editor vizual
                 </h3>
                 <button onclick="toggleEditMode()" class="hover:bg-white/20 p-2 rounded">
                     <i class="fas fa-times"></i>
@@ -162,7 +162,7 @@ function toggleEditMode() {
     const sidebar = document.getElementById('editor-sidebar');
 
     if (editMode) {
-        if (btn) btn.textContent = 'Dezactivează Editare';
+        if (btn) btn.textContent = 'Dezactivează editare';
         if (btnMobile) btnMobile.textContent = 'Stop';
         document.getElementById('visual-edit-toggle').querySelector('button').classList.add('ring-4', 'ring-yellow-300');
 
