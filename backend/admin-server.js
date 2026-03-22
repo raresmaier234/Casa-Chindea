@@ -1357,4 +1357,44 @@ router.get('/public/offers', async (req, res) => {
     }
 });
 
+// ── Backup PocketBase ──────────────────────────────────────────────────────
+router.post('/backup', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        if (!pb.authStore.isValid) await authPocketBaseAdmin();
+
+        const backupName = `backup_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+
+        // PocketBase 0.23+ backup API
+        await fetch(`${process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'}/api/backups`, {
+            method: 'POST',
+            headers: {
+                'Authorization': pb.authStore.token,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify({ name: backupName })
+        });
+
+        console.log('✅ Backup created:', backupName);
+        res.json({ success: true, message: `Backup creat: ${backupName}`, name: backupName });
+    } catch (err) {
+        console.error('❌ Backup error:', err.message);
+        res.status(500).json({ success: false, error: 'Eroare la crearea backup-ului: ' + err.message });
+    }
+});
+
+router.get('/backups', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        if (!pb.authStore.isValid) await authPocketBaseAdmin();
+
+        const response = await fetch(`${process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090'}/api/backups`, {
+            headers: { 'Authorization': pb.authStore.token }
+        });
+        const backups = await response.json();
+
+        res.json({ success: true, backups: backups || [] });
+    } catch (err) {
+        res.status(500).json({ success: false, error: err.message });
+    }
+});
+
 export default router;

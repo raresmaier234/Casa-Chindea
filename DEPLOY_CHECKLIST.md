@@ -464,5 +464,84 @@ curl https://casa-chindea.fly.dev/api/health
 
 ---
 
+## 10. Backup automat PocketBase
+
+### Cum funcționează
+
+Un **GitHub Action** rulează automat **în fiecare Luni la 06:00 ora României**:
+
+1. Se autentifică la PocketBase pe Fly.io
+2. Crează un backup `.zip` al bazei de date
+3. Descarcă backup-ul
+4. Îl salvează ca **GitHub Release** (permanent, descărcabil)
+5. Șterge backup-urile vechi de pe server (păstrează ultimele 4)
+
+### Setup — O singură dată
+
+#### Pasul 1: Adaugă secretele în GitHub
+
+```
+GitHub → repo → Settings → Secrets and variables → Actions → New repository secret
+```
+
+| Secret | Valoare |
+|--------|---------|
+| `PB_ADMIN_EMAIL` | `raresmaier123@gmail.com` |
+| `PB_ADMIN_PASSWORD` | parola admin PocketBase |
+
+> `GITHUB_TOKEN` e automat — nu trebuie adăugat manual.
+
+#### Pasul 2: Push workflow-ul
+
+```bash
+git add .github/workflows/backup.yml
+git commit -m "feat: automated weekly PocketBase backup"
+git push origin main
+```
+
+#### Pasul 3: Verifică
+
+- Mergi la **GitHub → repo → Actions → 🗄️ PocketBase Backup**
+- Click **"Run workflow"** → rulează manual prima dată
+- Verifică în **Releases** că apare backup-ul
+
+### Backup manual din Admin Dashboard
+
+Din admin panel poți crea backup-uri oricând:
+
+```
+POST /api/admin/backup   (necesită token admin)
+GET  /api/admin/backups   (listează backup-uri existente)
+```
+
+### Modifică frecvența
+
+Editează `.github/workflows/backup.yml` → linia `cron`:
+
+| Frecvență | Cron |
+|-----------|------|
+| Zilnic la 3:00 UTC | `0 3 * * *` |
+| Săptămânal (Luni) | `0 3 * * 1` |
+| La fiecare 2 săptămâni | `0 3 1,15 * *` |
+| Lunar (ziua 1) | `0 3 1 * *` |
+
+### Unde sunt backup-urile?
+
+- **GitHub Releases:** `https://github.com/raresmaier234/Casa-Chindea/releases`
+  - Permanente, descărcabile, versionizate
+- **Pe PocketBase server:** `https://casa-chindea.fly.dev/_/#/settings/backups`
+  - Ultimele 4, se rotesc automat
+
+### Restaurare din backup
+
+```bash
+# 1. Descarcă backup-ul din GitHub Releases
+# 2. Upload prin PocketBase Admin UI:
+#    https://casa-chindea.fly.dev/_/#/settings/backups
+#    → Click "Restore" → selectează .zip-ul
+```
+
+---
+
 *Generat: Martie 2026 | Casa Chindea v1.0*
 

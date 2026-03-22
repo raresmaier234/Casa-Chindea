@@ -1,0 +1,110 @@
+name: 🗄️ PocketBase Backup
+
+on:
+  schedule:
+    # Rulează în fiecare Luni la 03:00 UTC (06:00 ora României)
+    - cron: '0 3 * * 1'
+  workflow_dispatch:
+    # Permite rulare manuală din GitHub Actions tab
+
+env:
+  PB_URL: https://casa-chindea.fly.dev
+  PB_ADMIN_EMAIL: ${{ secrets.PB_ADMIN_EMAIL }}
+  PB_ADMIN_PASSWORD: ${{ secrets.PB_ADMIN_PASSWORD }}
+
+jobs:
+  backup:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: 🔐 Authenticate with PocketBase
+        id: auth
+        run: |
+          echo "Authenticating..."
+          RESPONSE=$(curl -sf -X POST "$PB_URL/api/collections/_superusers/auth-with-password" \
+            -H "Content-Type: application/json" \
+            -d "{\"identity\":\"$PB_ADMIN_EMAIL\",\"password\":\"$PB_ADMIN_PASSWORD\"}")
+
+          TOKEN=$(echo "$RESPONSE" | jq -r '.token')
+
+          if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
+            echo "❌ Authentication failed"
+            echo "$RESPONSE"
+            exit 1
+          fi
+
+          echo "✅ Authenticated"
+          echo "token=$TOKEN" >> $GITHUB_OUTPUT
+
+      - name: 📦 Create backup
+        id: backup
+        run: |
+          TOKEN="${{ steps.auth.outputs.token }}"
+          BACKUP_NAME="backup_$(date +%Y%m%d_%H%M%S).zip"
+
+          echo "Creating backup: $BACKUP_NAME"
+
+          # Trigger backup creation
+          RESULT=$(curl -sf -X POST "$PB_URL/api/backups" \
+            -H "Authorization: $TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"name\":\"$BACKUP_NAME\"}")
+
+          echo "✅ Backup created: $BACKUP_NAME"
+          echo "name=$BACKUP_NAME" >> $GITHUB_OUTPUT
+
+      - name: ⬇️ Download backup
+        run: |
+          TOKEN="${{ steps.auth.outputs.token }}"
+          BACKUP_NAME="${{ steps.backup.outputs.name }}"
+
+          echo "Downloading $BACKUP_NAME..."
+
+          curl -sf -o "$BACKUP_NAME" \
+            "$PB_URL/api/backups/$BACKUP_NAME" \
+            -H "Authorization: $TOKEN"
+
+          ls -lh "$BACKUP_NAME"
+          echo "✅ Downloaded"
+
+      - name: 🏷️ Create GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: backup-${{ github.run_number }}
+          name: "🗄️ DB Backup — $(date +'%d %b %Y')"
+          body: |
+            Backup automat PocketBase
+            - **Fișier:** `${{ steps.backup.outputs.name }}`
+            - **Data:** ${{ github.event.repository.updated_at }}
+            - **Trigger:** ${{ github.event_name == 'schedule' && '⏰ Programat (săptămânal)' || '🖱️ Manual' }}
+          files: ${{ steps.backup.outputs.name }}
+          draft: false
+          prerelease: false
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🧹 Cleanup old backups on PocketBase (keep last 4)
+        run: |
+          TOKEN="${{ steps.auth.outputs.token }}"
+
+          # List all backups
+          BACKUPS=$(curl -sf "$PB_URL/api/backups" \
+            -H "Authorization: $TOKEN")
+
+          # Count backups
+          COUNT=$(echo "$BACKUPS" | jq 'length')
+          echo "Total backups on server: $COUNT"
+
+          if [ "$COUNT" -gt 4 ]; then
+            # Delete oldest backups (keep last 4)
+            echo "$BACKUPS" | jq -r '.[:-4] | .[].key' | while read -r KEY; do
+              echo "Deleting old backup: $KEY"
+              curl -sf -X DELETE "$PB_URL/api/backups/$KEY" \
+                -H "Authorization: $TOKEN" || true
+            done
+            echo "✅ Old backups cleaned"
+          else
+            echo "ℹ️ No cleanup needed"
+          fi
+
