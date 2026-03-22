@@ -62,6 +62,52 @@ async function authPocketBaseAdmin() {
 // Initialize admin auth
 authPocketBaseAdmin();
 
+// Auto-create prices collection if missing (handles fresh PocketBase deployments)
+async function ensurePricesCollection() {
+    if (!pb.authStore.isValid) await authPocketBaseAdmin();
+    const token = pb.authStore.token;
+    const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+
+    const check = await fetch(`${pbUrl}/api/collections/prices`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+    });
+    if (check.ok) return; // collection exists
+
+    console.log('📦 Creating "prices" collection in PocketBase...');
+    const resp = await fetch(`${pbUrl}/api/collections`, {
+        method: 'POST',
+        headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({
+            name: 'prices',
+            type: 'base',
+            fields: [
+                { name: 'priceRoom', type: 'number', required: true },
+                { name: 'priceEntire', type: 'number', required: true },
+                { name: 'priceBreakfast', type: 'number' },
+                { name: 'priceBreakfastChild', type: 'number' },
+                { name: 'surchargeWeekend', type: 'number' },
+                { name: 'surchargeHoliday', type: 'number' },
+                { name: 'paymentMode', type: 'select', options: { values: ['none', 'full', 'deposit'] } },
+                { name: 'depositPercent', type: 'number' }
+            ],
+            listRule: '',
+            viewRule: '',
+            createRule: '',
+            updateRule: '',
+            deleteRule: ''
+        })
+    });
+    if (resp.ok) {
+        console.log('✅ "prices" collection created');
+    } else {
+        const err = await resp.json().catch(() => ({}));
+        console.error('❌ Failed to create prices collection:', resp.status, JSON.stringify(err));
+    }
+}
+
 // Cache pentru prețuri (pentru a evita citiri repetate)
 let pricesCache = null;
 let pricesCacheTimestamp = 0;
@@ -953,6 +999,9 @@ router.get('/prices', authenticateToken, requireAdmin, async (req, res) => {
             await authPocketBaseAdmin();
         }
 
+        // Ensure collection exists
+        await ensurePricesCollection();
+
         // Obține prețurile din colecția 'prices'
         const records = await pb.collection('prices').getFullList(200, {
             sort: '-created',
@@ -1045,16 +1094,22 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             await authPocketBaseAdmin();
         }
 
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+
         // Salvează DOAR în PocketBase
         try {
-            const existingRecords = await pb.collection('prices').getFullList(200, {
-                $autoCancel: false
-            });
+            await ensurePricesCollection();
+
+            let existingRecords = [];
+            try {
+                existingRecords = await pb.collection('prices').getFullList(200, {
+                    $autoCancel: false
+                });
+            } catch (listErr) {
+                console.warn('⚠️ Could not list prices:', listErr.message);
+            }
 
             let result;
-            const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
-
-            // Direct HTTP to PocketBase — superuser token bypasses all collection rules
             const saveToDb = async (data) => {
                 if (!pb.authStore.isValid) await authPocketBaseAdmin();
                 const token = pb.authStore.token;
