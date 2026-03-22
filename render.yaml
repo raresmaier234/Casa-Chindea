@@ -19,9 +19,9 @@ services:
       - key: POCKET_BASE_URL
         value: "http://127.0.0.1:8090"
       - key: API_URL
-        value: "https://casa-chindea.onrender.com"
+        value: "https://api.casachindea.ro"
       - key: FRONTEND_URL
-        value: "https://casa-chindea.vercel.app"
+        value: "https://www.casachindea.ro"
       # These must be set manually in Render Dashboard:
       # - PB_ADMIN_EMAIL
       # - PB_ADMIN_PASSWORD

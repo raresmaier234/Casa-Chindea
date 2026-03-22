@@ -19,7 +19,7 @@ if (!process.env.API_URL && process.env.NODE_ENV === 'production') {
 
 // Production fallback: FRONTEND_URL
 if (!process.env.FRONTEND_URL && process.env.NODE_ENV === 'production') {
-    process.env.FRONTEND_URL = 'https://casa-chindea.vercel.app';
+    process.env.FRONTEND_URL = 'https://www.casachindea.ro';
 }
 
 console.log('✅ ENV loaded | POCKET_BASE_URL =', process.env.POCKET_BASE_URL, '| NODE_ENV =', process.env.NODE_ENV);
