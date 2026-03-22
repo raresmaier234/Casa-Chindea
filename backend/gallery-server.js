@@ -14,6 +14,14 @@ app.use(express.json());
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Public URL for file links sent to browser (proxied through Node.js in production)
+function getPublicFileUrl(record, filename) {
+    const baseUrl = process.env.NODE_ENV === 'production'
+        ? (process.env.API_URL || 'https://casa-chindea.onrender.com')
+        : (process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
+    return `${baseUrl}/api/files/${record.collectionId}/${record.id}/${filename}`;
+}
+
 // Helper function to optimize image
 async function optimizeImage(buffer, options = {}) {
     const {
@@ -69,8 +77,8 @@ app.get('/api/photos', async (req, res) => {
 
         const items = photos.items.map(photo => ({
             ...photo,
-            imageUrl: pb.getFileUrl(photo, photo.image),
-            thumbnailUrl: photo.thumbnail ? pb.getFileUrl(photo, photo.thumbnail) : pb.getFileUrl(photo, photo.image)
+            imageUrl: getPublicFileUrl(photo, photo.image),
+            thumbnailUrl: photo.thumbnail ? getPublicFileUrl(photo, photo.thumbnail) : getPublicFileUrl(photo, photo.image)
         }));
 
         res.json({ items });

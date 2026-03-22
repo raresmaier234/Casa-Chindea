@@ -1,0 +1,42 @@
+# ═══════════════════════════════════════════════════════════════
+# Casa Chindea — Render Blueprint
+# Runs PocketBase + Node.js backend on ONE server
+# ═══════════════════════════════════════════════════════════════
+
+services:
+  - type: web
+    name: casa-chindea
+    runtime: docker
+    dockerfilePath: ./Dockerfile
+    region: frankfurt  # Closest to Romania
+    plan: starter      # $7/month — includes persistent disk
+    healthCheckPath: /api/health
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: PORT
+        value: "10000"
+      - key: POCKET_BASE_URL
+        value: "http://127.0.0.1:8090"
+      - key: API_URL
+        value: "https://casa-chindea.onrender.com"
+      - key: FRONTEND_URL
+        value: "https://casa-chindea.vercel.app"
+      # These must be set manually in Render Dashboard:
+      # - PB_ADMIN_EMAIL
+      # - PB_ADMIN_PASSWORD
+      # - POCKETBASE_ADMIN_EMAIL
+      # - POCKETBASE_ADMIN_PASSWORD
+      # - JWT_SECRET
+      # - MAILERSEND_API_KEY
+      # - MAILERSEND_FROM
+      # - CONTACT_TO
+      # - CONTACT_PHONE
+      # - RECAPTCHA_SECRET
+      # - WHATSAPP_PHONE_ID
+      # - WHATSAPP_TOKEN
+    disk:
+      name: pocketbase-data
+      mountPath: /app/pb_data
+      sizeGB: 1  # 1GB is plenty for SQLite + uploaded files
+

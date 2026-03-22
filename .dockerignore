@@ -1,0 +1,16 @@
+node_modules
+logs
+.git
+.env
+api/pocketbase
+api/pb_data/data.db*
+api/pb_data/auxiliary.db*
+api/pb_data/storage
+api/pb_data/backups
+api/pb_data_corrupted*
+public
+scripts
+*.md
+*.log
+.DS_Store
+

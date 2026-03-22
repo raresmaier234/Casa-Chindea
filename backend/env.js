@@ -7,11 +7,9 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '..', '.env') });
 
-// Production fallback: if POCKET_BASE_URL is not set, use Fly.io
+// Production fallback: PocketBase runs on the same server (started by start-production.sh)
 if (!process.env.POCKET_BASE_URL) {
-    process.env.POCKET_BASE_URL = process.env.NODE_ENV === 'production'
-        ? 'https://casa-chindea.fly.dev'
-        : 'http://127.0.0.1:8090';
+    process.env.POCKET_BASE_URL = 'http://127.0.0.1:8090';
 }
 
 // Production fallback: API_URL

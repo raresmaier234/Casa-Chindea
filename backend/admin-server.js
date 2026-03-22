@@ -26,6 +26,14 @@ router.use((req, res, next) => {
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Public URL for file links sent to browser (proxied through Node.js in production)
+function getPublicPbUrl() {
+    if (process.env.NODE_ENV === 'production') {
+        return process.env.API_URL || 'https://casa-chindea.onrender.com';
+    }
+    return process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+}
+
 // Authenticate PocketBase as admin/superuser for server-side operations
 async function authPocketBaseAdmin() {
     const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
@@ -513,7 +521,7 @@ router.post('/photos', authenticateToken, requireAdmin, upload.single('photo'), 
             photo: {
                 id: record.id,
                 description: record.description,
-                imageUrl: pb.getFileUrl(record, record.image),
+                imageUrl: `${getPublicPbUrl()}/api/files/${(record).collectionId}/${(record).id}/${(record.image)}`,
                 created: record.created
             }
         });
@@ -603,14 +611,13 @@ router.patch('/photos/:id/image', authenticateToken, requireAdmin, upload.single
         // Clean up temp file
         fs.unlink(req.file.path, () => {});
 
-        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
         res.json({
             success: true,
             message: 'Imaginea a fost actualizată.',
             photo: {
                 id: updated.id,
                 description: updated.description,
-                imageUrl: updated.image ? `${pbUrl}/api/files/photos/${updated.id}/${updated.image}` : null,
+                imageUrl: updated.image ? `${getPublicPbUrl()}/api/files/photos/${updated.id}/${updated.image}` : null,
                 updated: updated.updated
             }
         });
@@ -816,7 +823,7 @@ router.get('/cms/sections', async (req, res) => {
                 key: sec.key,
                 type: sec.type,
                 content: sec.content,
-                imageUrl: sec.image ? pb.getFileUrl(sec, sec.image) : null,
+                imageUrl: sec.image ? `${getPublicPbUrl()}/api/files/${(sec).collectionId}/${(sec).id}/${(sec.image)}` : null,
                 data: sec.data,
                 order: sec.order,
                 active: sec.active,
@@ -887,7 +894,7 @@ router.post('/cms/sections', authenticateToken, requireAdmin, upload.single('ima
                     message: 'Secțiunea a fost actualizată cu succes.',
                     section: {
                         id: updated.id,
-                        imageUrl: updated.image ? pb.getFileUrl(updated, updated.image) : null,
+                        imageUrl: updated.image ? `${getPublicPbUrl()}/api/files/${(updated).collectionId}/${(updated).id}/${(updated.image)}` : null,
                         page: updated.page,
                         section: updated.section,
                         key: updated.key
@@ -906,7 +913,7 @@ router.post('/cms/sections', authenticateToken, requireAdmin, upload.single('ima
                     message: 'Secțiunea a fost creată cu succes.',
                     section: {
                         id: created.id,
-                        imageUrl: created.image ? pb.getFileUrl(created, created.image) : null,
+                        imageUrl: created.image ? `${getPublicPbUrl()}/api/files/${(created).collectionId}/${(created).id}/${(created.image)}` : null,
                         page: created.page,
                         section: created.section,
                         key: created.key
@@ -929,7 +936,7 @@ router.post('/cms/sections', authenticateToken, requireAdmin, upload.single('ima
                     key: updated.key,
                     type: updated.type,
                     content: updated.content,
-                    imageUrl: updated.image ? pb.getFileUrl(updated, updated.image) : null,
+                    imageUrl: updated.image ? `${getPublicPbUrl()}/api/files/${(updated).collectionId}/${(updated).id}/${(updated.image)}` : null,
                     data: updated.data,
                     updated: updated.updated
                 }
@@ -952,7 +959,7 @@ router.post('/cms/sections', authenticateToken, requireAdmin, upload.single('ima
                     key: created.key,
                     type: created.type,
                     content: created.content,
-                    imageUrl: created.image ? pb.getFileUrl(created, created.image) : null,
+                    imageUrl: created.image ? `${getPublicPbUrl()}/api/files/${(created).collectionId}/${(created).id}/${(created.image)}` : null,
                     data: created.data,
                     created: created.created
                 }
@@ -1279,7 +1286,6 @@ router.get('/offers', authenticateToken, requireAdmin, async (req, res) => {
             $autoCancel: false
         });
 
-        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
         res.json({
             success: true,
             offers: records.map(offer => ({
@@ -1295,7 +1301,7 @@ router.get('/offers', authenticateToken, requireAdmin, async (req, res) => {
                 includes: offer.includes,
                 active: offer.active,
                 imageUrl: offer.image
-                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    ? `${getPublicPbUrl()}/api/files/offers/${offer.id}/${offer.image}`
                     : null
             }))
         });
@@ -1310,13 +1316,12 @@ router.get('/offers/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {
         const { id } = req.params;
         const offer = await pb.collection('offers').getOne(id, { $autoCancel: false });
-        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
         res.json({
             success: true,
             offer: {
                 ...offer,
                 imageUrl: offer.image
-                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    ? `${getPublicPbUrl()}/api/files/offers/${offer.id}/${offer.image}`
                     : null
             }
         });
@@ -1401,13 +1406,12 @@ router.put('/offers/:id', authenticateToken, requireAdmin, upload.single('image'
         // Invalidează cache-ul public
         try { await fetch(`http://localhost:${process.env.PORT || 3001}/api/cache/invalidate`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ key: 'offers' }) }); } catch (e) { }
 
-        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
         res.json({
             success: true,
             message: 'Oferta a fost actualizată!',
             offer: {
                 ...result,
-                imageUrl: result.image ? `${pbUrl}/api/files/offers/${result.id}/${result.image}` : null
+                imageUrl: result.image ? `${getPublicPbUrl()}/api/files/offers/${result.id}/${result.image}` : null
             }
         });
     } catch (err) {

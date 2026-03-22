@@ -20,6 +20,15 @@ const app = express();
 // ── Shared PocketBase instance (created once, reused across all requests) ──
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Public-facing URL for PocketBase file links sent to browser
+// In production, files are proxied through the Node.js server
+function getPublicPbUrl() {
+    if (process.env.NODE_ENV === 'production') {
+        return process.env.API_URL || 'https://casa-chindea.onrender.com';
+    }
+    return process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+}
+
 // ── In-memory cache for public endpoints ──
 const cache = {
     prices: { data: null, timestamp: 0, ttl: 2 * 60 * 1000 },   // 2 min
@@ -69,13 +78,13 @@ async function fetchOffers() {
             sort: 'startDate',
             $autoCancel: false
         });
-        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        const publicUrl = getPublicPbUrl();
         return records
             .filter(o => new Date(o.endDate) >= new Date())
             .map(offer => ({
                 ...offer,
                 imageUrl: offer.image
-                    ? `${pbUrl}/api/files/offers/${offer.id}/${offer.image}`
+                    ? `${publicUrl}/api/files/offers/${offer.id}/${offer.image}`
                     : null
             }));
     } catch (err) {
@@ -117,6 +126,40 @@ app.use(compression({
     level: 6
 }));
 
+// ── SSL / HTTPS enforcement ────────────────────────────────────────────────
+// Render (and most PaaS) terminates SSL at the load balancer and forwards
+// requests via HTTP with X-Forwarded-Proto header.
+app.set('trust proxy', true);
+
+if (process.env.NODE_ENV === 'production') {
+    // Redirect HTTP → HTTPS
+    app.use((req, res, next) => {
+        if (req.headers['x-forwarded-proto'] !== 'https') {
+            return res.redirect(301, `https://${req.hostname}${req.originalUrl}`);
+        }
+        next();
+    });
+}
+
+// ── Security headers ───────────────────────────────────────────────────────
+app.use((req, res, next) => {
+    // HSTS — tells browsers to always use HTTPS (1 year, include subdomains)
+    if (process.env.NODE_ENV === 'production') {
+        res.set('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+    // Prevent MIME type sniffing
+    res.set('X-Content-Type-Options', 'nosniff');
+    // Prevent clickjacking
+    res.set('X-Frame-Options', 'SAMEORIGIN');
+    // XSS protection (legacy browsers)
+    res.set('X-XSS-Protection', '1; mode=block');
+    // Referrer policy
+    res.set('Referrer-Policy', 'strict-origin-when-cross-origin');
+    // Permissions policy
+    res.set('Permissions-Policy', 'camera=(), microphone=(), geolocation=(self)');
+    next();
+});
+
 // Configure CORS for Vercel frontend
 app.use(cors({
     origin: [
@@ -156,6 +199,29 @@ app.use('/api', (req, res, next) => {
 // Health check endpoint
 app.get('/api/health', (req, res) => {
     res.json({ status: 'ok', timestamp: new Date().toISOString() });
+});
+
+// ── Proxy PocketBase file URLs ──────────────────────────────────────────────
+// PocketBase runs on 127.0.0.1:8090 (not exposed externally).
+// This proxy lets the browser access /api/files/* through the Node.js server.
+app.get('/api/files/*', async (req, res) => {
+    try {
+        const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+        const pbResp = await fetch(`${pbUrl}${req.originalUrl}`);
+        if (!pbResp.ok) {
+            return res.status(pbResp.status).end();
+        }
+        // Forward content-type and cache headers
+        const ct = pbResp.headers.get('content-type');
+        if (ct) res.set('Content-Type', ct);
+        res.set('Cache-Control', 'public, max-age=31536000, immutable');
+
+        const buffer = Buffer.from(await pbResp.arrayBuffer());
+        res.send(buffer);
+    } catch (err) {
+        console.error('PB file proxy error:', err.message);
+        res.status(502).json({ error: 'File proxy error' });
+    }
 });
 
 app.use(authRouter);
