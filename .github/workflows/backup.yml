@@ -16,8 +16,6 @@ jobs:
   backup:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    permissions:
-      contents: write
 
     steps:
       - name: 🔐 Authenticate with PocketBase
@@ -47,13 +45,11 @@ jobs:
 
           echo "Creating backup: $BACKUP_NAME"
 
-          # Trigger backup creation
           curl -sf -X POST "$PB_URL/api/backups" \
             -H "Authorization: Bearer $TOKEN" \
             -H "Content-Type: application/json" \
             -d "{\"name\":\"$BACKUP_NAME\"}"
 
-          # Wait for backup to be ready
           sleep 5
 
           echo "✅ Backup created: $BACKUP_NAME"
@@ -66,20 +62,15 @@ jobs:
 
           echo "Downloading $BACKUP_NAME..."
 
-          # PocketBase requires a short-lived file token for downloads
+          # Get file token for download
           FILE_TOKEN=$(curl -sf -X POST "$PB_URL/api/files/token" \
             -H "Authorization: Bearer $TOKEN" | jq -r '.token')
 
-          echo "Got file token: ${FILE_TOKEN:0:10}..."
-
-          # Download using the file token
+          # Download with file token
           HTTP_CODE=$(curl -s -w "%{http_code}" -o "$BACKUP_NAME" \
             "$PB_URL/api/backups/$BACKUP_NAME?token=$FILE_TOKEN")
 
-          echo "HTTP response: $HTTP_CODE"
-
           if [ "$HTTP_CODE" != "200" ] || [ ! -s "$BACKUP_NAME" ]; then
-            echo "File token method failed, trying direct auth..."
             curl -sf -o "$BACKUP_NAME" \
               "$PB_URL/api/backups/$BACKUP_NAME" \
               -H "Authorization: Bearer $TOKEN" || true
@@ -93,36 +84,24 @@ jobs:
           ls -lh "$BACKUP_NAME"
           echo "✅ Downloaded"
 
-      - name: 🏷️ Create GitHub Release
-        uses: softprops/action-gh-release@v2
+      - name: 📤 Upload as private Artifact
+        uses: actions/upload-artifact@v4
         with:
-          tag_name: backup-${{ github.run_number }}
-          name: "🗄️ DB Backup — $(date +'%d %b %Y')"
-          body: |
-            Backup automat PocketBase
-            - **Fișier:** `${{ steps.backup.outputs.name }}`
-            - **Data:** ${{ github.event.repository.updated_at }}
-            - **Trigger:** ${{ github.event_name == 'schedule' && '⏰ Programat (săptămânal)' || '🖱️ Manual' }}
-          files: ${{ steps.backup.outputs.name }}
-          draft: false
-          prerelease: false
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          name: pocketbase-backup-${{ steps.backup.outputs.name }}
+          path: ${{ steps.backup.outputs.name }}
+          retention-days: 90
 
       - name: 🧹 Cleanup old backups on PocketBase (keep last 4)
         run: |
           TOKEN="${{ steps.auth.outputs.token }}"
 
-          # List all backups
           BACKUPS=$(curl -sf "$PB_URL/api/backups" \
             -H "Authorization: Bearer $TOKEN" || echo "[]")
 
-          # Count backups
           COUNT=$(echo "$BACKUPS" | jq 'length' 2>/dev/null || echo "0")
           echo "Total backups on server: $COUNT"
 
           if [ "$COUNT" -gt 4 ]; then
-            # Delete oldest backups (keep last 4)
             echo "$BACKUPS" | jq -r '.[:-4] | .[].key' | while read -r KEY; do
               echo "Deleting old backup: $KEY"
               curl -sf -X DELETE "$PB_URL/api/backups/$KEY" \
