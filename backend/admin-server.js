@@ -1054,42 +1054,36 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             let result;
             const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
 
-            // Use direct HTTP to PocketBase admin API — bypasses all collection rules
+            // Direct HTTP to PocketBase — superuser token bypasses all collection rules
             const saveToDb = async (data) => {
                 if (!pb.authStore.isValid) await authPocketBaseAdmin();
                 const token = pb.authStore.token;
 
-                if (existingRecords.length > 0) {
-                    // UPDATE existing record via HTTP PATCH
-                    const resp = await fetch(`${pbUrl}/api/collections/prices/records/${existingRecords[0].id}`, {
-                        method: 'PATCH',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                        body: JSON.stringify(data)
-                    });
-                    if (!resp.ok) {
-                        const errBody = await resp.json().catch(() => ({}));
-                        const e = new Error(`Update failed: ${resp.status}`);
-                        e.status = resp.status;
-                        e.data = errBody;
-                        throw e;
-                    }
-                    return await resp.json();
-                } else {
-                    // CREATE new record via HTTP POST
-                    const resp = await fetch(`${pbUrl}/api/collections/prices/records`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
-                        body: JSON.stringify(data)
-                    });
-                    if (!resp.ok) {
-                        const errBody = await resp.json().catch(() => ({}));
-                        const e = new Error(`Create failed: ${resp.status}`);
-                        e.status = resp.status;
-                        e.data = errBody;
-                        throw e;
-                    }
-                    return await resp.json();
+                const isUpdate = existingRecords.length > 0;
+                const url = isUpdate
+                    ? `${pbUrl}/api/collections/prices/records/${existingRecords[0].id}`
+                    : `${pbUrl}/api/collections/prices/records`;
+                const method = isUpdate ? 'PATCH' : 'POST';
+                const resp = await fetch(url, {
+                    method,
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                const body = await resp.json().catch(() => ({}));
+
+                if (!resp.ok) {
+                    console.error(`❌ PB ${method} failed:`, resp.status, JSON.stringify(body));
+                    const e = new Error(`${method} failed: ${resp.status}`);
+                    e.status = resp.status;
+                    e.data = body;
+                    throw e;
                 }
+
+                return body;
             };
 
             try {
