@@ -25,29 +25,38 @@ router.use((req, res, next) => {
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
-// Authenticate PocketBase as admin for server-side operations
-// Authenticate PocketBase as admin for server-side operations
+// Authenticate PocketBase as admin/superuser for server-side operations
 async function authPocketBaseAdmin() {
-    try {
-        const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
-        const password = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
+    const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
+    const password = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
 
-        if (email && password) {
-            // Try authenticating as superuser (admins) first
-            try {
-                await pb.admins.authWithPassword(email, password);
-                return;
-            } catch (e) {
-            }
-
-            // Fallback to regular user auth (legacy)
-            await pb.collection('users').authWithPassword(email, password);
-        } else {
-            console.log('⚠️ PocketBase admin credentials not set - some operations may fail');
-        }
-    } catch (err) {
-        console.error('❌ PocketBase admin authentication failed:', err.message);
+    if (!email || !password) {
+        console.log('⚠️ PocketBase admin credentials not set');
+        return;
     }
+
+    // Method 1: PocketBase 0.23+ _superusers collection
+    try {
+        await pb.collection('_superusers').authWithPassword(email, password);
+        console.log('✅ PB auth via _superusers');
+        return;
+    } catch (e) {}
+
+    // Method 2: Legacy pb.admins API
+    try {
+        await pb.admins.authWithPassword(email, password);
+        console.log('✅ PB auth via pb.admins');
+        return;
+    } catch (e) {}
+
+    // Method 3: Regular user with admin flag (last resort)
+    try {
+        await pb.collection('users').authWithPassword(email, password);
+        console.log('⚠️ PB auth via users collection (not superuser)');
+        return;
+    } catch (e) {}
+
+    console.error('❌ All PocketBase auth methods failed for:', email);
 }
 
 // Initialize admin auth
@@ -1043,11 +1052,43 @@ router.post('/prices', authenticateToken, requireAdmin, async (req, res) => {
             });
 
             let result;
+            const pbUrl = process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
+
+            // Use direct HTTP to PocketBase admin API — bypasses all collection rules
             const saveToDb = async (data) => {
+                if (!pb.authStore.isValid) await authPocketBaseAdmin();
+                const token = pb.authStore.token;
+
                 if (existingRecords.length > 0) {
-                    return await pb.collection('prices').update(existingRecords[0].id, data);
+                    // UPDATE existing record via HTTP PATCH
+                    const resp = await fetch(`${pbUrl}/api/collections/prices/records/${existingRecords[0].id}`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify(data)
+                    });
+                    if (!resp.ok) {
+                        const errBody = await resp.json().catch(() => ({}));
+                        const e = new Error(`Update failed: ${resp.status}`);
+                        e.status = resp.status;
+                        e.data = errBody;
+                        throw e;
+                    }
+                    return await resp.json();
                 } else {
-                    return await pb.collection('prices').create(data);
+                    // CREATE new record via HTTP POST
+                    const resp = await fetch(`${pbUrl}/api/collections/prices/records`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': token },
+                        body: JSON.stringify(data)
+                    });
+                    if (!resp.ok) {
+                        const errBody = await resp.json().catch(() => ({}));
+                        const e = new Error(`Create failed: ${resp.status}`);
+                        e.status = resp.status;
+                        e.data = errBody;
+                        throw e;
+                    }
+                    return await resp.json();
                 }
             };
 
