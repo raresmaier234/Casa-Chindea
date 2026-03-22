@@ -1,15 +1,15 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const users = app.findCollectionByNameOrId("_pb_users_auth_")
-
-  if (!users) {
-    console.log("Users collection not found, trying 'users'")
-    users = app.findCollectionByNameOrId("users")
-  }
-
-  if (!users) {
-    console.log("Could not find users collection")
-    return
+  let users
+  try {
+    users = app.findCollectionByNameOrId("_pb_users_auth_")
+  } catch (e) {
+    try {
+      users = app.findCollectionByNameOrId("users")
+    } catch (e2) {
+      console.log("Could not find users collection, skipping")
+      return
+    }
   }
 
   // Check if phone field already exists
@@ -19,31 +19,28 @@ migrate((app) => {
     return
   }
 
-  // Add phone field to users collection using correct PocketBase syntax
-  users.fields.push({
-    name: "phone",
-    type: "text",
-    required: false,
-    system: false,
-    presentable: false,
-    hidden: false,
-    autogeneratePattern: "",
-    min: 0,
-    max: 20,
-    pattern: ""
-  })
+  // Add phone field using new Field() constructor (required for PocketBase v0.25+)
+  users.fields.addAt(users.fields.length, new Field({
+    "hidden": false,
+    "id": "text_phone_field",
+    "max": 20,
+    "min": 0,
+    "name": "phone",
+    "pattern": "",
+    "presentable": false,
+    "primaryKey": false,
+    "required": false,
+    "system": false,
+    "type": "text",
+    "autogeneratePattern": ""
+  }))
 
   return app.save(users)
 }, (app) => {
-  const users = app.findCollectionByNameOrId("_pb_users_auth_") || app.findCollectionByNameOrId("users")
-
-  if (!users) return
-
-  const phoneFieldIndex = users.fields.findIndex(f => f.name === "phone")
-  if (phoneFieldIndex !== -1) {
-    users.fields.splice(phoneFieldIndex, 1)
-  }
-
-  return app.save(users)
+  try {
+    const users = app.findCollectionByNameOrId("_pb_users_auth_")
+    users.fields.removeById("text_phone_field")
+    return app.save(users)
+  } catch (e) {}
 })
 

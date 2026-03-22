@@ -1,20 +1,20 @@
 /// <reference path="../pb_data/types.d.ts" />
 migrate((app) => {
-  const collection = app.findCollectionByNameOrId("pbc_about_content")
+  let collection
+  try {
+    collection = app.findCollectionByNameOrId("pbc_about_content")
+  } catch (e) {
+    // Already created by previous migration — skip
+    return
+  }
 
-  // update collection data
-  unmarshal({
-    "updateRule": ""
-  }, collection)
-
+  unmarshal({ "updateRule": "" }, collection)
   return app.save(collection)
 }, (app) => {
-  const collection = app.findCollectionByNameOrId("pbc_about_content")
-
-  // update collection data
-  unmarshal({
-    "updateRule": null
-  }, collection)
-
-  return app.save(collection)
+  try {
+    const collection = app.findCollectionByNameOrId("pbc_about_content")
+    unmarshal({ "updateRule": null }, collection)
+    return app.save(collection)
+  } catch (e) {}
 })
+
