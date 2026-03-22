@@ -1,7 +1,46 @@
-.env.local
-node_modules
+# Environment & secrets
 .env
+.env.local
+.env.production
+
+# Dependencies
+node_modules/
+
+# PocketBase data (contains user data, passwords, personal info)
+api/pb_data/data.db
+api/pb_data/data.db-shm
+api/pb_data/data.db-wal
+api/pb_data/auxiliary.db
+api/pb_data/auxiliary.db-shm
+api/pb_data/auxiliary.db-wal
+api/pb_data/storage/
+api/pb_data/backups/
+api/pb_data_corrupted*/
+
+# Logs
+logs/
+
+# Uploads
+backend/uploads/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Build artifacts
+dist/
+
+# Scripts with credentials / local-only
 start.sh
 stop.sh
 fly.toml
+
+# Misc
 javascript.svg
+apply-payment-migration.js

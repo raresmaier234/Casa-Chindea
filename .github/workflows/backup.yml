@@ -30,15 +30,13 @@ jobs:
 
           if [ "$TOKEN" = "null" ] || [ -z "$TOKEN" ]; then
             echo "❌ Authentication failed"
-            echo "$RESPONSE"
             exit 1
           fi
 
           echo "✅ Authenticated"
           echo "token=$TOKEN" >> $GITHUB_OUTPUT
 
-      - name: 📦 Create backup
-        id: backup
+      - name: 📦 Create backup on PocketBase server
         run: |
           TOKEN="${{ steps.auth.outputs.token }}"
           BACKUP_NAME="backup_$(date +%Y%m%d_%H%M%S).zip"
@@ -50,48 +48,11 @@ jobs:
             -H "Content-Type: application/json" \
             -d "{\"name\":\"$BACKUP_NAME\"}"
 
-          sleep 5
-
           echo "✅ Backup created: $BACKUP_NAME"
-          echo "name=$BACKUP_NAME" >> $GITHUB_OUTPUT
+          echo "Backup is stored securely on PocketBase server (Fly.io)"
+          echo "Access it at: $PB_URL/_/#/settings/backups"
 
-      - name: ⬇️ Download backup
-        run: |
-          TOKEN="${{ steps.auth.outputs.token }}"
-          BACKUP_NAME="${{ steps.backup.outputs.name }}"
-
-          echo "Downloading $BACKUP_NAME..."
-
-          # Get file token for download
-          FILE_TOKEN=$(curl -sf -X POST "$PB_URL/api/files/token" \
-            -H "Authorization: Bearer $TOKEN" | jq -r '.token')
-
-          # Download with file token
-          HTTP_CODE=$(curl -s -w "%{http_code}" -o "$BACKUP_NAME" \
-            "$PB_URL/api/backups/$BACKUP_NAME?token=$FILE_TOKEN")
-
-          if [ "$HTTP_CODE" != "200" ] || [ ! -s "$BACKUP_NAME" ]; then
-            curl -sf -o "$BACKUP_NAME" \
-              "$PB_URL/api/backups/$BACKUP_NAME" \
-              -H "Authorization: Bearer $TOKEN" || true
-          fi
-
-          if [ ! -s "$BACKUP_NAME" ]; then
-            echo "❌ Download failed"
-            exit 1
-          fi
-
-          ls -lh "$BACKUP_NAME"
-          echo "✅ Downloaded"
-
-      - name: 📤 Upload as private Artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: pocketbase-backup-${{ steps.backup.outputs.name }}
-          path: ${{ steps.backup.outputs.name }}
-          retention-days: 90
-
-      - name: 🧹 Cleanup old backups on PocketBase (keep last 4)
+      - name: 🧹 Cleanup old backups (keep last 4)
         run: |
           TOKEN="${{ steps.auth.outputs.token }}"
 
@@ -109,6 +70,6 @@ jobs:
             done
             echo "✅ Old backups cleaned"
           else
-            echo "ℹ️ No cleanup needed"
+            echo "ℹ️ No cleanup needed ($COUNT backups, keeping all)"
           fi
 
