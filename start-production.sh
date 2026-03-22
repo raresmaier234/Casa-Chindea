@@ -18,6 +18,18 @@ PB_MIGRATIONS_SRC="/app/pb_migrations_src"
 # Ensure data directory exists
 mkdir -p "$PB_DATA_DIR/pb_migrations"
 
+# ── Diagnostic: check persistent disk ────────────────────────
+echo "📊 Checking persistent disk at $PB_DATA_DIR..."
+if [ -f "$PB_DATA_DIR/data.db" ]; then
+    DB_SIZE=$(du -h "$PB_DATA_DIR/data.db" | cut -f1)
+    echo "✅ Database exists: data.db ($DB_SIZE)"
+else
+    echo "⚠️  WARNING: No data.db found! This is a FRESH database."
+    echo "   If this is NOT the first deploy, the persistent disk may not be mounted!"
+fi
+echo "📂 Disk contents: $(ls -la "$PB_DATA_DIR/" 2>/dev/null | head -20)"
+echo "💾 Disk usage: $(df -h "$PB_DATA_DIR" 2>/dev/null | tail -1)"
+
 # Sync migrations from Docker image to persistent disk
 # This ensures new deploys always apply the latest migrations
 if [ -d "$PB_MIGRATIONS_SRC" ]; then
