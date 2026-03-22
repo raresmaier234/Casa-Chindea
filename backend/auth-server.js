@@ -559,6 +559,16 @@ app.post('/api/auth/verify-email', async (req, res) => {
 
         console.log('✅ User created successfully:', record.id);
 
+        // Mark email as verified immediately — we already verified it with our 6-digit code
+        try {
+            await ensurePocketBaseAuth();
+            await pb.collection('users').update(record.id, { verified: true });
+            console.log('✅ User marked as verified:', record.id);
+        } catch (verifyErr) {
+            console.warn('⚠️ Could not mark user as verified:', verifyErr.message);
+            // Non-blocking — user is created, they can still log in
+        }
+
         // Remove verification data
         verificationCodes.delete(email);
 
