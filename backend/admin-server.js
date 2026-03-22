@@ -8,6 +8,7 @@ import { fileURLToPath } from 'url';
 import PocketBase from 'pocketbase';
 import { authenticateToken } from './auth-server.js';
 import { sendWhatsAppBookingConfirmed, sendWhatsAppBookingDeclined } from './whatsapp.js';
+import { sendBookingConfirmedEmail, sendBookingDeclinedEmail } from './email.js';
 import dotenv from 'dotenv';
 
 // dotenv loaded by index.js → env.js
@@ -364,60 +365,46 @@ router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => 
         const testPhone = process.env.TEST_WHATSAPP_PHONE || process.env.CONTACT_PHONE;
         const targetPhone = process.env.NODE_ENV === 'production' ? booking.phone : testPhone;
 
+        // Calculează prețul total (folosit și de WhatsApp și de Email)
+        const checkinDate = new Date(booking.checkin);
+        const checkoutDate = new Date(booking.checkout);
+        const nights = Math.round((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
+
+        let totalPrice = 0;
+        let offerPriceFromDB = booking.offerPrice;
+
+        if (!offerPriceFromDB && booking.message) {
+            const priceMatch = booking.message.match(/Preț pachet:\s*(\d+)\s*RON/i);
+            if (priceMatch) {
+                offerPriceFromDB = parseInt(priceMatch[1]);
+            }
+        }
+
+        if (offerPriceFromDB && offerPriceFromDB > 0) {
+            totalPrice = offerPriceFromDB;
+        } else {
+            const prices = await getPrices();
+            if (booking.roomType === 'entire') {
+                totalPrice = nights * prices.priceEntire;
+            } else {
+                const rooms = booking.numberOfRooms || 1;
+                totalPrice = nights * prices.priceRoom * rooms;
+            }
+        }
+
+        console.log('💰 Preț calculat:', { offerPrice: offerPriceFromDB, nights, roomType: booking.roomType, totalPrice });
+
         let whatsappResult = null;
         let whatsappError = null;
 
         if (targetPhone && status !== 'pending') {
             try {
-                // Formatează numărul de telefon pentru WhatsApp API
-                // WhatsApp API necesită format: cod țară + număr (fără +, spații, sau alte caractere)
-                // Exemplu: 40744308651 pentru România
                 let formattedPhone = targetPhone.replace(/[\s+\-()]/g, '');
-
-                // Dacă începe cu 0, adaugă codul țării România (40)
                 if (formattedPhone.startsWith('0')) {
                     formattedPhone = '40' + formattedPhone.substring(1);
                 }
 
-                console.log('📱 WhatsApp target phone:', targetPhone, '→', formattedPhone);
-
-                // Calculează prețul total
-                // 1. Dacă e ofertă, folosește offerPrice
-                // 2. Altfel, calculează bazat pe prețurile din admin
-                const checkinDate = new Date(booking.checkin);
-                const checkoutDate = new Date(booking.checkout);
-                const nights = Math.round((checkoutDate - checkinDate) / (1000 * 60 * 60 * 24));
-
-                let totalPrice = 0;
-                let offerPriceFromDB = booking.offerPrice;
-
-                // Fallback: extrage prețul ofertei din mesaj dacă câmpul nu există în DB
-                if (!offerPriceFromDB && booking.message) {
-                    const priceMatch = booking.message.match(/Preț pachet:\s*(\d+)\s*RON/i);
-                    if (priceMatch) {
-                        offerPriceFromDB = parseInt(priceMatch[1]);
-                        console.log('💡 Preț ofertă extras din mesaj:', offerPriceFromDB);
-                    }
-                }
-
-                if (offerPriceFromDB && offerPriceFromDB > 0) {
-                    // Rezervare cu ofertă - folosește prețul ofertei
-                    totalPrice = offerPriceFromDB;
-                } else {
-                    // Rezervare normală - calculează bazat pe prețurile din admin
-                    const prices = await getPrices();
-
-                    if (booking.roomType === 'entire') {
-                        totalPrice = nights * prices.priceEntire;
-                    } else {
-                        const rooms = booking.numberOfRooms || 1;
-                        totalPrice = nights * prices.priceRoom * rooms;
-                    }
-                }
-
-                console.log('💰 Preț calculat:', { offerPrice: offerPriceFromDB, nights, roomType: booking.roomType, totalPrice });
-
-                const bookingData = {
+                const waBookingData = {
                     name: booking.name,
                     checkin: booking.checkin,
                     checkout: booking.checkout,
@@ -429,13 +416,32 @@ router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => 
                 };
 
                 if (status === 'confirmed') {
-                    whatsappResult = await sendWhatsAppBookingConfirmed(formattedPhone, bookingData);
+                    whatsappResult = await sendWhatsAppBookingConfirmed(formattedPhone, waBookingData);
                 } else if (status === 'cancelled') {
                     const reason = declineReason || 'Perioada solicitată nu este disponibilă.';
-                    whatsappResult = await sendWhatsAppBookingDeclined(formattedPhone, bookingData, reason);
+                    whatsappResult = await sendWhatsAppBookingDeclined(formattedPhone, waBookingData, reason);
                 }
             } catch (waErr) {
                 whatsappError = waErr.message;
+            }
+        }
+
+        // Send email notification to client (independent of WhatsApp)
+        let emailResult = null;
+        let emailError = null;
+        if (status === 'confirmed') {
+            try {
+                await sendBookingConfirmedEmail(booking, totalPrice);
+                emailResult = true;
+            } catch (emErr) {
+                emailError = emErr.message;
+            }
+        } else if (status === 'cancelled') {
+            try {
+                await sendBookingDeclinedEmail(booking, declineReason || 'Perioada solicitată nu este disponibilă.');
+                emailResult = true;
+            } catch (emErr) {
+                emailError = emErr.message;
             }
         }
 
@@ -450,6 +456,10 @@ router.put('/booking/:id', authenticateToken, requireAdmin, async (req, res) => 
             whatsapp: {
                 sent: !!whatsappResult,
                 error: whatsappError
+            },
+            email: {
+                sent: !!emailResult,
+                error: emailError
             }
         });
     } catch (err) {

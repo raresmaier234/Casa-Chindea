@@ -66,16 +66,33 @@ router.post('/api/contact', async (req, res) => {
     }
 
     try {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: {
-                user: process.env.SMTP_USER,
-                pass: process.env.SMTP_PASS
-            }
-        });
+        let transporter;
+        let fromAddress;
+
+        if (process.env.MAILERSEND_SMTP_USER && process.env.MAILERSEND_SMTP_PASS) {
+            transporter = nodemailer.createTransport({
+                host: 'smtp.mailersend.net',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.MAILERSEND_SMTP_USER,
+                    pass: process.env.MAILERSEND_SMTP_PASS
+                }
+            });
+            fromAddress = process.env.MAILERSEND_FROM || process.env.SMTP_USER;
+        } else {
+            transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: {
+                    user: process.env.SMTP_USER,
+                    pass: process.env.SMTP_PASS
+                }
+            });
+            fromAddress = process.env.SMTP_USER;
+        }
 
         await transporter.sendMail({
-            from: `"Casa Chindea" <${process.env.SMTP_USER}>`,
+            from: `"Casa Chindea" <${fromAddress}>`,
             to: process.env.CONTACT_TO,
             replyTo: email,
             subject: `🏡 Casa Chindea | Mesaj nou: ${subject} — de la ${name}`,

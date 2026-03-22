@@ -177,50 +177,62 @@ function generateVerificationCode() {
 async function sendVerificationEmail(email, code, name) {
     console.log('📧 sendVerificationEmail called with:', { email, code, name });
 
-    // Determine which SMTP service to use based on environment
-    const isProduction = process.env.NODE_ENV === 'production';
+    // Determine which SMTP service to use
+    const useMailerSend = process.env.MAILERSEND_SMTP_USER && process.env.MAILERSEND_SMTP_PASS;
     const useSendGrid = process.env.SENDGRID_API_KEY;
 
-    console.log('📧 Email service:', useSendGrid ? 'SendGrid' : 'Gmail SMTP');
-    console.log('📧 NODE_ENV:', process.env.NODE_ENV);
+    console.log('📧 Email service:', useMailerSend ? 'MailerSend' : useSendGrid ? 'SendGrid' : 'Gmail SMTP');
 
     try {
         let transporter;
+        let fromAddress;
 
-        if (useSendGrid) {
-            // SendGrid configuration (RECOMMENDED FOR PRODUCTION)
+        if (useMailerSend) {
+            // MailerSend SMTP (PRODUCTION)
+            transporter = nodemailer.createTransport({
+                host: 'smtp.mailersend.net',
+                port: 587,
+                secure: false,
+                auth: {
+                    user: process.env.MAILERSEND_SMTP_USER,
+                    pass: process.env.MAILERSEND_SMTP_PASS
+                },
+                connectionTimeout: 10000,
+                greetingTimeout: 10000,
+                socketTimeout: 15000
+            });
+            fromAddress = process.env.MAILERSEND_FROM || process.env.SMTP_USER;
+        } else if (useSendGrid) {
+            // SendGrid (legacy)
             transporter = nodemailer.createTransport({
                 host: 'smtp.sendgrid.net',
                 port: 587,
                 secure: false,
-                auth: {
-                    user: 'apikey',
-                    pass: process.env.SENDGRID_API_KEY
-                },
-                connectionTimeout: 10000, // 10 seconds
+                auth: { user: 'apikey', pass: process.env.SENDGRID_API_KEY },
+                connectionTimeout: 10000,
                 greetingTimeout: 10000,
                 socketTimeout: 15000
             });
+            fromAddress = process.env.SMTP_USER;
         } else {
-            // Gmail configuration (FOR DEVELOPMENT ONLY)
-            // NOTE: You need to enable "App Password" in Gmail settings
-            // https://support.google.com/accounts/answer/185833
+            // Gmail (development only)
             transporter = nodemailer.createTransport({
                 service: 'gmail',
                 auth: {
                     user: process.env.SMTP_USER,
-                    pass: process.env.SMTP_PASS // This must be an App Password, not regular password
+                    pass: process.env.SMTP_PASS
                 },
-                connectionTimeout: 10000, // 10 seconds
+                connectionTimeout: 10000,
                 greetingTimeout: 10000,
                 socketTimeout: 15000
             });
+            fromAddress = process.env.SMTP_USER;
         }
 
         console.log('✅ Transporter created');
 
         const mailOptions = {
-            from: `"Casa Chindea" <${process.env.SMTP_USER}>`,
+            from: `"Casa Chindea" <${fromAddress}>`,
             to: email,
             subject: '🏡 Casa Chindea | Confirmă-ți contul',
             html: `

@@ -3,6 +3,7 @@ import express from 'express';
 import dotenv from 'dotenv';
 import PocketBase from 'pocketbase';
 import { sendWhatsAppMessage } from './whatsapp.js';
+import { sendBookingEmailToOwner } from './email.js';
 import { authenticateToken } from './auth-server.js';
 // dotenv loaded by index.js → env.js
 
@@ -187,6 +188,19 @@ router.post(`/`, authenticateToken, async (req, res) => {
             }
         } catch (whatsappError) {
             console.error('❌ Eroare la trimitere WhatsApp către gazdă:', whatsappError.message);
+        }
+
+        // Send email notification to owner
+        try {
+            await sendBookingEmailToOwner({
+                name, email, phone, guests, checkin, checkout,
+                roomType, numberOfRooms,
+                message: message || '',
+                offerTitle: offerTitle || '',
+                offerPrice: offerPrice || 0
+            });
+        } catch (emailError) {
+            console.error('❌ Eroare email către gazdă:', emailError.message);
         }
 
 

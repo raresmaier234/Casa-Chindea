@@ -7,5 +7,22 @@ import { fileURLToPath } from 'url';
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '..', '.env') });
 
-console.log('✅ ENV loaded from root .env | POCKET_BASE_URL =', process.env.POCKET_BASE_URL);
+// Production fallback: if POCKET_BASE_URL is not set, use Fly.io
+if (!process.env.POCKET_BASE_URL) {
+    process.env.POCKET_BASE_URL = process.env.NODE_ENV === 'production'
+        ? 'https://casa-chindea.fly.dev'
+        : 'http://127.0.0.1:8090';
+}
+
+// Production fallback: API_URL
+if (!process.env.API_URL && process.env.NODE_ENV === 'production') {
+    process.env.API_URL = 'https://casa-chindea.onrender.com';
+}
+
+// Production fallback: FRONTEND_URL
+if (!process.env.FRONTEND_URL && process.env.NODE_ENV === 'production') {
+    process.env.FRONTEND_URL = 'https://casa-chindea.vercel.app';
+}
+
+console.log('✅ ENV loaded | POCKET_BASE_URL =', process.env.POCKET_BASE_URL, '| NODE_ENV =', process.env.NODE_ENV);
 
