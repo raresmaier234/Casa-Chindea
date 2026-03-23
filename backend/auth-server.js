@@ -8,6 +8,7 @@ import bcrypt from 'bcryptjs';
 import { auth } from 'express-openid-connect';
 import multer from 'multer';
 import nodemailer from 'nodemailer';
+import { readFileSync, writeFileSync, existsSync } from 'fs';
 
 // dotenv loaded by index.js → env.js
 
@@ -792,7 +793,56 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
 });
 
 // ── Forgot Password (no auth required) ──────────────────────────────────────
-const resetCodes = new Map(); // { email: { code, expires, attempts } }
+// Persistent storage for reset codes (survives server restarts)
+
+const RESET_CODES_FILE = process.env.NODE_ENV === 'production'
+    ? '/app/pb_data/reset_codes.json'
+    : new URL('../reset_codes.json', import.meta.url).pathname;
+
+function loadResetCodes() {
+    try {
+        if (existsSync(RESET_CODES_FILE)) {
+            const data = JSON.parse(readFileSync(RESET_CODES_FILE, 'utf-8'));
+            // Clean up expired codes while loading
+            const now = Date.now();
+            const cleaned = {};
+            for (const [email, entry] of Object.entries(data)) {
+                if (entry.expires > now) {
+                    cleaned[email] = entry;
+                }
+            }
+            return cleaned;
+        }
+    } catch (e) {
+        console.error('⚠️ Error loading reset codes:', e.message);
+    }
+    return {};
+}
+
+function saveResetCodes(codes) {
+    try {
+        writeFileSync(RESET_CODES_FILE, JSON.stringify(codes, null, 2));
+    } catch (e) {
+        console.error('⚠️ Error saving reset codes:', e.message);
+    }
+}
+
+function getResetCode(email) {
+    const codes = loadResetCodes();
+    return codes[email] || null;
+}
+
+function setResetCode(email, data) {
+    const codes = loadResetCodes();
+    codes[email] = data;
+    saveResetCodes(codes);
+}
+
+function deleteResetCode(email) {
+    const codes = loadResetCodes();
+    delete codes[email];
+    saveResetCodes(codes);
+}
 
 // Step 1: Request password reset — sends email with code
 app.post('/api/auth/forgot-password', async (req, res) => {
@@ -824,7 +874,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
         }
 
         // Rate limit: max 1 request per 2 minutes per email
-        const existing = resetCodes.get(email);
+        const existing = getResetCode(email);
         if (existing && Date.now() - (existing.createdAt || 0) < 2 * 60 * 1000) {
             return res.status(429).json({
                 success: false,
@@ -834,7 +884,7 @@ app.post('/api/auth/forgot-password', async (req, res) => {
 
         // Generate code
         const code = generateVerificationCode();
-        resetCodes.set(email, {
+        setResetCode(email, {
             code,
             expires: Date.now() + 15 * 60 * 1000, // 15 min
             attempts: 0,
@@ -873,24 +923,25 @@ app.post('/api/auth/reset-password', async (req, res) => {
         return res.status(400).json({ success: false, error: 'Parola trebuie să aibă cel puțin 8 caractere.' });
     }
 
-    const resetData = resetCodes.get(email);
+    const resetData = getResetCode(email);
 
     if (!resetData) {
         return res.status(400).json({ success: false, error: 'Nu există o cerere de resetare pentru acest email. Te rugăm să soliciți un cod nou.' });
     }
 
     if (Date.now() > resetData.expires) {
-        resetCodes.delete(email);
+        deleteResetCode(email);
         return res.status(400).json({ success: false, error: 'Codul a expirat. Te rugăm să soliciți un cod nou.' });
     }
 
     if (resetData.attempts >= 5) {
-        resetCodes.delete(email);
+        deleteResetCode(email);
         return res.status(429).json({ success: false, error: 'Prea multe încercări. Te rugăm să soliciți un cod nou.' });
     }
 
     if (resetData.code !== code) {
         resetData.attempts++;
+        setResetCode(email, resetData);
         return res.status(400).json({ success: false, error: 'Cod invalid. Te rugăm să verifici și să încerci din nou.' });
     }
 
@@ -907,7 +958,7 @@ app.post('/api/auth/reset-password', async (req, res) => {
         });
 
         // Clear reset code
-        resetCodes.delete(email);
+        deleteResetCode(email);
 
         res.json({ success: true, message: 'Parola a fost schimbată cu succes! Te poți autentifica acum.' });
     } catch (err) {

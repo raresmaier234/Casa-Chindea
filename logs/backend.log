@@ -9,3 +9,5 @@ Using 'form_post' for response_mode may cause issues for you logging in over htt
 💰 Prices cache warmed
 ✅ PB auth via _superusers
 ✅ PocketBase authenticated as admin
+⚠️ Password reset requested for non-existent email: raresmaier123@gmail.com
+⚠️ Password reset requested for non-existent email: raresmaier123@gmail.com
