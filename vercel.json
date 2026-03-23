@@ -1,23 +1,18 @@
 {
     "version": 2,
-    "public": true,
     "buildCommand": null,
     "installCommand": null,
     "outputDirectory": "public",
     "framework": null,
-    "redirects": [
+    "rewrites": [
         {
             "source": "/",
-            "destination": "/js/pages/home.html",
-            "permanent": false
+            "destination": "/js/pages/home.html"
         },
         {
             "source": "/index.html",
-            "destination": "/js/pages/home.html",
-            "permanent": false
-        }
-    ],
-    "rewrites": [
+            "destination": "/js/pages/home.html"
+        },
         {
             "source": "/home",
             "destination": "/js/pages/home.html"
