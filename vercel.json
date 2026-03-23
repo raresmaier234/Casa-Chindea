@@ -19,6 +19,30 @@
     ],
     "rewrites": [
         {
+            "source": "/home",
+            "destination": "/js/pages/home.html"
+        },
+        {
+            "source": "/about",
+            "destination": "/js/pages/about.html"
+        },
+        {
+            "source": "/gallery",
+            "destination": "/js/pages/gallery.html"
+        },
+        {
+            "source": "/booking",
+            "destination": "/js/pages/booking.html"
+        },
+        {
+            "source": "/contact",
+            "destination": "/js/pages/contact.html"
+        },
+        {
+            "source": "/offers",
+            "destination": "/js/pages/offers.html"
+        },
+        {
             "source": "/api/:path*",
             "destination": "https://api.casachindea.ro/api/:path*"
         },
