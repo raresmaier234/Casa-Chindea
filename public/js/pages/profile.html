@@ -492,6 +492,20 @@
             }
         }
 
+        // Helper: fix avatar URLs that point to internal PocketBase (127.0.0.1)
+        // In production, these must go through the public API URL
+        function fixAvatarUrl(url) {
+            if (!url) return url;
+            // Replace internal PocketBase URLs with public API
+            if (url.includes('127.0.0.1:8090') || url.includes('localhost:8090')) {
+                const apiBase = window.API_BASE || '';
+                if (apiBase) {
+                    return url.replace(/https?:\/\/(127\.0\.0\.1|localhost):8090/, apiBase);
+                }
+            }
+            return url;
+        }
+
         // Helper to render profile data
         function renderProfile(user) {
             // Store user ID globally for avatar functionality
@@ -517,7 +531,7 @@
 
             if (user.avatar && user.avatar.trim() !== '') {
                 // Use avatar from PocketBase (preferred)
-                avatarImg.src = user.avatar;
+                avatarImg.src = fixAvatarUrl(user.avatar);
                 avatarImg.classList.remove('hidden');
                 avatarIcon.classList.add('hidden');
 
@@ -1014,7 +1028,7 @@
                         // Update avatar with PocketBase URL
                         if (data.avatarUrl) {
                             const avatarImg = document.getElementById('avatar-img');
-                            avatarImg.src = data.avatarUrl;
+                            avatarImg.src = fixAvatarUrl(data.avatarUrl);
 
                             // Clear localStorage since we have it in PocketBase now
                             if (currentUserId) {
@@ -1118,3 +1132,5 @@
 </body>
 
 </html>
+
+
