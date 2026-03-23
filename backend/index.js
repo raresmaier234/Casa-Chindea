@@ -24,7 +24,7 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 // In production, files are proxied through the Node.js server
 function getPublicPbUrl() {
     if (process.env.NODE_ENV === 'production') {
-        return process.env.API_URL || 'https://casa-chindea.onrender.com';
+        return process.env.API_URL || 'https://api.casachindea.ro';
     }
     return process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
 }
@@ -174,7 +174,7 @@ app.use(cors({
 }));
 
 // ── Proxy PocketBase Admin Dashboard & API ──────────────────────────────────
-// Access PocketBase admin at https://casa-chindea.onrender.com/_/
+// Access PocketBase admin at https://api.casachindea.ro/_/
 // MUST be before express.json() to preserve raw body for multipart uploads.
 const pbProxy = async (req, res) => {
     try {

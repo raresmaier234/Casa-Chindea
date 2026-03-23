@@ -29,7 +29,7 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 // Public URL for file links sent to browser (proxied through Node.js in production)
 function getPublicPbUrl() {
     if (process.env.NODE_ENV === 'production') {
-        return process.env.API_URL || 'https://casa-chindea.onrender.com';
+        return process.env.API_URL || 'https://api.casachindea.ro';
     }
     return process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090';
 }

@@ -403,7 +403,6 @@
                     title: decodeURIComponent(urlParams.get('title') || 'Ofertă Specială')
                 };
 
-                console.log('🎁 Special offer detected:', selectedOffer);
                 applySpecialOffer();
             } else if (rentalType) {
                 document.getElementById('rental-type').value = rentalType;
@@ -432,11 +431,8 @@
 
         function applySpecialOffer() {
             if (!selectedOffer) {
-                console.log('❌ No selectedOffer to apply');
                 return;
             }
-
-            console.log('✅ Applying special offer:', selectedOffer);
 
             // Show offer banner
             showOfferBanner();
@@ -448,7 +444,6 @@
             // Set dates after calendar initializes
             setTimeout(() => {
                 if (selectedOffer.startDate && selectedOffer.endDate) {
-                    console.log('📅 Setting dates:', selectedOffer.startDate, '-', selectedOffer.endDate);
 
                     document.getElementById('checkin').value = selectedOffer.startDate;
                     document.getElementById('checkout').value = selectedOffer.endDate;
@@ -458,13 +453,10 @@
                     const endFormatted = formatDateDMY(selectedOffer.endDate);
                     document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
 
-                    console.log('📅 Date range set to:', document.getElementById('date-range').value);
-
                     // Lock the date picker for offer bookings
                     document.getElementById('date-range').disabled = true;
                     document.getElementById('date-range').classList.add('bg-gray-100');
                 } else {
-                    console.log('❌ Missing dates in offer');
                 }
 
                 updateBookingSummary();
@@ -527,7 +519,6 @@
         async function prefillUserData() {
             const token = sessionStorage.getItem('auth_token');
             if (!token) {
-                console.log('👤 User not logged in, skipping prefill');
                 return;
             }
 
@@ -541,8 +532,6 @@
                 if (response.ok) {
                     const data = await response.json();
                     const user = data.user;
-
-                    console.log('👤 Pre-filling form with user data:', user);
 
                     // Pre-fill name
                     const nameInput = document.getElementById('full-name');
@@ -562,13 +551,10 @@
                         phoneInput.value = user.phone;
                     }
 
-                    console.log('✅ Form pre-filled successfully');
-
                     // Update booking summary after prefill
                     updateBookingSummary();
                 }
             } catch (err) {
-                console.log('⚠️ Could not prefill user data:', err.message);
                 // Silently fail - user can fill manually
             }
         }

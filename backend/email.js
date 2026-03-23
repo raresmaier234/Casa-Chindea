@@ -355,3 +355,56 @@ export async function sendContactEmail({ name, email, subject, message }) {
     return result;
 }
 
+// ─── Password reset email (used by auth-server) ─────────────────────────────
+
+export async function sendPasswordResetEmail(email, code) {
+    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/reset-password.html?email=${encodeURIComponent(email)}&code=${code}`;
+
+    const result = await sendEmail({
+        to: email,
+        subject: '🔑 Casa Chindea | Resetare parolă',
+        html: `<!DOCTYPE html>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"></head>
+<body style="margin:0;padding:0;background-color:#f3f4f6;font-family:Arial,Helvetica,sans-serif;-webkit-font-smoothing:antialiased;">
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="background-color:#f3f4f6;padding:20px 0;">
+<tr><td align="center">
+<table role="presentation" width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;border:1px solid #e5e7eb;border-radius:8px;overflow:hidden;background-color:#ffffff;">
+  <tr><td style="background-color:#059669;padding:24px 30px;text-align:center;">
+    <h1 style="color:#ffffff;margin:0;font-size:24px;font-weight:bold;">🏡 Casa Chindea</h1>
+    <p style="color:#d1fae5;margin:8px 0 0;font-size:14px;">Resetare parolă</p>
+  </td></tr>
+  <tr><td style="padding:30px;">
+    <h2 style="color:#111827;margin:0 0 16px;font-size:20px;font-weight:600;">Ai solicitat resetarea parolei 🔑</h2>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 20px;">Am primit o cerere de resetare a parolei pentru contul tău. Folosește codul de mai jos sau apasă pe buton pentru a seta o parolă nouă:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center">
+        <div style="background-color:#fef3c7;border:2px solid #f59e0b;padding:20px;text-align:center;font-size:32px;font-weight:bold;color:#b45309;letter-spacing:8px;border-radius:8px;font-family:monospace;">${code}</div>
+      </td></tr>
+    </table>
+    <p style="text-align:center;color:#6b7280;font-size:13px;margin:20px 0 12px;">Sau dă click pe butonul de mai jos:</p>
+    <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
+      <tr><td align="center" style="padding:8px 0 24px;">
+        <a href="${resetUrl}" style="display:inline-block;background-color:#059669;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">Resetează Parola</a>
+      </td></tr>
+    </table>
+    <hr style="border:none;border-top:1px solid #e5e7eb;margin:0 0 16px;">
+    <p style="color:#374151;font-size:13px;line-height:1.6;margin:0 0 12px;"><strong>Important:</strong> Acest cod este valabil 15 minute și poate fi folosit o singură dată.</p>
+    <p style="color:#6b7280;font-size:13px;line-height:1.6;margin:0 0 20px;">Dacă nu ai solicitat resetarea parolei, te rugăm să ignori acest email. Parola ta nu va fi modificată.</p>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
+  </td></tr>
+  <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
+    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
+  </td></tr>
+</table>
+</td></tr></table>
+</body></html>`
+    });
+
+    if (result) {
+        console.log('✅ Password reset email sent to:', email, 'via', result.provider);
+        return true;
+    }
+    return false;
+}
+

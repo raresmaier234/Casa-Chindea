@@ -23,6 +23,19 @@ const upload = multer({
 
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
+// Helper: convert internal PocketBase file URL to public URL
+// pb.getFileUrl() returns http://127.0.0.1:8090/api/files/...
+// In production, this must be https://api.casachindea.ro/api/files/...
+function publicFileUrl(record, filename) {
+    if (!filename) return '';
+    const internalUrl = pb.getFileUrl(record, filename);
+    const apiUrl = process.env.API_URL;
+    if (apiUrl && process.env.POCKET_BASE_URL) {
+        return internalUrl.replace(process.env.POCKET_BASE_URL, apiUrl);
+    }
+    return internalUrl;
+}
+
 // Helper function to ensure PocketBase is authenticated as admin
 async function ensurePocketBaseAuth() {
     try {
@@ -756,7 +769,7 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
         const updatedUser = await pb.collection('users').update(req.user.userId, formData);
 
         // Get the avatar URL using correct PocketBase method
-        const avatarUrl = pb.getFileUrl(updatedUser, updatedUser.avatar);
+        const avatarUrl = publicFileUrl(updatedUser, updatedUser.avatar);
 
 
         res.json({
@@ -775,6 +788,131 @@ app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (
             success: false,
             error: 'Eroare la încărcarea avatar-ului: ' + err.message
         });
+    }
+});
+
+// ── Forgot Password (no auth required) ──────────────────────────────────────
+const resetCodes = new Map(); // { email: { code, expires, attempts } }
+
+// Step 1: Request password reset — sends email with code
+app.post('/api/auth/forgot-password', async (req, res) => {
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+
+    if (!email) {
+        return res.status(400).json({ success: false, error: 'Email-ul este obligatoriu.' });
+    }
+
+    try {
+        await ensurePocketBaseAuth();
+
+        // Check if user exists
+        let userExists = false;
+        try {
+            await pb.collection('users').getFirstListItem(`email="${email}"`);
+            userExists = true;
+        } catch (e) {
+            // User not found — still return success to prevent email enumeration
+        }
+
+        if (!userExists) {
+            // Don't reveal that the email doesn't exist
+            console.log('⚠️ Password reset requested for non-existent email:', email);
+            return res.json({
+                success: true,
+                message: 'Dacă acest email este asociat unui cont, vei primi un email cu instrucțiuni de resetare.'
+            });
+        }
+
+        // Rate limit: max 1 request per 2 minutes per email
+        const existing = resetCodes.get(email);
+        if (existing && Date.now() - (existing.createdAt || 0) < 2 * 60 * 1000) {
+            return res.status(429).json({
+                success: false,
+                error: 'Un cod de resetare a fost deja trimis. Te rugăm să aștepți 2 minute.'
+            });
+        }
+
+        // Generate code
+        const code = generateVerificationCode();
+        resetCodes.set(email, {
+            code,
+            expires: Date.now() + 15 * 60 * 1000, // 15 min
+            attempts: 0,
+            createdAt: Date.now()
+        });
+
+        // Send email
+        const { sendPasswordResetEmail } = await import('./email.js');
+        const sent = await sendPasswordResetEmail(email, code);
+
+        if (!sent) {
+            console.error('❌ Failed to send password reset email to:', email);
+            return res.status(500).json({ success: false, error: 'Eroare la trimiterea email-ului.' });
+        }
+
+        res.json({
+            success: true,
+            message: 'Dacă acest email este asociat unui cont, vei primi un email cu instrucțiuni de resetare.'
+        });
+    } catch (err) {
+        console.error('❌ Forgot password error:', err.message);
+        res.status(500).json({ success: false, error: 'Eroare internă. Te rugăm să încerci din nou.' });
+    }
+});
+
+// Step 2: Reset password with code
+app.post('/api/auth/reset-password', async (req, res) => {
+    const email = req.body.email ? req.body.email.trim().toLowerCase() : '';
+    const { code, newPassword } = req.body;
+
+    if (!email || !code || !newPassword) {
+        return res.status(400).json({ success: false, error: 'Toate câmpurile sunt obligatorii.' });
+    }
+
+    if (newPassword.length < 8) {
+        return res.status(400).json({ success: false, error: 'Parola trebuie să aibă cel puțin 8 caractere.' });
+    }
+
+    const resetData = resetCodes.get(email);
+
+    if (!resetData) {
+        return res.status(400).json({ success: false, error: 'Nu există o cerere de resetare pentru acest email. Te rugăm să soliciți un cod nou.' });
+    }
+
+    if (Date.now() > resetData.expires) {
+        resetCodes.delete(email);
+        return res.status(400).json({ success: false, error: 'Codul a expirat. Te rugăm să soliciți un cod nou.' });
+    }
+
+    if (resetData.attempts >= 5) {
+        resetCodes.delete(email);
+        return res.status(429).json({ success: false, error: 'Prea multe încercări. Te rugăm să soliciți un cod nou.' });
+    }
+
+    if (resetData.code !== code) {
+        resetData.attempts++;
+        return res.status(400).json({ success: false, error: 'Cod invalid. Te rugăm să verifici și să încerci din nou.' });
+    }
+
+    try {
+        await ensurePocketBaseAuth();
+
+        // Find user
+        const user = await pb.collection('users').getFirstListItem(`email="${email}"`);
+
+        // Update password
+        await pb.collection('users').update(user.id, {
+            password: newPassword,
+            passwordConfirm: newPassword
+        });
+
+        // Clear reset code
+        resetCodes.delete(email);
+
+        res.json({ success: true, message: 'Parola a fost schimbată cu succes! Te poți autentifica acum.' });
+    } catch (err) {
+        console.error('❌ Reset password error:', err.message);
+        res.status(500).json({ success: false, error: 'Eroare la schimbarea parolei. Te rugăm să încerci din nou.' });
     }
 });
 

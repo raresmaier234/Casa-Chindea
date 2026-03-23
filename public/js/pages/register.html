@@ -758,7 +758,6 @@
 
             try {
                 // STEP 1: Check if email exists (NEW!)
-                console.log('🔍 Checking if email exists...');
                 const checkRes = await fetch('/api/auth/check-email', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -771,16 +770,11 @@
                 }
 
                 const checkData = await checkRes.json();
-                console.log('📋 Check result:', checkData);
 
                 // If email exists (exists: true), show error and STOP
                 if (checkData.exists === true) {
-                    console.log('❌ Email already exists');
                     throw new Error(checkData.message || 'Acest email este deja înregistrat.');
                 }
-
-                // Email is available (exists: false), proceed with registration
-                console.log('✅ Email available, proceeding with registration...');
 
                 // STEP 2: Email is available, proceed with registration
                 registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se trimite codul...';

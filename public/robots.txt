@@ -8,5 +8,6 @@ Disallow: /js/pages/admin.html
 Disallow: /js/pages/login.html
 Disallow: /js/pages/register.html
 Disallow: /js/pages/verify-email.html
+Disallow: /js/pages/reset-password.html
 Disallow: /js/pages/profile.html
 

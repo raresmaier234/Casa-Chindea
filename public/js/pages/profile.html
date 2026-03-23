@@ -545,7 +545,6 @@
 
                 // 1. Render Cached Data Immediately (Instant UI)
                 if (window._cachedProfile?.user) {
-                    console.log('⚡ Rendering cached profile');
                     renderProfile(window._cachedProfile.user);
                 }
 
@@ -669,7 +668,6 @@
 
                 // 1. Render Cached Bookings Immediately
                 if (window._cachedBookings?.bookings) {
-                    console.log('⚡ Rendering cached bookings');
                     loadingEl.classList.add('hidden');
                     containerEl.classList.remove('hidden');
                     document.getElementById('bookings-count').textContent = window._cachedBookings.bookings.length;

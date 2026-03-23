@@ -376,8 +376,6 @@
                 loadingEl?.classList.add('hidden');
 
                 // Debug log
-                console.log('Offers data:', data);
-
                 if (data && data.success && data.offers && data.offers.length > 0) {
                     gridEl.innerHTML = data.offers.map((offer, index) => {
                         const image = offer.imageUrl || holidayImages[offer.type] || holidayImages['custom'];

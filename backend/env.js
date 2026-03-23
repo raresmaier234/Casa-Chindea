@@ -14,7 +14,7 @@ if (!process.env.POCKET_BASE_URL) {
 
 // Production fallback: API_URL
 if (!process.env.API_URL && process.env.NODE_ENV === 'production') {
-    process.env.API_URL = 'https://casa-chindea.onrender.com';
+    process.env.API_URL = 'https://api.casachindea.ro';
 }
 
 // Production fallback: FRONTEND_URL

@@ -17,7 +17,7 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 // Public URL for file links sent to browser (proxied through Node.js in production)
 function getPublicFileUrl(record, filename) {
     const baseUrl = process.env.NODE_ENV === 'production'
-        ? (process.env.API_URL || 'https://casa-chindea.onrender.com')
+        ? (process.env.API_URL || 'https://api.casachindea.ro')
         : (process.env.POCKET_BASE_URL || 'http://127.0.0.1:8090');
     return `${baseUrl}/api/files/${record.collectionId}/${record.id}/${filename}`;
 }

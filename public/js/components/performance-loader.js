@@ -120,15 +120,6 @@
     window.addEventListener('load', () => {
         window.perfMetrics.contentLoaded = performance.now() - window.perfMetrics.start;
 
-        // Log performance in development
-        if (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1') {
-            console.log('⚡ Performance:', {
-                domReady: Math.round(window.perfMetrics.domReady) + 'ms',
-                fullLoad: Math.round(window.perfMetrics.contentLoaded) + 'ms',
-                connection: connection?.effectiveType || 'unknown',
-                mobile: isMobile
-            });
-        }
     });
 
     // Request idle callback for non-critical tasks
