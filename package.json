@@ -9,7 +9,7 @@
     "optimize-images": "node scripts/optimize-existing-images.js",
     "optimize-html": "node scripts/optimize-html-pages.js",
     "optimize-all": "npm run optimize-images && npm run optimize-html",
-    "build": "echo 'Static site - no build needed. Run npm run optimize-html locally before deploying.'"
+    "build": "rm -rf dist && mkdir -p dist dist/css dist/js/components && cp *.html favicon.ico dist/ && cp googlef1ee2b5187cf8079.html dist/ 2>/dev/null; cp public/css/*.css dist/css/ 2>/dev/null; cp public/js/*.js dist/js/ 2>/dev/null; cp public/js/components/*.js dist/js/components/ 2>/dev/null; cp public/robots.txt public/sitemap.xml dist/ 2>/dev/null; ls dist/"
   },
   "devDependencies": {
     "@flydotio/dockerfile": "^0.7.10",
