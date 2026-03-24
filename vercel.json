@@ -1,16 +1,16 @@
 {
     "version": 2,
+    "buildCommand": "",
     "outputDirectory": "public",
     "cleanUrls": true,
     "trailingSlash": false,
     "framework": null,
-    "redirects": [
-        { "source": "/home", "destination": "/", "permanent": true },
-        { "source": "/home.html", "destination": "/", "permanent": true }
-    ],
-    "rewrites": [
-        { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
-        { "source": "/", "destination": "/home.html" },
-        { "source": "/(.*)", "destination": "/404.html" }
+    "routes": [
+        { "src": "/home", "headers": { "Location": "/" }, "status": 301 },
+        { "src": "/home.html", "headers": { "Location": "/" }, "status": 301 },
+        { "src": "/api/(.*)", "dest": "https://api.casachindea.ro/api/$1" },
+        { "handle": "filesystem" },
+        { "src": "^/$", "dest": "/home.html" },
+        { "src": "/(.*)", "dest": "/404.html", "status": 404 }
     ]
 }
