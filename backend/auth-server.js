@@ -200,14 +200,29 @@ function generateVerificationCode() {
 
 // Helper function to send verification email — delegates to shared email.js
 async function sendVerificationEmailFn(email, code, name) {
-    console.log('📧 sendVerificationEmail called:', { email, name });
-    try {
-        const { sendVerificationEmail } = await import('./email.js');
-        return await sendVerificationEmail(email, name, code);
-    } catch (err) {
-        console.error('❌ Error sending verification email:', err.message);
-        return false;
+    // Try up to 2 times
+    for (let attempt = 1; attempt <= 2; attempt++) {
+        try {
+            const { sendVerificationEmail } = await import('./email.js');
+            const result = await sendVerificationEmail(email, name, code);
+            if (result) {
+                console.log(`✅ Verification email sent on attempt ${attempt}`);
+                return true;
+            }
+            console.warn(`⚠️ sendVerificationEmail returned false on attempt ${attempt}`);
+        } catch (err) {
+            console.error(`❌ Error sending verification email (attempt ${attempt}):`, err.message);
+        }
+
+        // Wait 1 second before retry
+        if (attempt < 2) {
+            console.log('🔄 Retrying in 1 second...');
+            await new Promise(r => setTimeout(r, 1000));
+        }
     }
+
+    console.error('❌ All email send attempts failed for:', email);
+    return false;
 }
 
 // NEW: Check if email exists (called before registration)
