@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="ro">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -7,123 +8,142 @@
     <meta name="robots" content="noindex, nofollow">
     <link rel="icon" type="image/svg+xml" href="/favicon.svg">
     <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+
     <script src="https://cdn.tailwindcss.com"></script>
+
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
+
     <script>
         tailwind.config = {
             theme: {
                 extend: {
                     colors: {
-                        primary: '#15803d',
-                        'primary-dark': '#166534',
-                        'primary-light': '#dcfce7',
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
                     }
                 }
             }
         }
     </script>
-    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
-    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
-    <style>
-        body {
-            background-color: #f0fdf4;
-            background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 1440 200'%3E%3Cpath fill='%23bbf7d0' fill-opacity='0.5' d='M0,160 L120,80 L240,130 L360,40 L480,100 L600,20 L720,90 L840,50 L960,110 L1080,30 L1200,100 L1320,60 L1440,120 L1440,200 L0,200 Z'/%3E%3Cpath fill='%2386efac' fill-opacity='0.4' d='M0,180 L180,100 L300,150 L440,70 L560,130 L680,50 L800,120 L920,60 L1060,140 L1180,80 L1300,130 L1440,90 L1440,200 L0,200 Z'/%3E%3C/svg%3E");
-            background-repeat: no-repeat;
-            background-position: bottom center;
-            background-size: 100%;
-        }
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-        .float-anim { animation: float 3s ease-in-out infinite; }
-        .fade-in { animation: fadeIn 0.6s ease-out forwards; }
-        .fade-in-delay { animation: fadeIn 0.6s ease-out 0.2s both; }
-        .fade-in-delay2 { animation: fadeIn 0.6s ease-out 0.4s both; }
-        .nav-link { transition: color 0.2s; }
-        .nav-link:hover { color: #15803d; }
-        .btn-bounce:hover { transform: scale(1.05); transition: transform 0.2s; }
-    </style>
+    <script src="/js/components/navigation.js"></script>
 </head>
-<body class="min-h-screen flex flex-col">
 
-    <nav class="bg-white shadow-sm sticky top-0 z-50">
-        <div class="max-w-6xl mx-auto px-4 py-3 flex items-center justify-between">
-            <a href="/" class="flex items-center gap-2 text-primary font-bold text-xl tracking-tight">
-                <i class="fas fa-house text-primary"></i>
-                <span>Casa <span class="text-gray-800">Chindea</span></span>
-            </a>
-            <div class="hidden md:flex items-center gap-6 text-sm font-medium text-gray-700">
-                <a href="/" class="nav-link">Acasă</a>
-                <a href="/about" class="nav-link">Despre</a>
-                <a href="/offers" class="nav-link">Oferte</a>
-                <a href="/gallery" class="nav-link">Galerie</a>
-                <a href="/contact" class="nav-link">Contact</a>
-                <a href="/booking" class="btn-bounce bg-primary hover:bg-primary-dark text-white font-bold py-2 px-5 rounded-full transition-colors duration-200">
-                    <i class="fas fa-calendar-check mr-1"></i> Rezervă
-                </a>
-            </div>
-            <a href="/booking" class="md:hidden bg-primary text-white text-sm font-bold py-2 px-4 rounded-full">
-                <i class="fas fa-calendar-check mr-1"></i> Rezervă
-            </a>
-        </div>
-    </nav>
-
-    <main class="flex-1 flex items-center justify-center px-4 py-16">
-        <div class="text-center max-w-lg w-full">
-            <div class="float-anim text-6xl mb-4 fade-in">🏡</div>
-            <div class="fade-in">
-                <span class="text-8xl font-extrabold text-primary leading-none" style="letter-spacing:-4px;">404</span>
-            </div>
-            <h1 class="mt-3 text-2xl font-bold text-gray-800 fade-in-delay">
-                Te-ai rătăcit prin pădure?
-            </h1>
-            <p class="mt-3 text-gray-500 leading-relaxed fade-in-delay">
-                Pagina pe care o cauți nu există sau a fost mutată.<br>
-                Dar cabana noastră te așteaptă! 🌲
-            </p>
-            <div class="mt-8 flex flex-wrap gap-3 justify-center fade-in-delay2">
-                <a href="/" class="btn-bounce flex items-center gap-2 bg-primary hover:bg-primary-dark text-white font-bold py-3 px-7 rounded-full shadow-md transition-colors duration-200">
-                    <i class="fas fa-house"></i> Înapoi acasă
-                </a>
-                <a href="/booking" class="btn-bounce flex items-center gap-2 bg-white border-2 border-primary text-primary hover:bg-primary-light font-bold py-3 px-7 rounded-full shadow-sm transition-colors duration-200">
-                    <i class="fas fa-calendar-check"></i> Rezervă acum
-                </a>
-            </div>
-            <div class="mt-10 border-t border-gray-200 pt-8 fade-in-delay2">
-                <p class="text-xs text-gray-400 uppercase tracking-widest font-semibold mb-4">Explorează site-ul</p>
-                <div class="flex flex-wrap gap-2 justify-center">
-                    <a href="/about" class="flex items-center gap-1 bg-primary-light text-primary border border-green-200 hover:bg-green-100 text-sm font-medium py-1.5 px-4 rounded-full transition-colors duration-200">
-                        <i class="fas fa-info-circle text-xs"></i> Despre noi
-                    </a>
-                    <a href="/offers" class="flex items-center gap-1 bg-primary-light text-primary border border-green-200 hover:bg-green-100 text-sm font-medium py-1.5 px-4 rounded-full transition-colors duration-200">
-                        <i class="fas fa-tag text-xs"></i> Oferte
-                    </a>
-                    <a href="/gallery" class="flex items-center gap-1 bg-primary-light text-primary border border-green-200 hover:bg-green-100 text-sm font-medium py-1.5 px-4 rounded-full transition-colors duration-200">
-                        <i class="fas fa-images text-xs"></i> Galerie
-                    </a>
-                    <a href="/contact" class="flex items-center gap-1 bg-primary-light text-primary border border-green-200 hover:bg-green-100 text-sm font-medium py-1.5 px-4 rounded-full transition-colors duration-200">
-                        <i class="fas fa-phone text-xs"></i> Contact
-                    </a>
+<body class="bg-gray-50 min-h-screen flex flex-col">
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/home"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/about"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/offers"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/gallery"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/booking"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/contact"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
                 </div>
             </div>
-            <div class="mt-8 inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-500 text-sm px-4 py-2 rounded-full shadow-sm fade-in-delay2">
-                <i class="fas fa-map-marker-alt text-primary"></i>
-                Hășmaș, Harghita · 3.8 km de Lacul Roșu
+        </div>
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/home"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/about"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/offers"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/gallery"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/booking"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/contact"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
             </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <main class="flex-1 flex items-center justify-center px-4 pt-24 pb-16">
+        <div class="text-center">
+            <span class="text-9xl font-extrabold text-primary">404</span>
+            <h1 class="mt-4 text-2xl font-bold text-gray-800">Pagina nu a fost găsită</h1>
+            <p class="mt-2 text-gray-500">Pagina pe care o cauți nu există sau a fost mutată.</p>
+            <a href="/"
+                class="inline-flex items-center gap-2 mt-8 bg-primary hover:bg-green-700 text-white font-bold py-3 px-8 rounded-lg transition-colors duration-300">
+                <i class="fas fa-home"></i> Înapoi acasă
+            </a>
         </div>
     </main>
 
-    <footer class="bg-white border-t border-gray-100 py-5 text-center text-sm text-gray-400">
-        © 2025 Casa Chindea &nbsp;·&nbsp;
-        <a href="tel:+40743930521" class="text-primary hover:underline">+40 743 930 521</a>
-        &nbsp;·&nbsp;
-        <a href="mailto:contact@casachindea.ro" class="text-primary hover:underline">contact@casachindea.ro</a>
+    <footer class="bg-gray-800 text-white py-12 mt-auto">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Casa Chindea</h3>
+                    <p class="text-gray-300">Refugiul perfect în inima naturii, la poalele Hășmașului Mare.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>Hășmaș, județul Harghita</p>
+                        <p><i class="fas fa-phone mr-2"></i>+40 743 930 521</p>
+                        <p><i class="fas fa-envelope mr-2"></i>contact@casachindea.ro</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Urmărește-ne</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/casa.chindea?locale=ro_RO"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="https://www.instagram.com/casachindea2019?igsh=bW1oMmdhcDcwbXhi"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@casachindea?_t=ZN-8xQ5XCOZp2I&_r=1"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-tiktok text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
+                <div class="mt-4 space-x-4 text-sm">
+                    <a href="/terms" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="/privacy" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
+                </div>
+            </div>
+        </div>
     </footer>
-
 </body>
-</html>
 
+</html>
