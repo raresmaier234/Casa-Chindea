@@ -169,11 +169,11 @@ class CasaChindeaNav {
                 <i class="fas fa-chevron-down text-xs"></i>
             </button>
             <div id="dropdown-menu" class="hidden absolute right-0 mt-2 w-48 bg-white rounded-md shadow-lg py-1 z-10 border border-gray-200">
-                <a href="/js/pages/profile.html" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
+                <a href="/profile" class="block px-4 py-2 text-sm text-gray-700 hover:bg-gray-100">
                     <i class="fas fa-user mr-2"></i>Profilul Meu
                 </a>
                 ${isAdmin ? `
-                    <a href="/js/pages/admin.html" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
+                    <a href="/admin" class="block px-4 py-2 text-sm text-red-600 hover:bg-red-50">
                         <i class="fas fa-cog mr-2"></i>Admin Dashboard
                     </a>
                 ` : ''}
@@ -212,7 +212,7 @@ class CasaChindeaNav {
 
     createUnauthenticatedDesktopNav() {
         const element = document.createElement('a');
-        element.href = '/js/pages/login.html';
+        element.href = '/login';
         element.className = 'nav-link text-primary font-semibold hover:underline transition-colors duration-200 auth-element';
         element.textContent = 'Login';
         return element;
@@ -226,12 +226,12 @@ class CasaChindeaNav {
         const isAdmin = this.currentUser.admin === true;
 
         element.innerHTML = `
-            <a href="/js/pages/profile.html"
+            <a href="/profile"
                 class="nav-link block px-3 py-2 text-primary font-semibold hover:bg-gray-50 rounded-md">
                 <i class="fas fa-user mr-2"></i>Profilul Meu
             </a>
             ${isAdmin ? `
-                <a href="/js/pages/admin.html"
+                <a href="/admin"
                     class="nav-link block px-3 py-2 text-red-600 font-semibold hover:bg-red-50 rounded-md">
                     <i class="fas fa-cog mr-2"></i>Admin Dashboard
                 </a>
@@ -254,7 +254,7 @@ class CasaChindeaNav {
 
     createUnauthenticatedMobileNav() {
         const element = document.createElement('a');
-        element.href = '/js/pages/login.html';
+        element.href = '/login';
         element.className = 'nav-link block px-3 py-2 text-primary font-semibold hover:underline auth-element';
         element.innerHTML = '<i class="fas fa-sign-in-alt mr-2"></i>Login';
         return element;
@@ -296,7 +296,7 @@ class CasaChindeaNav {
         });
 
         setTimeout(() => {
-            window.location.href = '/js/pages/home.html';
+            window.location.href = '/home';
         }, 1000);
     }
 

@@ -14,10 +14,10 @@
     <title>Oferte Cazare Casa Chindea — Camere și Prețuri în Hășmaș</title>
     <meta name="description" content="Vezi ofertele și prețurile la Casa Chindea, Hășmaș. Camere duble cu baie proprie, mic dejun, foișor. De la 150 lei/noapte, aproape de Lacul Roșu.">
     <meta name="robots" content="index, follow">
-    <link rel="canonical" href="https://www.casachindea.ro/js/pages/offers.html">
+    <link rel="canonical" href="https://www.casachindea.ro/offers">
     <meta property="og:title" content="Oferte Cazare — Casa Chindea Hășmaș">
     <meta property="og:description" content="Camere confortabile cu baie proprie în Hășmaș. Vezi prețurile și ofertele speciale.">
-    <meta property="og:url" content="https://www.casachindea.ro/js/pages/offers.html">
+    <meta property="og:url" content="https://www.casachindea.ro/offers">
     <meta property="og:type" content="website">
     <meta property="og:locale" content="ro_RO">
 
@@ -84,17 +84,17 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
-                    <a href="/js/pages/home.html"
+                    <a href="/home"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
-                    <a href="/js/pages/about.html"
+                    <a href="/about"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/offers.html"
+                    <a href="/offers"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
-                    <a href="/js/pages/gallery.html"
+                    <a href="/gallery"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
-                    <a href="/js/pages/booking.html"
+                    <a href="/booking"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
-                    <a href="/js/pages/contact.html"
+                    <a href="/contact"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
                     <!-- Auth element will be dynamically added by navigation.js -->
                 </div>
@@ -108,17 +108,17 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
-                <a href="/js/pages/home.html"
+                <a href="/home"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
-                <a href="/js/pages/about.html"
+                <a href="/about"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/offers.html"
+                <a href="/offers"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
-                <a href="/js/pages/gallery.html"
+                <a href="/gallery"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
-                <a href="/js/pages/booking.html"
+                <a href="/booking"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
-                <a href="/js/pages/contact.html"
+                <a href="/contact"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
                 <!-- Auth element will be dynamically added by navigation.js -->
             </div>
@@ -461,7 +461,7 @@
                                     ` : ''}
 
                                     <!-- CTA Button -->
-                                    <a href="/js/pages/booking.html?offer=${offer.id}&type=${offer.type}&start=${offer.startDate}&end=${offer.endDate}&nights=${offer.nights}&price=${offer.totalPrice}&roomPrice=${offer.roomPrice || 0}&title=${encodeURIComponent(offer.title)}"
+                                    <a href="/booking?offer=${offer.id}&type=${offer.type}&start=${offer.startDate}&end=${offer.endDate}&nights=${offer.nights}&price=${offer.totalPrice}&roomPrice=${offer.roomPrice || 0}&title=${encodeURIComponent(offer.title)}"
                                        class="block w-full mt-6 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base">
                                         <i class="fas fa-calendar-check mr-2"></i>Rezervă Această Ofertă
                                     </a>
@@ -622,11 +622,11 @@
         }
 
         function reserveRooms() {
-            window.location.href = `/js/pages/booking.html?type=room&rooms=${roomCount}`;
+            window.location.href = `/booking?type=room&rooms=${roomCount}`;
         }
 
         function reserveCottage() {
-            window.location.href = '/js/pages/booking.html?type=entire';
+            window.location.href = '/booking?type=entire';
         }
 
         function isVisualEditorActive() {
@@ -919,10 +919,10 @@
             <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
                 <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
                 <div class="mt-4 space-x-4 text-sm">
-                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                    <a href="/terms" class="text-gray-400 hover:text-accent transition-colors">Termeni și
                         Condiții</a>
                     <span class="text-gray-600">|</span>
-                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                    <a href="/privacy" class="text-gray-400 hover:text-accent transition-colors">Politica
                         de Confidențialitate</a>
                 </div>
             </div>

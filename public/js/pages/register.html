@@ -274,12 +274,12 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
-                    <a href="/js/pages/home.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
-                    <a href="/js/pages/about.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/offers.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
-                    <a href="/js/pages/gallery.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
-                    <a href="/js/pages/booking.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
-                    <a href="/js/pages/contact.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <a href="/home" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/about" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/offers" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/gallery" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/booking" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/contact" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
                 </div>
                 <div class="md:hidden flex items-center">
                     <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
@@ -291,12 +291,12 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden glass-effect border-t border-white/20 absolute w-full left-0 top-full">
             <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
-                <a href="/js/pages/home.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
-                <a href="/js/pages/about.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/offers.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
-                <a href="/js/pages/gallery.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
-                <a href="/js/pages/booking.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
-                <a href="/js/pages/contact.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <a href="/home" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/about" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/offers" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/gallery" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/booking" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/contact" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
             </div>
         </div>
     </nav>
@@ -394,7 +394,7 @@
             <div class="mt-6 sm:mt-8 text-center">
                 <p class="text-gray-600 text-xs sm:text-sm">
                     Ai deja cont?
-                    <a href="/js/pages/login.html" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
+                    <a href="/login" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
                         Autentifică-te aici
                     </a>
                 </p>
@@ -469,7 +469,7 @@
                         <p class="text-sm text-gray-700">
                             <i class="fas fa-info-circle text-primary mr-2"></i>
                             Pentru versiunea completă a termenilor și condițiilor, vizitați
-                            <a href="/js/pages/terms.html" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
+                            <a href="/terms" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
                         </p>
                     </div>
                 </div>
@@ -553,7 +553,7 @@
                         <p class="text-sm text-gray-700">
                             <i class="fas fa-info-circle text-primary mr-2"></i>
                             Pentru versiunea completă a politicii de confidențialitate, vizitați
-                            <a href="/js/pages/privacy.html" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
+                            <a href="/privacy" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
                         </p>
                     </div>
                 </div>
@@ -805,7 +805,7 @@
 
                     // Redirect to verification page
                     setTimeout(() => {
-                        window.location.href = `/js/pages/verify-email.html?email=${encodeURIComponent(email)}`;
+                        window.location.href = `/verify-email?email=${encodeURIComponent(email)}`;
                     }, 2000);
                 } else {
                     throw new Error(data.error || 'Eroare la înregistrare.');
@@ -841,7 +841,7 @@
                 .then(res => {
                     if (res.ok) {
                         // Token is valid, user is already logged in
-                        window.location.href = '/js/pages/profile.html';
+                        window.location.href = '/profile';
                     } else {
                         // Token is invalid or expired, clear it and continue registration
                         sessionStorage.removeItem('auth_token');

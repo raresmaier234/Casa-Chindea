@@ -183,7 +183,7 @@
             <div class="mt-6 sm:mt-8 text-center">
                 <p class="text-gray-600 text-xs sm:text-sm">
                     Email greșit?
-                    <a href="/js/pages/register.html" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
+                    <a href="/register" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
                         Înregistrează-te din nou
                     </a>
                 </p>
@@ -206,7 +206,7 @@
         const verificationEmail = sessionStorage.getItem('verification_email');
 
         if (!email || (!fromEmailLink && !verificationPending)) {
-            window.location.href = '/js/pages/register.html';
+            window.location.href = '/register';
         }
 
         // If from email link, set sessionStorage so resend/refresh works
@@ -353,7 +353,7 @@
 
                     // Redirect to login page after showing success message
                     setTimeout(() => {
-                        window.location.href = '/js/pages/login.html';
+                        window.location.href = '/login';
                     }, 2000);
                 } else {
                     throw new Error(data.error || 'Eroare la verificare.');

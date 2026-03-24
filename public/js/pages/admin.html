@@ -208,9 +208,9 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
-                    <a href="/js/pages/home.html"
+                    <a href="/home"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
-                    <a href="/js/pages/profile.html"
+                    <a href="/profile"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Profil</a>
                     <!-- Auth element will be dynamically added by navigation.js -->
                 </div>
@@ -224,9 +224,9 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
-                <a href="/js/pages/home.html"
+                <a href="/home"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
-                <a href="/js/pages/profile.html"
+                <a href="/profile"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Profil</a>
                 <!-- Auth element will be dynamically added by navigation.js -->
             </div>
@@ -1086,7 +1086,7 @@
             if (!token || !userInfo) {
                 showToast('Trebuie să fii autentificat pentru a accesa această pagină', 'error');
                 setTimeout(() => {
-                    window.location.href = '/js/pages/login.html';
+                    window.location.href = '/login';
                 }, 2000);
                 return false;
             }
@@ -1097,7 +1097,7 @@
                 if (!user.admin) {
                     showToast('Acces restricționat! Doar administratorii pot accesa această pagină.', 'error');
                     setTimeout(() => {
-                        window.location.href = '/js/pages/home.html';
+                        window.location.href = '/home';
                     }, 2000);
                     return false;
                 }
@@ -1105,7 +1105,7 @@
             } catch (err) {
                 showToast('Sesiune invalidă. Te rog să te autentifici din nou.', 'error');
                 setTimeout(() => {
-                    window.location.href = '/js/pages/login.html';
+                    window.location.href = '/login';
                 }, 2000);
                 return false;
             }

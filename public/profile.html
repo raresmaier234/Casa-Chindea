@@ -168,17 +168,17 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
-                    <a href="/js/pages/home.html"
+                    <a href="/home"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
-                    <a href="/js/pages/about.html"
+                    <a href="/about"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/offers.html"
+                    <a href="/offers"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
-                    <a href="/js/pages/gallery.html"
+                    <a href="/gallery"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
-                    <a href="/js/pages/booking.html"
+                    <a href="/booking"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
-                    <a href="/js/pages/contact.html"
+                    <a href="/contact"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
                     <!-- Auth element will be added by navigation.js -->
                 </div>
@@ -192,17 +192,17 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
             <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
-                <a href="/js/pages/home.html"
+                <a href="/home"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
-                <a href="/js/pages/about.html"
+                <a href="/about"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/offers.html"
+                <a href="/offers"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
-                <a href="/js/pages/gallery.html"
+                <a href="/gallery"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
-                <a href="/js/pages/booking.html"
+                <a href="/booking"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
-                <a href="/js/pages/contact.html"
+                <a href="/contact"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
                 <!-- Auth element will be added by navigation.js -->
             </div>
@@ -302,7 +302,7 @@
                                 <i class="fas fa-calendar-alt text-primary mr-2"></i>
                                 Rezervările mele
                             </h2>
-                            <a href="/js/pages/booking.html"
+                            <a href="/booking"
                                 class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-xs sm:text-sm font-medium transition-colors duration-200 text-center">
                                 <i class="fas fa-plus mr-1"></i>
                                 Rezervare nouă
@@ -321,7 +321,7 @@
                             <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
                             <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu ai rezervări încă</h3>
                             <p class="text-gray-600 mb-6">Fă prima ta rezervare la Casa Chindea!</p>
-                            <a href="/js/pages/booking.html"
+                            <a href="/booking"
                                 class="inline-flex items-center bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-medium transition-colors duration-200">
                                 <i class="fas fa-calendar-plus mr-2"></i>
                                 Rezervă acum
@@ -460,7 +460,7 @@
             const token = sessionStorage.getItem('auth_token');
             if (!token) {
                 // Redirect to login if not authenticated
-                window.location.href = '/js/pages/login.html';
+                window.location.href = '/login';
                 return;
             }
         }

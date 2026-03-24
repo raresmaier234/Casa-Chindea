@@ -165,17 +165,17 @@
                     </div>
                 </div>
                 <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
-                    <a href="/js/pages/home.html"
+                    <a href="/home"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
-                    <a href="/js/pages/about.html"
+                    <a href="/about"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
-                    <a href="/js/pages/offers.html"
+                    <a href="/offers"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
-                    <a href="/js/pages/gallery.html"
+                    <a href="/gallery"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
-                    <a href="/js/pages/booking.html"
+                    <a href="/booking"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
-                    <a href="/js/pages/contact.html"
+                    <a href="/contact"
                         class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
                     <!-- Auth element will be dynamically added by navigation.js -->
                 </div>
@@ -189,17 +189,17 @@
         <!-- Mobile menu -->
         <div id="mobile-menu" class="md:hidden hidden glass-effect border-t border-white/20 absolute w-full left-0 top-full">
             <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
-                <a href="/js/pages/home.html"
+                <a href="/home"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
-                <a href="/js/pages/about.html"
+                <a href="/about"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
-                <a href="/js/pages/offers.html"
+                <a href="/offers"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
-                <a href="/js/pages/gallery.html"
+                <a href="/gallery"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
-                <a href="/js/pages/booking.html"
+                <a href="/booking"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
-                <a href="/js/pages/contact.html"
+                <a href="/contact"
                     class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
                 <!-- Auth element will be dynamically added by navigation.js -->
             </div>
@@ -265,7 +265,7 @@
 
                 <!-- Forgot password link -->
                 <div class="text-right mt-2">
-                    <a href="/js/pages/reset-password.html"
+                    <a href="/reset-password"
                         class="text-primary text-xs sm:text-sm hover:text-secondary transition-colors duration-200">
                         <i class="fas fa-key mr-1"></i>Ai uitat parola?
                     </a>
@@ -287,7 +287,7 @@
             <div class="mt-6 sm:mt-8 text-center">
                 <p class="text-gray-600 text-xs sm:text-sm">
                     Nu ai cont încă?
-                    <a href="/js/pages/register.html" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
+                    <a href="/register" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
                         Înregistrează-te aici
                     </a>
                 </p>
@@ -317,7 +317,7 @@
         let auth0Config = {
             domain: window.AUTH0_DOMAIN || "dev-casa-chindea.eu.auth0.com",
             clientId: window.AUTH0_CLIENT_ID || "YOUR_REAL_AUTH0_CLIENT_ID",
-            redirect_uri: window.location.origin + "/js/pages/login.html"
+            redirect_uri: window.location.origin + "/login"
         };
 
         // Încarcă configurația din backend
@@ -414,7 +414,7 @@
                         if (redirect) {
                             window.location.href = redirect;
                         } else {
-                            window.location.href = '/js/pages/profile.html';
+                            window.location.href = '/profile';
                         }
                     }, 2000);
                 } else {
@@ -552,7 +552,7 @@
                     // Handle redirect from Auth0
                     if (window.location.search.includes('code=') && window.location.search.includes('state=')) {
                         await auth0.handleRedirectCallback();
-                        window.history.replaceState({}, document.title, "/js/pages/login.html");
+                        window.history.replaceState({}, document.title, "/login");
                     }
 
                     await updateUI();
