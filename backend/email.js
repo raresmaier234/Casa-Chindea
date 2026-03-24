@@ -1,71 +1,87 @@
 // backend/email.js — Shared email utility for booking notifications
-// Uses MailerSend HTTP API (production) or nodemailer/Gmail (development)
-// Render blocks SMTP ports (587, 465) so we MUST use HTTP API for production.
+// Fallback chain: MailerSend HTTP API → Gmail SMTP
 import nodemailer from 'nodemailer';
 
 // ─── Core send function ────────────────────────────────────────────────────
 
 /**
- * Send an email via MailerSend HTTP API or nodemailer (fallback)
+ * Send an email. Tries MailerSend first, falls back to Gmail SMTP.
  * @param {{ to: string, subject: string, html: string, from?: string, replyTo?: string }} opts
  */
 async function sendEmail({ to, subject, html, from, replyTo }) {
-    const apiKey = process.env.MAILERSEND_API_KEY;
-    const fromEmail = from || process.env.MAILERSEND_FROM || process.env.SMTP_USER;
     const fromName = 'Casa Chindea';
+    const errors = [];
 
-    // 1. MailerSend HTTP API (production — works on Render)
-    if (apiKey) {
-        console.log(`📧 MailerSend: from=${fromEmail}, to=${to}`);
-        const body = {
-            from: { email: fromEmail, name: fromName },
-            to: [{ email: to }],
-            subject,
-            html
-        };
-        if (replyTo) body.reply_to = [{ email: replyTo }];
+    // 1. MailerSend HTTP API
+    const mailersendKey = process.env.MAILERSEND_API_KEY;
+    if (mailersendKey) {
+        try {
+            const fromEmail = from || process.env.MAILERSEND_FROM || process.env.SMTP_USER;
+            console.log(`📧 Trying MailerSend: to=${to}`);
+            const body = {
+                from: { email: fromEmail, name: fromName },
+                to: [{ email: to }],
+                subject,
+                html
+            };
+            if (replyTo) body.reply_to = [{ email: replyTo }];
 
-        const resp = await fetch('https://api.mailersend.com/v1/email', {
-            method: 'POST',
-            headers: {
-                'Authorization': `Bearer ${apiKey}`,
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(body)
-        });
+            const resp = await fetch('https://api.mailersend.com/v1/email', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${mailersendKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
 
-        if (!resp.ok) {
-            const errBody = await resp.text().catch(() => '');
-            console.error(`❌ MailerSend error: ${resp.status} from=${fromEmail}`);
-            if (resp.status === 422 && errBody.includes('MS42207')) {
-                throw new Error(`MailerSend: domeniul "${fromEmail.split('@')[1]}" nu e verificat. Setează MAILERSEND_FROM la adresa de pe domeniul trial (ex: casachindea@trial-xxx.mlsender.net)`);
+            if (resp.ok || resp.status === 202) {
+                console.log('✅ Email sent via MailerSend');
+                return { provider: 'mailersend', status: resp.status };
             }
-            throw new Error(`MailerSend API ${resp.status}: ${errBody}`);
+
+            const errBody = await resp.text().catch(() => '');
+            console.warn(`⚠️ MailerSend failed (${resp.status}), trying next provider...`);
+            errors.push(`MailerSend ${resp.status}: ${errBody}`);
+        } catch (err) {
+            console.warn('⚠️ MailerSend error, trying next provider:', err.message);
+            errors.push(`MailerSend: ${err.message}`);
         }
-        // 202 = accepted
-        return { provider: 'mailersend', status: resp.status };
     }
 
-    // 2. Nodemailer Gmail fallback (development)
+    // 2. Gmail SMTP fallback
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
-        const transporter = nodemailer.createTransport({
-            service: 'gmail',
-            auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
-            connectionTimeout: 10000,
-            greetingTimeout: 10000,
-            socketTimeout: 15000
-        });
+        try {
+            console.log(`📧 Trying Gmail SMTP: to=${to}`);
+            const transporter = nodemailer.createTransport({
+                service: 'gmail',
+                auth: { user: process.env.SMTP_USER, pass: process.env.SMTP_PASS },
+                connectionTimeout: 15000,
+                greetingTimeout: 15000,
+                socketTimeout: 20000
+            });
 
-        const mailOpts = {
-            from: `"${fromName}" <${process.env.SMTP_USER}>`,
-            to,
-            subject,
-            html
-        };
-        if (replyTo) mailOpts.replyTo = replyTo;
+            const mailOpts = {
+                from: `"${fromName}" <${process.env.SMTP_USER}>`,
+                to,
+                subject,
+                html
+            };
+            if (replyTo) mailOpts.replyTo = replyTo;
 
-        const info = await transporter.sendMail(mailOpts);
-        return { provider: 'gmail', messageId: info.messageId };
+            const info = await transporter.sendMail(mailOpts);
+            console.log('✅ Email sent via Gmail SMTP');
+            return { provider: 'gmail', messageId: info.messageId };
+        } catch (err) {
+            console.warn('⚠️ Gmail SMTP failed:', err.message);
+            errors.push(`Gmail: ${err.message}`);
+        }
+    }
+
+    // All providers failed
+    if (errors.length > 0) {
+        console.error('❌ All email providers failed:', errors.join(' | '));
+        throw new Error('Email send failed: ' + errors.join(' | '));
     }
 
     console.warn('⚠️ No email provider configured (set MAILERSEND_API_KEY or SMTP_USER+SMTP_PASS)');
