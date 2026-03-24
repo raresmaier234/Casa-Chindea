@@ -6,13 +6,6 @@
     "framework": null,
     "cleanUrls": true,
     "trailingSlash": false,
-    "redirects": [
-        {
-            "source": "/",
-            "destination": "/home",
-            "statusCode": 302
-        }
-    ],
     "rewrites": [
         {
             "source": "/api/:path*",
