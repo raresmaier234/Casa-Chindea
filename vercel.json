@@ -8,28 +8,27 @@
     "trailingSlash": false,
     "redirects": [
         { "source": "/home", "destination": "/", "permanent": true },
-        { "source": "/js/pages/:page*", "destination": "/", "permanent": true },
         {
-            "source": "/((?!$|about$|offers$|gallery$|booking$|contact$|login$|register$|profile$|admin$|privacy$|terms$|verify-email$|reset-password$|js/(?!pages).*|css/.*|api/.*|sitemap\\.xml$|robots\\.txt$|favicon\\.ico$|favicon\\.svg$|vite\\.svg$|googlef1ee2b5187cf8079\\.html$).*)",
+            "source": "/((?!$|about$|offers$|gallery$|booking$|contact$|login$|register$|profile$|admin$|privacy$|terms$|verify-email$|reset-password$|js/.*|css/.*|api/.*|sitemap\\.xml$|robots\\.txt$|favicon\\.ico$|favicon\\.svg$|vite\\.svg$|googlef1ee2b5187cf8079\\.html$|.*\\.html$).*)",
             "destination": "/",
             "permanent": true
         }
     ],
     "rewrites": [
-        { "source": "/", "destination": "/js/pages/home.html" },
-        { "source": "/about", "destination": "/js/pages/about.html" },
-        { "source": "/offers", "destination": "/js/pages/offers.html" },
-        { "source": "/gallery", "destination": "/js/pages/gallery.html" },
-        { "source": "/booking", "destination": "/js/pages/booking.html" },
-        { "source": "/contact", "destination": "/js/pages/contact.html" },
-        { "source": "/login", "destination": "/js/pages/login.html" },
-        { "source": "/register", "destination": "/js/pages/register.html" },
-        { "source": "/profile", "destination": "/js/pages/profile.html" },
-        { "source": "/admin", "destination": "/js/pages/admin.html" },
-        { "source": "/privacy", "destination": "/js/pages/privacy.html" },
-        { "source": "/terms", "destination": "/js/pages/terms.html" },
-        { "source": "/verify-email", "destination": "/js/pages/verify-email.html" },
-        { "source": "/reset-password", "destination": "/js/pages/reset-password.html" },
+        { "source": "/", "destination": "/home.html" },
+        { "source": "/about", "destination": "/about.html" },
+        { "source": "/offers", "destination": "/offers.html" },
+        { "source": "/gallery", "destination": "/gallery.html" },
+        { "source": "/booking", "destination": "/booking.html" },
+        { "source": "/contact", "destination": "/contact.html" },
+        { "source": "/login", "destination": "/login.html" },
+        { "source": "/register", "destination": "/register.html" },
+        { "source": "/profile", "destination": "/profile.html" },
+        { "source": "/admin", "destination": "/admin.html" },
+        { "source": "/privacy", "destination": "/privacy.html" },
+        { "source": "/terms", "destination": "/terms.html" },
+        { "source": "/verify-email", "destination": "/verify-email.html" },
+        { "source": "/reset-password", "destination": "/reset-password.html" },
         {
             "source": "/api/:path*",
             "destination": "https://api.casachindea.ro/api/:path*"
