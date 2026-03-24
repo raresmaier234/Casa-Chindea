@@ -9,7 +9,6 @@
     ],
     "rewrites": [
         { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
-        { "source": "/", "destination": "/home.html" },
-        { "source": "/(.*)", "destination": "/404.html" }
+        { "source": "/", "destination": "/home.html" }
     ]
 }
