@@ -858,15 +858,23 @@
         // ── Save booking to DB then handle result ─────────────────────────────
         async function saveBookingAndFinish(bookingData, totalAmount, token, method, paidAmount = 0) {
             try {
+                console.log('📋 Trimit rezervare:', JSON.stringify(bookingData));
                 const res = await fetch('/api/booking', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
                     body: JSON.stringify(bookingData)
                 });
+                console.log('📡 Response status:', res.status);
                 const data = await res.json();
+                console.log('📦 Response data:', JSON.stringify(data));
                 if (!data.success) throw new Error(data.error || 'Eroare necunoscută');
-                return data.booking?.id;
+                const bookingId = data.booking?.id;
+                if (!bookingId) {
+                    console.warn('⚠️ Booking saved but no ID returned:', data);
+                }
+                return bookingId;
             } catch (err) {
+                console.error('❌ Eroare saveBookingAndFinish:', err);
                 throw err;
             }
         }
