@@ -7,7 +7,8 @@
     "cleanUrls": true,
     "trailingSlash": false,
     "redirects": [
-        { "source": "/js/pages/home.html", "destination": "/home", "permanent": true },
+        { "source": "/home", "destination": "/", "permanent": true },
+        { "source": "/js/pages/home.html", "destination": "/", "permanent": true },
         { "source": "/js/pages/about.html", "destination": "/about", "permanent": true },
         { "source": "/js/pages/offers.html", "destination": "/offers", "permanent": true },
         { "source": "/js/pages/gallery.html", "destination": "/gallery", "permanent": true },
@@ -20,9 +21,28 @@
         { "source": "/js/pages/privacy.html", "destination": "/privacy", "permanent": true },
         { "source": "/js/pages/terms.html", "destination": "/terms", "permanent": true },
         { "source": "/js/pages/verify-email.html", "destination": "/verify-email", "permanent": true },
-        { "source": "/js/pages/reset-password.html", "destination": "/reset-password", "permanent": true }
+        { "source": "/js/pages/reset-password.html", "destination": "/reset-password", "permanent": true },
+        {
+            "source": "/((?!$|about$|offers$|gallery$|booking$|contact$|login$|register$|profile$|admin$|privacy$|terms$|verify-email$|reset-password$|js/.*|css/.*|api/.*|sitemap\\.xml$|robots\\.txt$|favicon\\.ico$|favicon\\.svg$|vite\\.svg$|googlef1ee2b5187cf8079\\.html$).*)",
+            "destination": "/",
+            "permanent": true
+        }
     ],
     "rewrites": [
+        { "source": "/", "destination": "/js/pages/home.html" },
+        { "source": "/about", "destination": "/js/pages/about.html" },
+        { "source": "/offers", "destination": "/js/pages/offers.html" },
+        { "source": "/gallery", "destination": "/js/pages/gallery.html" },
+        { "source": "/booking", "destination": "/js/pages/booking.html" },
+        { "source": "/contact", "destination": "/js/pages/contact.html" },
+        { "source": "/login", "destination": "/js/pages/login.html" },
+        { "source": "/register", "destination": "/js/pages/register.html" },
+        { "source": "/profile", "destination": "/js/pages/profile.html" },
+        { "source": "/admin", "destination": "/js/pages/admin.html" },
+        { "source": "/privacy", "destination": "/js/pages/privacy.html" },
+        { "source": "/terms", "destination": "/js/pages/terms.html" },
+        { "source": "/verify-email", "destination": "/js/pages/verify-email.html" },
+        { "source": "/reset-password", "destination": "/js/pages/reset-password.html" },
         {
             "source": "/api/:path*",
             "destination": "https://api.casachindea.ro/api/:path*"
