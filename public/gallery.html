@@ -1,0 +1,393 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preconnect" href="https://api.casachindea.ro" crossorigin>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Galerie Foto — Casa Chindea, Pensiune Hășmaș</title>
+    <meta name="description" content="Galerie foto Casa Chindea — vezi camerele, peisajele de la Hășmaș, foișorul și împrejurimile lângă Lacul Roșu și Cheile Bicazului.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.casachindea.ro/js/pages/gallery.html">
+    <meta property="og:title" content="Galerie Foto — Casa Chindea Hășmaș">
+    <meta property="og:description" content="Vezi fotografii cu camerele, peisajele și facilitățile Casei Chindea.">
+    <meta property="og:url" content="https://www.casachindea.ro/js/pages/gallery.html">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ro_RO">
+    <link rel="icon" type="image/x-icon" href="/favicon.ico">
+
+    <!-- API config - must load before any fetch -->
+    <script src="/js/api-config.js"></script>
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early data fetch for instant render with timeout -->
+    <script>
+        const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+        window._galleryPromise = window.fetchJsonWithTimeout
+            ? window.fetchJsonWithTimeout('/api/photos?limit=500', {}, timeout)
+            : fetch('/api/photos?limit=500').then(r => r.json()).catch(() => null);
+    </script>
+
+    <!-- Critical CSS - prevent flash of default content -->
+    <!-- Shared critical CSS (preloaded) to prevent flash and enable smooth opacity transitions -->
+    <link rel="preload" href="/css/cms-skeleton.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="/css/cms-skeleton.css" rel="stylesheet">
+    </noscript>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
+
+    <!-- CMS Loader - load early for instant content -->
+    <script src="/js/components/cms-loader.js"></script>
+
+    <script defer src="https://unpkg.com/pocketbase/dist/pocketbase.umd.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 animate-bounce-gentle">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/js/pages/gallery.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <!-- Auth element will be dynamically added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/js/pages/gallery.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <!-- Auth element will be dynamically added by navigation.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Include navigation component -->
+    <script src="/js/components/navigation.js"></script>
+    <script src="/js/components/visual-editor.js"></script>
+
+    <section class="py-20 bg-white mt-16">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h1 id="cms-gallery-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Galeria foto</h1>
+                <p id="cms-gallery-hero-subtitle" class="text-xl text-gray-600">Descoperă frumusețea Casei Chindea</p>
+            </div>
+            <div id="full-gallery" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <!-- Photos will be loaded here -->
+            </div>
+            <!-- Lightbox Modal -->
+            <div id="lightbox-modal"
+                class="fixed inset-0 bg-black bg-opacity-80 flex items-center justify-center z-50 hidden">
+                <button id="lightbox-close"
+                    class="absolute top-4 right-4 text-white text-3xl font-bold">&times;</button>
+                <button id="lightbox-prev"
+                    class="absolute left-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8592;</button>
+                <img loading="lazy" id="lightbox-img" src="" alt="Poza mărită"
+                    class="max-h-[80vh] max-w-[90vw] rounded-lg shadow-2xl">
+                <button id="lightbox-next"
+                    class="absolute right-4 top-1/2 -translate-y-1/2 text-white text-3xl font-bold">&#8594;</button>
+            </div>
+            <!-- Formularul de upload a fost eliminat pentru utilizatorii publici -->
+        </div>
+    </section>
+    <script>
+        function isVisualEditorActive() {
+            return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+        }
+
+        // Show skeleton while loading
+        function showGallerySkeleton() {
+            if (isVisualEditorActive()) return;
+            const gallery = document.getElementById('full-gallery');
+            if (!gallery) return;
+            gallery.innerHTML = Array(8).fill(0).map(() => `
+                <div class="skeleton-image h-64 w-full"></div>
+            `).join('');
+        }
+
+        async function loadGalleryPhotos() {
+            const gallery = document.getElementById('full-gallery');
+
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._galleryPromise) {
+                    if (window._galleryPromise instanceof Promise) {
+                        data = await window._galleryPromise;
+                    } else {
+                        // Already resolved data if someone modified the strategy
+                        data = window._galleryPromise;
+                    }
+                    // Don't null it out - let others use it if needed, or rely on browser cache for subsequent calls
+                }
+
+                // Fallback to fresh fetch if no pre-fetched data
+                if (!data) {
+                    const response = await fetch('/api/photos?limit=500');
+                    data = await response.json();
+                }
+
+                const photos = data?.items || [];
+
+                if (photos.length > 0) {
+                    // Use thumbnails for grid, lazy load images
+                    gallery.innerHTML = photos.map((photo, idx) => `
+                        <div class="relative overflow-hidden rounded-lg shadow-lg group cursor-pointer" data-idx="${idx}">
+                            <img data-src="${photo.thumbnailUrl}"
+                                 src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
+                                 alt="Casa Chindea"
+                                 data-photo-id="${photo.id}"
+                                 class="lazy w-full h-64 object-cover transition-transform duration-300 group-hover:scale-110"
+                                 loading="lazy">
+                            <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-30 transition-all duration-300 flex items-center justify-center">
+                                <i class="fas fa-expand text-white text-2xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"></i>
+                            </div>
+                        </div>
+                    `).join('');
+
+                    // Lazy loading implementation
+                    const lazyImages = gallery.querySelectorAll('img.lazy');
+
+                    const imageObserver = new IntersectionObserver((entries, observer) => {
+                        entries.forEach(entry => {
+                            if (entry.isIntersecting) {
+                                const img = entry.target;
+                                img.src = img.dataset.src;
+                                img.classList.remove('lazy');
+                                observer.unobserve(img);
+                            }
+                        });
+                    }, {
+                        rootMargin: '50px' // Start loading 50px before image enters viewport
+                    });
+
+                    lazyImages.forEach(img => imageObserver.observe(img));
+
+                    // Lightbox logic - use full resolution images
+                    let currentIdx = 0;
+                    const modal = document.getElementById('lightbox-modal');
+                    const img = document.getElementById('lightbox-img');
+                    const closeBtn = document.getElementById('lightbox-close');
+                    const prevBtn = document.getElementById('lightbox-prev');
+                    const nextBtn = document.getElementById('lightbox-next');
+
+                    function showLightbox(idx) {
+                        currentIdx = idx;
+                        // Use full resolution image in lightbox
+                        img.src = photos[currentIdx].imageUrl;
+                        modal.classList.remove('hidden');
+                    }
+
+                    gallery.querySelectorAll('.group').forEach((el, idx) => {
+                        el.addEventListener('click', () => showLightbox(idx));
+                    });
+
+                    closeBtn.onclick = () => modal.classList.add('hidden');
+
+                    prevBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        currentIdx = (currentIdx - 1 + photos.length) % photos.length;
+                        img.src = photos[currentIdx].imageUrl;
+                    };
+
+                    nextBtn.onclick = (e) => {
+                        e.stopPropagation();
+                        currentIdx = (currentIdx + 1) % photos.length;
+                        img.src = photos[currentIdx].imageUrl;
+                    };
+
+                    modal.onclick = (e) => {
+                        if (e.target === modal) modal.classList.add('hidden');
+                    };
+
+                    document.addEventListener('keydown', function (ev) {
+                        if (modal.classList.contains('hidden')) return;
+                        if (ev.key === 'ArrowLeft') prevBtn.onclick(ev);
+                        if (ev.key === 'ArrowRight') nextBtn.onclick(ev);
+                        if (ev.key === 'Escape') closeBtn.onclick();
+                    });
+                } else {
+                    gallery.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-images text-6xl text-gray-300 mb-4"></i>
+                            <p class="text-xl text-gray-500">Nu există poze încărcate încă.</p>
+                            <p class="text-gray-400">Folosește formularul de mai jos pentru a adăuga poze.</p>
+                        </div>
+                    `;
+                }
+            } catch (error) {
+                showNotification('Nu s-au putut încărca pozele din galerie.', 'error');
+                const gallery = document.getElementById('full-gallery');
+                gallery.innerHTML = `<div class='col-span-full text-center py-12 text-gray-500'><i class="fas fa-exclamation-triangle text-4xl mb-4"></i><br>Nu s-au putut încărca pozele din galerie.</div>`;
+            }
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            const existing = document.getElementById('notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
+                    type === 'error' ? 'bg-red-500 text-white' :
+                        type === 'warning' ? 'bg-yellow-500 text-white' :
+                            'bg-blue-500 text-white'
+                }`;
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        type === 'warning' ? 'fa-exclamation-triangle' :
+                            'fa-info-circle'
+                } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadGalleryPhotos();
+        });
+
+        // Observer global pentru ascundere skeleton-uri
+        (function () {
+            function hideAllSkeletonsIfEditor() {
+                if (isVisualEditorActive()) {
+                    document.querySelectorAll('.skeleton-image').forEach(el => el.style.display = 'none');
+                }
+            }
+            hideAllSkeletonsIfEditor();
+            const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
+    </script>
+
+    <footer class="bg-gray-800 text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Casa Chindea</h3>
+                    <p class="text-gray-300">Refugiul perfect în inima naturii, la poalele Hășmașului Mare.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>Hășmaș, județul Harghita</p>
+                        <p><i class="fas fa-phone mr-2"></i>+40 743 930 521</p>
+                        <p><i class="fas fa-envelope mr-2"></i>contact@casachindea.ro</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Urmărește-ne</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/casa.chindea?locale=ro_RO"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="https://www.instagram.com/casachindea2019?igsh=bW1oMmdhcDcwbXhi"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@casachindea?_t=ZN-8xQ5XCOZp2I&_r=1"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-tiktok text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
+                <div class="mt-4 space-x-4 text-sm">
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+</body>
+
+</html>
+

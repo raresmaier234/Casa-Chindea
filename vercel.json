@@ -4,62 +4,19 @@
     "installCommand": null,
     "outputDirectory": "public",
     "framework": null,
-    "rewrites": [
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "redirects": [
         {
             "source": "/",
-            "destination": "/js/pages/home.html"
-        },
-        {
-            "source": "/index.html",
-            "destination": "/js/pages/home.html"
-        },
-        {
-            "source": "/home",
-            "destination": "/js/pages/home.html"
-        },
-        {
-            "source": "/about",
-            "destination": "/js/pages/about.html"
-        },
-        {
-            "source": "/gallery",
-            "destination": "/js/pages/gallery.html"
-        },
-        {
-            "source": "/booking",
-            "destination": "/js/pages/booking.html"
-        },
-        {
-            "source": "/contact",
-            "destination": "/js/pages/contact.html"
-        },
-        {
-            "source": "/offers",
-            "destination": "/js/pages/offers.html"
-        },
+            "destination": "/home",
+            "statusCode": 302
+        }
+    ],
+    "rewrites": [
         {
             "source": "/api/:path*",
             "destination": "https://api.casachindea.ro/api/:path*"
-        },
-        {
-            "source": "/js/pages/:match*",
-            "destination": "/js/pages/:match*"
-        },
-        {
-            "source": "/js/components/:match*",
-            "destination": "/js/components/:match*"
-        },
-        {
-            "source": "/favicon.ico",
-            "destination": "/favicon.ico"
-        },
-        {
-            "source": "/vite.svg",
-            "destination": "/vite.svg"
-        },
-        {
-            "source": "/javascript.svg",
-            "destination": "/javascript.svg"
         }
     ],
     "headers": [

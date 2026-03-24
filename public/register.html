@@ -1,0 +1,868 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- API config - must load before any fetch -->
+    <script src="/js/api-config.js"></script>
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Înregistrare - Casa Chindea</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/forms.css">
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    },
+                    animation: {
+                        'fade-in': 'fadeIn 0.5s ease-in-out',
+                        'slide-up': 'slideUp 0.6s ease-out',
+                        'pulse-slow': 'pulse 3s ease-in-out infinite',
+                        'bounce-gentle': 'bounceGentle 0.6s ease-out'
+                    },
+                    keyframes: {
+                        fadeIn: {
+                            '0%': { opacity: '0' },
+                            '100%': { opacity: '1' }
+                        },
+                        slideUp: {
+                            '0%': { opacity: '0', transform: 'translateY(20px)' },
+                            '100%': { opacity: '1', transform: 'translateY(0)' }
+                        },
+                        bounceGentle: {
+                            '0%, 20%, 50%, 80%, 100%': { transform: 'translateY(0)' },
+                            '40%': { transform: 'translateY(-5px)' },
+                            '60%': { transform: 'translateY(-3px)' }
+                        }
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        .form-floating {
+            position: relative;
+        }
+
+        .form-floating input {
+            padding-top: 1.5rem;
+            padding-bottom: 0.5rem;
+        }
+
+        @media (min-width: 640px) {
+            .form-floating input {
+                padding-top: 1.625rem;
+                padding-bottom: 0.625rem;
+            }
+        }
+
+        .form-floating label {
+            position: absolute;
+            top: 0;
+            left: 0;
+            padding: 0.75rem;
+            pointer-events: none;
+            border: 1px solid transparent;
+            color: #6b7280;
+            font-size: 0.75rem;
+            /* Label is now STATIC - always stays at top */
+            opacity: 0.65;
+            transform: scale(0.85) translateY(-0.5rem) translateX(0.15rem);
+            transform-origin: 0 0;
+        }
+
+        @media (min-width: 640px) {
+            .form-floating label {
+                padding: 1rem 0.75rem;
+                font-size: 0.875rem;
+            }
+        }
+
+        /* Fix for autofill background color */
+        .form-floating input:-webkit-autofill,
+        .form-floating input:-webkit-autofill:hover,
+        .form-floating input:-webkit-autofill:focus {
+            -webkit-box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.5) inset;
+            box-shadow: 0 0 0px 1000px rgba(255, 255, 255, 0.5) inset;
+            transition: background-color 5000s ease-in-out 0s;
+        }
+
+        .glass-effect {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+
+        .password-strength {
+            height: 4px;
+            transition: all 0.3s ease;
+        }
+
+        /* Password toggle button */
+        .password-toggle {
+            position: absolute;
+            right: 1rem;
+            top: 50%;
+            transform: translateY(-50%);
+            cursor: pointer;
+            color: #6b7280;
+            transition: color 0.2s;
+            z-index: 10;
+        }
+
+        .password-toggle:hover {
+            color: #059669;
+        }
+
+        .form-floating-with-toggle {
+            position: relative;
+        }
+
+        .form-floating-with-toggle input {
+            padding-right: 3rem;
+        }
+
+        /* Modal Styles */
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0, 0, 0, 0.6);
+            animation: fadeIn 0.3s ease-in-out;
+        }
+
+        .modal.show {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            margin: auto;
+            padding: 0;
+            border-radius: 1.5rem;
+            width: 90%;
+            max-width: 800px;
+            max-height: 90vh;
+            overflow: hidden;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+            animation: slideUp 0.4s ease-out;
+        }
+
+        .modal-header {
+            background: linear-gradient(135deg, #059669 0%, #10b981 100%);
+            color: white;
+            padding: 1.5rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 2rem;
+            max-height: 60vh;
+            overflow-y: auto;
+        }
+
+        .modal-body::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-body::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 10px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb {
+            background: #059669;
+            border-radius: 10px;
+        }
+
+        .modal-body::-webkit-scrollbar-thumb:hover {
+            background: #047857;
+        }
+
+        .close-modal {
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+            cursor: pointer;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: 50%;
+            width: 36px;
+            height: 36px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.3s ease;
+        }
+
+        .close-modal:hover,
+        .close-modal:focus {
+            background: rgba(255, 255, 255, 0.3);
+            transform: rotate(90deg);
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(50px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        #terms:disabled {
+            cursor: not-allowed;
+            opacity: 0.5;
+        }
+    </style>
+</head>
+
+<body class="bg-gradient-to-br from-primary/10 via-accent/5 to-secondary/10 min-h-screen flex flex-col relative">
+    <!-- Background Animation -->
+    <div class="absolute inset-0 overflow-hidden pointer-events-none">
+        <div class="absolute -top-4 -left-4 w-72 h-72 bg-primary/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse-slow"></div>
+        <div class="absolute -bottom-8 -right-4 w-72 h-72 bg-accent/10 rounded-full mix-blend-multiply filter blur-xl animate-pulse-slow" style="animation-delay: 1s;"></div>
+        <div class="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-96 h-96 bg-secondary/5 rounded-full mix-blend-multiply filter blur-xl animate-pulse-slow" style="animation-delay: 2s;"></div>
+    </div>
+
+    <!-- Navbar -->
+    <nav class="glass-effect w-full top-0 z-50 relative">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 animate-bounce-gentle">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/offers.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/js/pages/gallery.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html" class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden glass-effect border-t border-white/20 absolute w-full left-0 top-full">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/offers.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/js/pages/gallery.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html" class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+            </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <!-- Register Form -->
+    <main class="flex-1 flex items-center justify-center py-8 px-4 relative z-10 min-h-0">
+        <div class="glass-effect shadow-2xl rounded-3xl p-6 sm:p-8 max-w-md w-full animate-slide-up">
+            <!-- Welcome Header -->
+            <div class="text-center mb-6 sm:mb-8">
+                <div class="w-16 h-16 sm:w-20 sm:h-20 bg-gradient-to-br from-primary to-secondary rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 shadow-lg animate-bounce-gentle">
+                    <i class="fas fa-user-plus text-white text-xl sm:text-2xl"></i>
+                </div>
+                <h2 class="text-2xl sm:text-3xl font-bold bg-gradient-to-r from-primary to-secondary bg-clip-text text-transparent mb-2">
+                    Creează cont
+                </h2>
+                <p class="text-gray-600 text-sm sm:text-base">Înregistrează-te pentru a face rezervări</p>
+            </div>
+
+            <!-- Success State -->
+            <div id="register-success" class="hidden text-center mb-4 sm:mb-6">
+                <div class="w-12 h-12 sm:w-16 sm:h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-3 sm:mb-4 animate-bounce-gentle">
+                    <i class="fas fa-check text-green-600 text-lg sm:text-xl"></i>
+                </div>
+                <h3 class="text-base sm:text-lg font-semibold text-green-700 mb-2">Înregistrare reușită!</h3>
+                <p class="text-green-600 text-sm sm:text-base">Te redirectăm către pagina de autentificare...</p>
+            </div>
+
+            <form id="register-form" class="space-y-4 sm:space-y-5">
+                <div class="form-floating">
+                    <input type="text" id="name" name="name" required placeholder=" "
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        autocomplete="name">
+                    <label for="name" class="px-4 text-sm sm:text-base">
+                        <i class="fas fa-user mr-2 text-primary"></i>Nume complet
+                    </label>
+                </div>
+
+                <div class="form-floating">
+                    <input type="email" id="email" name="email" required placeholder=" "
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        autocomplete="email">
+                    <label for="email" class="px-4 text-sm sm:text-base">
+                        <i class="fas fa-envelope mr-2 text-primary"></i>Adresa de email
+                    </label>
+                </div>
+
+                <div class="form-floating form-floating-with-toggle">
+                    <input type="password" id="password" name="password" required placeholder=" " minlength="8"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        autocomplete="new-password">
+                    <label for="password" class="px-4 text-sm sm:text-base">
+                        <i class="fas fa-lock mr-2 text-primary"></i>Parola (min. 8 caractere)
+                    </label>
+                    <i class="password-toggle fas fa-eye" id="toggle-password" onclick="togglePassword('password', 'toggle-password')"></i>
+                </div>
+
+                <!-- Password Strength Indicator -->
+                <div class="password-strength rounded-full overflow-hidden bg-gray-200" id="password-strength">
+                    <div class="h-full bg-red-500 transition-all duration-300" style="width: 0%"></div>
+                </div>
+                <p class="text-xs text-gray-500 -mt-2" id="password-strength-text">Introduceți o parolă</p>
+
+                <div class="form-floating form-floating-with-toggle">
+                    <input type="password" id="password-confirm" name="password-confirm" required placeholder=" " minlength="8"
+                        class="w-full border-2 border-gray-200 rounded-xl px-4 py-3 sm:py-4 text-sm sm:text-base focus:ring-2 focus:ring-primary focus:border-primary transition-all duration-300 bg-white/50"
+                        autocomplete="new-password">
+                    <label for="password-confirm" class="px-4 text-sm sm:text-base">
+                        <i class="fas fa-lock mr-2 text-primary"></i>Confirmă parola
+                    </label>
+                    <i class="password-toggle fas fa-eye" id="toggle-password-confirm" onclick="togglePassword('password-confirm', 'toggle-password-confirm')"></i>
+                </div>
+
+                <div class="flex items-start">
+                    <input type="checkbox" id="terms" class="mt-1 mr-2 w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                    <label for="terms" class="text-xs sm:text-sm text-gray-600">
+                        Sunt de acord cu <a href="#" id="terms-link" class="text-primary hover:text-secondary underline">termenii și condițiile</a> și <a href="#" id="privacy-link" class="text-primary hover:text-secondary underline">politica de confidențialitate</a>
+                        <span class="text-red-500">*</span>
+                    </label>
+                </div>
+
+                <button type="submit" id="register-btn"
+                    class="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-3 sm:py-4 px-6 rounded-xl text-base sm:text-lg flex items-center justify-center gap-2 transition-all duration-300 transform hover:scale-[1.02] hover:shadow-lg disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none">
+                    <i class="fas fa-user-plus"></i>
+                    <span>Creează cont</span>
+                </button>
+
+                <div id="register-error" class="text-red-500 text-center mt-3 sm:mt-4 p-3 bg-red-50 rounded-lg border border-red-200 hidden animate-fade-in text-sm sm:text-base">
+                    <i class="fas fa-exclamation-triangle mr-2"></i>
+                    <span id="error-message"></span>
+                </div>
+            </form>
+
+            <!-- Login Link -->
+            <div class="mt-6 sm:mt-8 text-center">
+                <p class="text-gray-600 text-xs sm:text-sm">
+                    Ai deja cont?
+                    <a href="/js/pages/login.html" class="text-primary font-semibold hover:text-secondary transition-colors duration-200">
+                        Autentifică-te aici
+                    </a>
+                </p>
+            </div>
+        </div>
+    </main>
+
+    <!-- Terms and Conditions Modal -->
+    <div id="terms-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-file-contract mr-3"></i>
+                    Termeni și Condiții
+                </h2>
+                <span class="close-modal" onclick="closeTermsModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-6 text-gray-700">
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">1. Acceptarea Termenilor</h3>
+                        <p>Prin accesarea și utilizarea site-ului Casa Chindea, acceptați să respectați și să fiți legat de acești Termeni și Condiții.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">2. Servicii Oferite</h3>
+                        <p>Casa Chindea oferă servicii de cazare în Hășmaș, județul Harghita, România.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">3. Înregistrare și Cont</h3>
+                        <p>Pentru a face rezervări, trebuie să creați un cont și să furnizați informații exacte și complete.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">4. Rezervări și Plăți</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Pentru confirmarea rezervării este necesar un avans de 30%</li>
+                            <li>Restul sumei se achită la check-in</li>
+                            <li>Plățile se pot face prin transfer bancar sau cash</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">5. Politica de Anulare</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong>30+ zile înainte:</strong> Rambursare 100%</li>
+                            <li><strong>15-30 zile înainte:</strong> Rambursare 50%</li>
+                            <li><strong>Sub 15 zile:</strong> Fără rambursare</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">6. Check-in și Check-out</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong>Check-in:</strong> Începând cu ora 15:00</li>
+                            <li><strong>Check-out:</strong> Până la ora 11:00</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">7. Regulile Casei</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Respectați proprietatea și păstrați-o în stare bună</li>
+                            <li>Nu fumați în interior</li>
+                            <li>Mențineți un nivel rezonabil de zgomot după ora 22:00</li>
+                            <li>Respectați numărul maxim de oaspeți rezervat</li>
+                        </ul>
+                    </section>
+
+                    <div class="mt-6 p-4 bg-primary/10 rounded-lg">
+                        <p class="text-sm text-gray-700">
+                            <i class="fas fa-info-circle text-primary mr-2"></i>
+                            Pentru versiunea completă a termenilor și condițiilor, vizitați
+                            <a href="/js/pages/terms.html" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 flex justify-end gap-3">
+                <button onclick="closeTermsModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition-colors">
+                    Închide
+                </button>
+                <button onclick="acceptTerms()" class="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-secondary hover:to-primary transition-all">
+                    <i class="fas fa-check mr-2"></i>Accept
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Privacy Policy Modal -->
+    <div id="privacy-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h2 class="text-2xl font-bold flex items-center">
+                    <i class="fas fa-shield-alt mr-3"></i>
+                    Politica de Confidențialitate
+                </h2>
+                <span class="close-modal" onclick="closePrivacyModal()">&times;</span>
+            </div>
+            <div class="modal-body">
+                <div class="space-y-6 text-gray-700">
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">1. Introducere</h3>
+                        <p>Casa Chindea respectă confidențialitatea dumneavoastră și se angajează să protejeze datele personale în conformitate cu GDPR.</p>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">2. Ce Date Colectăm</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li><strong>Date de identificare:</strong> nume, prenume</li>
+                            <li><strong>Date de contact:</strong> email, telefon</li>
+                            <li><strong>Date de autentificare:</strong> parolă criptată</li>
+                            <li><strong>Date de rezervare:</strong> informații despre sejur</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">3. Cum Utilizăm Datele</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Procesarea rezervărilor</li>
+                            <li>Comunicare cu clienții</li>
+                            <li>Facturare și plăți</li>
+                            <li>Îmbunătățirea serviciilor</li>
+                            <li>Marketing (doar cu consimțământul dvs.)</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">4. Drepturile Dumneavoastră</h3>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Dreptul de acces la datele personale</li>
+                            <li>Dreptul la rectificare</li>
+                            <li>Dreptul la ștergere ("dreptul de a fi uitat")</li>
+                            <li>Dreptul la portabilitate</li>
+                            <li>Dreptul de opoziție</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">5. Securitatea Datelor</h3>
+                        <p>Implementăm măsuri tehnice și organizatorice pentru a proteja datele dumneavoastră:</p>
+                        <ul class="list-disc list-inside space-y-2 ml-4">
+                            <li>Criptarea parolelor și datelor sensibile</li>
+                            <li>Conexiuni HTTPS securizate</li>
+                            <li>Acces restricționat la datele personale</li>
+                        </ul>
+                    </section>
+
+                    <section>
+                        <h3 class="text-xl font-semibold text-primary mb-3">6. Contact</h3>
+                        <p>Pentru întrebări despre protecția datelor, contactați-ne la contact@casachindea.ro</p>
+                    </section>
+
+                    <div class="mt-6 p-4 bg-primary/10 rounded-lg">
+                        <p class="text-sm text-gray-700">
+                            <i class="fas fa-info-circle text-primary mr-2"></i>
+                            Pentru versiunea completă a politicii de confidențialitate, vizitați
+                            <a href="/js/pages/privacy.html" target="_blank" class="text-primary hover:text-secondary underline font-semibold">această pagină</a>.
+                        </p>
+                    </div>
+                </div>
+            </div>
+            <div class="p-4 bg-gray-50 flex justify-end gap-3">
+                <button onclick="closePrivacyModal()" class="px-6 py-2 bg-gray-300 hover:bg-gray-400 text-gray-800 rounded-lg transition-colors">
+                    Închide
+                </button>
+                <button onclick="acceptPrivacy()" class="px-6 py-2 bg-gradient-to-r from-primary to-secondary text-white rounded-lg hover:from-secondary hover:to-primary transition-all">
+                    <i class="fas fa-check mr-2"></i>Accept
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Password toggle functionality
+        function togglePassword(inputId, iconId) {
+            const input = document.getElementById(inputId);
+            const icon = document.getElementById(iconId);
+
+            if (input.type === 'password') {
+                input.type = 'text';
+                icon.classList.remove('fa-eye');
+                icon.classList.add('fa-eye-slash');
+            } else {
+                input.type = 'password';
+                icon.classList.remove('fa-eye-slash');
+                icon.classList.add('fa-eye');
+            }
+        }
+
+        // Modal handling
+        const termsModal = document.getElementById('terms-modal');
+        const privacyModal = document.getElementById('privacy-modal');
+        const termsCheckbox = document.getElementById('terms');
+        const termsLink = document.getElementById('terms-link');
+        const privacyLink = document.getElementById('privacy-link');
+        const registerBtn = document.getElementById('register-btn');
+
+        // Initially disable register button until terms are accepted
+        registerBtn.disabled = true;
+
+        // Show terms modal when link is clicked
+        termsLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            termsModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        // Show privacy modal when link is clicked
+        privacyLink.addEventListener('click', function(e) {
+            e.preventDefault();
+            privacyModal.classList.add('show');
+            document.body.style.overflow = 'hidden';
+        });
+
+        // Close modals when clicking outside
+        window.addEventListener('click', function(event) {
+            if (event.target === termsModal) {
+                closeTermsModal();
+            }
+            if (event.target === privacyModal) {
+                closePrivacyModal();
+            }
+        });
+
+        // Close terms modal
+        function closeTermsModal() {
+            termsModal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Close privacy modal
+        function closePrivacyModal() {
+            privacyModal.classList.remove('show');
+            document.body.style.overflow = 'auto';
+        }
+
+        // Accept terms from modal
+        function acceptTerms() {
+            termsCheckbox.checked = true;
+            closeTermsModal();
+            updateRegisterButton();
+        }
+
+        // Accept privacy from modal
+        function acceptPrivacy() {
+            // If terms is already checked, keep it; otherwise this is just reading privacy
+            closePrivacyModal();
+        }
+
+        // Update register button state based on checkbox
+        function updateRegisterButton() {
+            if (termsCheckbox.checked) {
+                registerBtn.disabled = false;
+                registerBtn.classList.remove('opacity-50', 'cursor-not-allowed');
+            } else {
+                registerBtn.disabled = true;
+                registerBtn.classList.add('opacity-50', 'cursor-not-allowed');
+            }
+        }
+
+        // Listen to checkbox changes
+        termsCheckbox.addEventListener('change', updateRegisterButton);
+
+        // Password strength checker
+        const passwordInput = document.getElementById('password');
+        const passwordStrength = document.getElementById('password-strength');
+        const passwordStrengthText = document.getElementById('password-strength-text');
+
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let text = '';
+            let color = '';
+
+            if (password.length >= 8) strength++;
+            if (password.match(/[a-z]+/)) strength++;
+            if (password.match(/[A-Z]+/)) strength++;
+            if (password.match(/[0-9]+/)) strength++;
+            if (password.match(/[$@#&!]+/)) strength++;
+
+            const strengthBar = passwordStrength.querySelector('div');
+
+            switch (strength) {
+                case 0:
+                case 1:
+                    strengthBar.style.width = '20%';
+                    strengthBar.style.backgroundColor = '#ef4444';
+                    text = 'Parolă slabă';
+                    break;
+                case 2:
+                    strengthBar.style.width = '40%';
+                    strengthBar.style.backgroundColor = '#f59e0b';
+                    text = 'Parolă medie';
+                    break;
+                case 3:
+                    strengthBar.style.width = '60%';
+                    strengthBar.style.backgroundColor = '#fbbf24';
+                    text = 'Parolă bună';
+                    break;
+                case 4:
+                    strengthBar.style.width = '80%';
+                    strengthBar.style.backgroundColor = '#84cc16';
+                    text = 'Parolă puternică';
+                    break;
+                case 5:
+                    strengthBar.style.width = '100%';
+                    strengthBar.style.backgroundColor = '#10b981';
+                    text = 'Parolă foarte puternică';
+                    break;
+            }
+
+            passwordStrengthText.textContent = text || 'Introduceți o parolă';
+        });
+
+        // Register form submission
+        document.getElementById('register-form').onsubmit = async function(e) {
+            e.preventDefault();
+
+            const registerBtn = document.getElementById('register-btn');
+            const registerForm = document.getElementById('register-form');
+            const registerSuccess = document.getElementById('register-success');
+            const errorDiv = document.getElementById('register-error');
+            const errorMessage = document.getElementById('error-message');
+
+            // Reset error state
+            errorDiv.classList.add('hidden');
+            errorMessage.textContent = '';
+
+            // Get form values
+            const name = document.getElementById('name').value;
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const passwordConfirm = document.getElementById('password-confirm').value;
+            const terms = document.getElementById('terms').checked;
+
+            // Validation
+            if (!terms) {
+                errorMessage.textContent = 'Trebuie să accepți termenii și condițiile.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (password !== passwordConfirm) {
+                errorMessage.textContent = 'Parolele nu se potrivesc.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            if (password.length < 8) {
+                errorMessage.textContent = 'Parola trebuie să aibă cel puțin 8 caractere.';
+                errorDiv.classList.remove('hidden');
+                return;
+            }
+
+            // Show loading state
+            registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se verifică email-ul...';
+            registerBtn.disabled = true;
+            registerBtn.className = registerBtn.className.replace('hover:scale-[1.02]', '');
+
+            try {
+                // STEP 1: Check if email exists (NEW!)
+                const checkRes = await fetch('/api/auth/check-email', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email })
+                });
+
+                // Check if request was successful
+                if (!checkRes.ok) {
+                    throw new Error('Eroare la verificarea email-ului. Te rugăm să încerci din nou.');
+                }
+
+                const checkData = await checkRes.json();
+
+                // If email exists (exists: true), show error and STOP
+                if (checkData.exists === true) {
+                    throw new Error(checkData.message || 'Acest email este deja înregistrat.');
+                }
+
+                // STEP 2: Email is available, proceed with registration
+                registerBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se trimite codul...';
+
+                const res = await fetch('/api/auth/register', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ name, email, password })
+                });
+
+                const data = await res.json();
+
+                if (res.ok && data.success) {
+                    // Store email for verification page
+                    localStorage.setItem('verification_email', email);
+
+                    // Set session flags so verify-email.html allows access
+                    sessionStorage.setItem('verification_pending', 'true');
+                    sessionStorage.setItem('verification_email', email);
+
+                    // Show success state
+                    registerForm.classList.add('hidden');
+                    registerSuccess.classList.remove('hidden');
+
+                    // Update success message
+                    document.querySelector('#register-success h3').textContent = 'Cod trimis!';
+                    document.querySelector('#register-success p').textContent = 'Verifică-ți emailul și introdu codul de verificare...';
+
+                    // Redirect to verification page
+                    setTimeout(() => {
+                        window.location.href = `/js/pages/verify-email.html?email=${encodeURIComponent(email)}`;
+                    }, 2000);
+                } else {
+                    throw new Error(data.error || 'Eroare la înregistrare.');
+                }
+            } catch (err) {
+                // Show error state in UI
+                errorMessage.textContent = err.message || 'Eroare de conexiune la server.';
+                errorDiv.classList.remove('hidden');
+
+                // Reset button state
+                registerBtn.innerHTML = '<i class="fas fa-user-plus"></i><span>Creează cont</span>';
+                registerBtn.disabled = false;
+                registerBtn.className = registerBtn.className + ' hover:scale-[1.02]';
+
+                // Add shake animation to form on error
+                registerForm.classList.add('animate-pulse');
+                setTimeout(() => {
+                    registerForm.classList.remove('animate-pulse');
+                }, 1000);
+            }
+        };
+
+        // Check if already authenticated
+        window.onload = function() {
+            // Check if user is already logged in
+            const token = sessionStorage.getItem('auth_token');
+
+            if (token) {
+                // Verify token is actually valid before redirecting
+                fetch('/api/auth/verify', {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                })
+                .then(res => {
+                    if (res.ok) {
+                        // Token is valid, user is already logged in
+                        window.location.href = '/js/pages/profile.html';
+                    } else {
+                        // Token is invalid or expired, clear it and continue registration
+                        sessionStorage.removeItem('auth_token');
+                        sessionStorage.removeItem('user_info');
+                        localStorage.removeItem('auth_token');
+                        localStorage.removeItem('user_info');
+                    }
+                })
+                .catch(() => {
+                    // Error verifying, clear everything and continue registration
+                    sessionStorage.removeItem('auth_token');
+                    sessionStorage.removeItem('user_info');
+                    localStorage.removeItem('auth_token');
+                    localStorage.removeItem('user_info');
+                });
+            }
+
+            // NOTE: Terms modal removed - user can open it manually by clicking the links
+        };
+    </script>
+</body>
+
+</html>
+

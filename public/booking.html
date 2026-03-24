@@ -1,0 +1,1238 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preconnect" href="https://api.casachindea.ro" crossorigin>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Rezervare Online — Casa Chindea, Cazare Hășmaș</title>
+    <meta name="description" content="Rezervă online la Casa Chindea, pensiune în Hășmaș, Harghita. Camere disponibile lângă Lacul Roșu și Cheile Bicazului. Check-in 15:00, check-out 11:00.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.casachindea.ro/js/pages/booking.html">
+    <meta property="og:title" content="Rezervare Online — Casa Chindea Hășmaș">
+    <meta property="og:description" content="Rezervă online cameră la Casa Chindea, pensiune lângă Lacul Roșu.">
+    <meta property="og:url" content="https://www.casachindea.ro/js/pages/booking.html">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ro_RO">
+
+    <!-- API config - must load before any fetch -->
+    <script src="/js/api-config.js"></script>
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early data fetch for instant render with timeout -->
+    <script>
+        const t = Date.now();
+        const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+
+        window._bookingDataPromises = {
+            prices: fetchFn(`/api/prices?_t=${t}`, {}, timeout),
+            availability: fetchFn(`/api/booking/booking-availability?_t=${t}`, {
+                cache: 'no-store',
+                headers: { 'Cache-Control': 'no-cache' }
+            }, timeout)
+        };
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/flatpickr/dist/flatpickr.min.css">
+    <link rel="stylesheet" type="text/css" href="https://npmcdn.com/flatpickr/dist/themes/airbnb.css">
+    <link rel="stylesheet" href="/css/forms.css">
+    <script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+    <script src="https://npmcdn.com/flatpickr/dist/l10n/ro.js"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 animate-bounce-gentle">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/js/pages/gallery.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <!-- Auth element will be dynamically added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/js/pages/gallery.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <!-- Auth element will be dynamically added by navigation.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Include navigation component -->
+    <script src="/js/components/navigation.js"></script>
+    <section class="py-20 bg-white">
+        <div class="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="text-center mb-16">
+                <h1 class="text-5xl font-bold text-gray-900 mb-6">Rezervare</h1>
+                <p class="text-xl text-gray-600">Completează formularul pentru a face o rezervare</p>
+            </div>
+            <div class="bg-white rounded-2xl shadow-lg p-8">
+                <form id="booking-form" class="space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Nume complet <span
+                                    class="text-red-500">*</span></label>
+                            <input type="text" id="full-name" required
+                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email <span
+                                    class="text-red-500">*</span></label>
+                            <input type="email" id="email" required
+                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                    </div>
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Telefon <span
+                                    class="text-red-500">*</span></label>
+                            <input type="tel" id="phone" required
+                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Numărul de persoane <span
+                                    class="text-red-500">*</span></label>
+                            <select id="guests" required
+                                class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                <option value="">Selectează</option>
+                                <option value="1">1 persoană</option>
+                                <option value="2">2 persoane</option>
+                                <option value="3">3 persoane</option>
+                                <option value="4">4 persoane</option>
+                                <option value="5">5 persoane</option>
+                                <option value="6">6 persoane</option>
+                                <option value="7">7 persoană</option>
+                                <option value="8">8 persoane</option>
+                                <option value="9">9 persoane</option>
+                                <option value="10">10 persoane</option>
+                                <option value="11">11 persoane</option>
+                                <option value="12">12 persoane</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Perioada cazării <span
+                                class="text-red-500">*</span></label>
+                        <input type="text" id="date-range" required placeholder="Alege perioada"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                        <input type="hidden" id="checkin">
+                        <input type="hidden" id="checkout">
+                        <p class="mt-2 text-sm text-gray-500">Datele ocupate sunt dezactivate în calendar</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Tip închiriere <span
+                                class="text-red-500">*</span></label>
+                        <select id="rental-type" required
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="">Selectează tipul</option>
+                            <option value="room">Camere individuale</option>
+                            <option value="entire">Casa întreagă</option>
+                        </select>
+                    </div>
+                    <div id="room-count-section" style="display: none;">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Număr de camere</label>
+                        <select id="room-count"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                            <option value="1">1 cameră</option>
+                            <option value="2">2 camere</option>
+                            <option value="3">3 camere</option>
+                            <option value="4">4 camere</option>
+                        </select>
+                        <p class="mt-2 text-sm text-gray-500">Fiecare cameră poate găzdui 2 persoane</p>
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Mesaj suplimentar (opțional)</label>
+                        <textarea id="message" rows="4"
+                            class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"
+                            placeholder="Cerințe speciale, întrebări..."></textarea>
+                    </div>
+                    <!-- Required fields note -->
+                    <p class="text-xs text-gray-500"><span class="text-red-500">*</span> Câmpuri obligatorii</p>
+                    <div class="bg-gray-50 rounded-lg p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-4">Rezumatul rezervării</h3>
+                        <div id="booking-summary" class="space-y-2 text-gray-600">
+                            <p>Completează formularul pentru a vedea rezumatul</p>
+                        </div>
+                    </div>
+                    <button type="submit"
+                        class="w-full bg-primary hover:bg-green-700 text-white font-bold py-4 px-6 rounded-lg text-lg transition-colors duration-300">
+                        Trimite rezervarea
+                    </button>
+                </form>
+            </div>
+        </div>
+    </section>
+    <footer class="bg-gray-800 text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Casa Chindea</h3>
+                    <p class="text-gray-300">Refugiul perfect în inima naturii, la poalele Hășmașului Mare.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>Hășmaș, județul Harghita</p>
+                        <p><i class="fas fa-phone mr-2"></i>+40 743 930 521</p>
+                        <p><i class="fas fa-envelope mr-2"></i>contact@casachindea.ro</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Urmărește-ne</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/casa.chindea?locale=ro_RO"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="https://www.instagram.com/casachindea2019?igsh=bW1oMmdhcDcwbXhi"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@casachindea?_t=ZN-8xQ5XCOZp2I&_r=1"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-tiktok text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
+                <div class="mt-4 space-x-4 text-sm">
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+    <script>
+        let unavailableDateRanges = [];
+        let unavailableDateRangesNormalized = []; // [{start: 'YYYY-MM-DD', end: 'YYYY-MM-DD', type, reason}]
+
+        function pad(n) { return String(n).padStart(2, '0'); }
+
+        // Convert an ISO/UTC date string from server into local YYYY-MM-DD
+        function toLocalDateStringFromISO(isoOrDateStr) {
+            const d = new Date(isoOrDateStr);
+            return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}`;
+        }
+
+        function normalizeUnavailableRanges() {
+            // Convert server-provided ranges (which are in UTC) into local date strings
+            unavailableDateRangesNormalized = (unavailableDateRanges || []).map(range => {
+                const start = toLocalDateStringFromISO(range.start);
+
+                // Handle end: if server returns end at midnight (exclusive check-out), convert to previous day
+                let endDateObj = new Date(range.end);
+                if (endDateObj.getUTCHours() === 0 && endDateObj.getUTCMinutes() === 0 && endDateObj.getUTCSeconds() === 0) {
+                    // subtract 1 millisecond to move to previous local day
+                    endDateObj = new Date(endDateObj.getTime() - 1);
+                }
+                const end = toLocalDateStringFromISO(endDateObj.toISOString());
+
+                return { start, end, type: range.type, reason: range.reason };
+            });
+        }
+
+        function isDateUnavailable(date) {
+            // Use local date parts (year-month-day) to compare with normalized local ranges
+            const dLocal = `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())}`;
+            return unavailableDateRangesNormalized.some(range => (dLocal >= range.start && dLocal <= range.end));
+        }
+
+        async function fetchAvailabilityAndInitCalendar() {
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._bookingDataPromises?.availability) {
+                    data = await window._bookingDataPromises.availability;
+                    window._bookingDataPromises.availability = null;
+                }
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch(`/api/booking/booking-availability?_t=${Date.now()}`, {
+                        cache: 'no-store',
+                        headers: {
+                            'Cache-Control': 'no-cache, no-store, must-revalidate',
+                            'Pragma': 'no-cache'
+                        }
+                    });
+                    if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                    data = await response.json();
+                }
+
+                if (data?.success) {
+                    unavailableDateRanges = data.unavailableDates;
+                    normalizeUnavailableRanges();
+                }
+                initCalendar();
+            } catch (err) {
+                // In case of error, ensure normalized array is empty and initialize calendar
+                unavailableDateRanges = [];
+                unavailableDateRangesNormalized = [];
+                initCalendar();
+            }
+        }
+
+        let selectedOffer = null; // Ofertă selectată din URL
+
+        // Holiday type images mapping
+        const holidayImages = {
+            'revelion': 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=100&h=100&fit=crop',
+            'craciun': 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=100&h=100&fit=crop',
+            'paste': 'https://images.unsplash.com/photo-1457301353672-324d6d14f471?w=100&h=100&fit=crop',
+            '1mai': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=100&h=100&fit=crop',
+            'vara': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=100&h=100&fit=crop',
+            'custom': 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=100&h=100&fit=crop'
+        };
+
+        // Prețuri încărcate din admin (cu valori implicite)
+        let prices = {
+            priceRoom: 150,
+            priceEntire: 500,
+            priceBreakfast: 35,
+            priceBreakfastChild: 20,
+            surchargeWeekend: 0,
+            surchargeHoliday: 0
+        };
+
+        // Ensure DOM is loaded before initializing
+        document.addEventListener('DOMContentLoaded', function () {
+            // Încarcă prețurile din API
+            loadPrices();
+
+            // Pre-fill form with logged-in user data
+            prefillUserData();
+
+            // Handle URL parameters
+            const urlParams = new URLSearchParams(window.location.search);
+            const rentalType = urlParams.get('type');
+            const numRooms = urlParams.get('rooms');
+            const offerId = urlParams.get('offer');
+
+            // Check if this is a special offer booking
+            if (offerId) {
+                const rawStart = urlParams.get('start');
+                const rawEnd = urlParams.get('end');
+
+                // Normalize dates (remove time part if present)
+                const normalizeDate = (dateStr) => {
+                    if (!dateStr) return '';
+                    return dateStr.split('T')[0]; // Keep only YYYY-MM-DD
+                };
+
+                selectedOffer = {
+                    id: offerId,
+                    type: urlParams.get('type'),
+                    startDate: normalizeDate(rawStart),
+                    endDate: normalizeDate(rawEnd),
+                    nights: parseInt(urlParams.get('nights')) || 1,
+                    totalPrice: parseInt(urlParams.get('price')) || 0,
+                    roomPrice: parseInt(urlParams.get('roomPrice')) || 0,
+                    title: decodeURIComponent(urlParams.get('title') || 'Ofertă Specială')
+                };
+
+                applySpecialOffer();
+            } else if (rentalType) {
+                document.getElementById('rental-type').value = rentalType;
+                toggleRoomCountSection();
+
+                if (rentalType === 'room' && numRooms) {
+                    document.getElementById('room-count').value = numRooms;
+                }
+            }
+
+            // Add event listener for rental type change
+            document.getElementById('rental-type').addEventListener('change', function () {
+                // Clear offer if user changes rental type manually
+                if (selectedOffer) {
+                    clearSpecialOffer();
+                }
+                toggleRoomCountSection();
+                updateBookingSummary();
+            });
+
+            document.getElementById('room-count').addEventListener('change', updateBookingSummary);
+            document.getElementById('guests').addEventListener('change', updateBookingSummary);
+
+            fetchAvailabilityAndInitCalendar();
+        });
+
+        function applySpecialOffer() {
+            if (!selectedOffer) {
+                return;
+            }
+
+            // Show offer banner
+            showOfferBanner();
+
+            // Set rental type to entire (offers are usually for entire cottage)
+            document.getElementById('rental-type').value = 'entire';
+            toggleRoomCountSection();
+
+            // Set dates after calendar initializes
+            setTimeout(() => {
+                if (selectedOffer.startDate && selectedOffer.endDate) {
+
+                    document.getElementById('checkin').value = selectedOffer.startDate;
+                    document.getElementById('checkout').value = selectedOffer.endDate;
+
+                    // Update the date range display
+                    const startFormatted = formatDateDMY(selectedOffer.startDate);
+                    const endFormatted = formatDateDMY(selectedOffer.endDate);
+                    document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
+
+                    // Lock the date picker for offer bookings
+                    document.getElementById('date-range').disabled = true;
+                    document.getElementById('date-range').classList.add('bg-gray-100');
+                } else {
+                }
+
+                updateBookingSummary();
+            }, 500);
+        }
+
+        function showOfferBanner() {
+            const formContainer = document.querySelector('#booking-form').parentElement;
+            const existingBanner = document.getElementById('offer-banner');
+            if (existingBanner) existingBanner.remove();
+
+            const offerImage = holidayImages[selectedOffer.type] || holidayImages['custom'];
+
+            const banner = document.createElement('div');
+            banner.id = 'offer-banner';
+            banner.className = 'bg-gradient-to-r from-primary to-secondary text-white p-6 rounded-2xl mb-8 shadow-lg';
+            banner.innerHTML = `
+                <div class="flex items-center justify-between flex-wrap gap-4">
+                    <div class="flex items-center">
+                        <img src="${offerImage}" alt="${selectedOffer.title}" class="w-16 h-16 rounded-xl object-cover mr-4 border-2 border-white/30 shadow-md">
+                        <div>
+                            <h3 class="text-xl font-bold">${selectedOffer.title}</h3>
+                            <p class="opacity-90">${selectedOffer.nights} nopți • ${formatDateDMY(selectedOffer.startDate)} - ${formatDateDMY(selectedOffer.endDate)}</p>
+                        </div>
+                    </div>
+                    <div class="text-right">
+                        <div class="text-3xl font-bold">${selectedOffer.totalPrice} RON</div>
+                        <p class="text-sm opacity-90">preț total pachet</p>
+                    </div>
+                </div>
+                <button onclick="clearSpecialOffer()" class="mt-4 text-sm underline opacity-80 hover:opacity-100">
+                    <i class="fas fa-times mr-1"></i>Renunță la ofertă și alege alte date
+                </button>
+            `;
+            formContainer.insertBefore(banner, formContainer.firstChild);
+        }
+
+        function clearSpecialOffer() {
+            selectedOffer = null;
+
+            // Remove banner
+            const banner = document.getElementById('offer-banner');
+            if (banner) banner.remove();
+
+            // Reset form
+            document.getElementById('date-range').disabled = false;
+            document.getElementById('date-range').classList.remove('bg-gray-100');
+            document.getElementById('date-range').value = '';
+            document.getElementById('checkin').value = '';
+            document.getElementById('checkout').value = '';
+            document.getElementById('rental-type').value = '';
+
+            // Clear URL parameters
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            updateBookingSummary();
+        }
+
+        // Pre-fill booking form with logged-in user data
+        async function prefillUserData() {
+            const token = sessionStorage.getItem('auth_token');
+            if (!token) {
+                return;
+            }
+
+            try {
+                const response = await fetch('/api/user/profile', {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    const user = data.user;
+
+                    // Pre-fill name
+                    const nameInput = document.getElementById('full-name');
+                    if (nameInput && user.name) {
+                        nameInput.value = user.name;
+                    }
+
+                    // Pre-fill email
+                    const emailInput = document.getElementById('email');
+                    if (emailInput && user.email) {
+                        emailInput.value = user.email;
+                    }
+
+                    // Pre-fill phone
+                    const phoneInput = document.getElementById('phone');
+                    if (phoneInput && user.phone) {
+                        phoneInput.value = user.phone;
+                    }
+
+                    // Update booking summary after prefill
+                    updateBookingSummary();
+                }
+            } catch (err) {
+                // Silently fail - user can fill manually
+            }
+        }
+
+        // Încarcă prețurile din API
+        async function loadPrices() {
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._bookingDataPromises?.prices) {
+                    data = await window._bookingDataPromises.prices;
+                    window._bookingDataPromises.prices = null;
+                }
+
+                // Fallback to fresh fetch
+                if (!data) {
+                    const response = await fetch('/api/prices');
+                    data = await response.json();
+                }
+
+                if (data?.success && data?.prices) {
+                    prices = { ...prices, ...data.prices };
+                    updateBookingSummary();
+                }
+            } catch (err) {
+                // Use default prices silently if loading fails
+            }
+        }
+
+        function toggleRoomCountSection() {
+            const rentalType = document.getElementById('rental-type').value;
+            const roomCountSection = document.getElementById('room-count-section');
+
+            if (rentalType === 'room') {
+                roomCountSection.style.display = 'block';
+            } else {
+                roomCountSection.style.display = 'none';
+            }
+        }
+
+        // Note: date availability helper functions are defined earlier and normalized to UTC.
+        // The duplicate implementations were removed to avoid conflicts.
+
+        function formatDateDMY(dateStr) {
+            if (!dateStr) return '';
+            const d = new Date(dateStr);
+            const day = String(d.getDate()).padStart(2, '0');
+            const month = String(d.getMonth() + 1).padStart(2, '0');
+            const year = d.getFullYear();
+            return `${day}.${month}.${year}`;
+        }
+
+        function setDateRangeInput(start, end) {
+            if (start && end) {
+                // Use local date methods to avoid timezone issues
+                const startFormatted = formatDateDMY(getLocalDateString(start));
+                const endFormatted = formatDateDMY(getLocalDateString(end));
+                document.getElementById('date-range').value = `${startFormatted} - ${endFormatted}`;
+            } else if (start) {
+                const startFormatted = formatDateDMY(getLocalDateString(start));
+                document.getElementById('date-range').value = startFormatted;
+            } else {
+                document.getElementById('date-range').value = '';
+            }
+        }
+
+        // Helper function to get local date string without timezone issues
+        function getLocalDateString(date) {
+            if (typeof date === 'string') return date;
+            if (!date || !date.getFullYear) return '';
+
+            const year = date.getFullYear();
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const day = String(date.getDate()).padStart(2, '0');
+            return `${year}-${month}-${day}`;
+        }
+
+        function initCalendar() {
+            // Update placeholder to show calendar is ready
+            document.getElementById('date-range').placeholder = "Alege perioada";
+
+            const fp = flatpickr("#date-range", {
+                mode: "range",
+                minDate: "today",
+                locale: "ro",
+                dateFormat: "d.m.Y",
+                altInput: false,
+                allowInput: false,
+                clickOpens: true,
+                // Use normalized ranges presence to enable disable function
+                disable: unavailableDateRangesNormalized.length > 0 ? [isDateUnavailable] : [],
+                onChange: function (selectedDates, dateStr, instance) {
+                    if (selectedDates.length === 2) {
+                        const [start, end] = selectedDates;
+                        document.getElementById('checkin').value = getLocalDateString(start);
+                        document.getElementById('checkout').value = getLocalDateString(end);
+                        setDateRangeInput(start, end);
+                        updateBookingSummary();
+                    } else if (selectedDates.length === 1) {
+                        setDateRangeInput(selectedDates[0]);
+                        document.getElementById('checkin').value = getLocalDateString(selectedDates[0]);
+                        document.getElementById('checkout').value = '';
+                    } else {
+                        setDateRangeInput();
+                        document.getElementById('checkin').value = '';
+                        document.getElementById('checkout').value = '';
+                    }
+                },
+                onReady: function (selectedDates, dateStr, instance) {
+                },
+                onOpen: function (selectedDates, dateStr, instance) {
+                }
+            });
+
+            // Fallback check if calendar doesn't initialize
+            setTimeout(() => {
+                if (!fp || !fp.isOpen) {
+                }
+            }, 1000);
+        }
+
+
+        function updateBookingSummary() {
+            const checkin = document.getElementById('checkin').value;
+            const checkout = document.getElementById('checkout').value;
+            const guests = document.getElementById('guests').value;
+            const rentalType = document.getElementById('rental-type').value;
+            const roomCount = document.getElementById('room-count').value;
+
+            // If special offer is selected, show offer summary
+            if (selectedOffer && checkin && checkout && guests) {
+                const offerImage = holidayImages[selectedOffer.type] || holidayImages['custom'];
+                const summary = `
+                    <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-lg p-4 border border-primary/30">
+                        <div class="flex items-center mb-3">
+                            <img src="${offerImage}" alt="${selectedOffer.title}" class="w-10 h-10 rounded-lg object-cover mr-3 border border-primary/30">
+                            <span class="font-bold text-primary">Ofertă Specială Aplicată</span>
+                        </div>
+                        <p><strong>Pachet:</strong> ${selectedOffer.title}</p>
+                        <p><strong>Check-in:</strong> ${formatDateDMY(checkin)}</p>
+                        <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
+                        <p><strong>Număr nopți:</strong> ${selectedOffer.nights}</p>
+                        <p><strong>Număr persoane:</strong> ${guests}</p>
+                        <p><strong>Tip închiriere:</strong> Casa întreagă (4 camere)</p>
+                        <p class="text-xl font-bold text-primary mt-3 pt-3 border-t border-primary/30">
+                            <strong>Total pachet:</strong> ${selectedOffer.totalPrice} RON
+                        </p>
+                        <p class="text-sm text-gray-500 mt-1">Prețul include tot ce este menționat în ofertă</p>
+                    </div>
+                `;
+                document.getElementById('booking-summary').innerHTML = summary;
+                return;
+            }
+
+            if (checkin && checkout && guests && rentalType) {
+                const nights = Math.round((new Date(checkout) - new Date(checkin)) / (1000 * 60 * 60 * 24));
+                let pricePerNight = 0;
+                let rentalDescription = '';
+
+                if (rentalType === 'room') {
+                    const numRooms = parseInt(roomCount) || 1;
+                    pricePerNight = prices.priceRoom * numRooms; // Preț din admin per cameră
+                    rentalDescription = `${numRooms} ${numRooms === 1 ? 'cameră' : 'camere'}`;
+                } else if (rentalType === 'entire') {
+                    pricePerNight = prices.priceEntire; // Preț din admin pentru cabana întreagă
+                    rentalDescription = 'Casa intreaga (4 camere)';
+                }
+
+                // Calculează suprataxă weekend dacă este cazul
+                let weekendNights = 0;
+                if (prices.surchargeWeekend > 0) {
+                    const startDate = new Date(checkin);
+                    for (let i = 0; i < nights; i++) {
+                        const day = new Date(startDate);
+                        day.setDate(day.getDate() + i);
+                        const dayOfWeek = day.getDay();
+                        if (dayOfWeek === 5 || dayOfWeek === 6) { // Vineri sau Sâmbătă
+                            weekendNights++;
+                        }
+                    }
+                }
+
+                const basePrice = nights * pricePerNight;
+                const weekendSurcharge = weekendNights > 0 ? Math.round((pricePerNight * weekendNights * prices.surchargeWeekend) / 100) : 0;
+                const totalPrice = basePrice + weekendSurcharge;
+
+                let summary = `
+                    <p><strong>Check-in:</strong> ${formatDateDMY(checkin)}</p>
+                    <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
+                    <p><strong>Număr nopți:</strong> ${nights}</p>
+                    <p><strong>Număr persoane:</strong> ${guests}</p>
+                    <p><strong>Tip închiriere:</strong> ${rentalDescription}</p>
+                    <p><strong>Preț pe noapte:</strong> ${pricePerNight} RON</p>
+                `;
+
+                if (weekendSurcharge > 0) {
+                    summary += `<p><strong>Suprataxă weekend (${prices.surchargeWeekend}%):</strong> +${weekendSurcharge} RON</p>`;
+                }
+
+                summary += `<p class="text-lg font-bold text-primary mt-2"><strong>Total estimat:</strong> ${totalPrice} RON</p>`;
+
+                document.getElementById('booking-summary').innerHTML = summary;
+            }
+        }
+
+        // ── Payment config (fetched once on page load) ───────────────────────
+        let paymentConfig = { paymentMode: 'none', depositPercent: 30, publishableKey: '' };
+        let stripeInstance = null;
+        let stripeElements = null;
+
+        async function loadPaymentConfig() {
+            try {
+                const res = await fetch('/api/payment/config');
+                const data = await res.json();
+                if (data.success) {
+                    paymentConfig = data;
+                    if (data.paymentMode !== 'none' && data.publishableKey && !data.publishableKey.includes('YOUR_')) {
+                        await loadStripeJs();
+                        stripeInstance = Stripe(data.publishableKey);
+                    }
+                }
+            } catch (e) {
+                console.warn('Could not load payment config:', e.message);
+            }
+        }
+
+        function loadStripeJs() {
+            return new Promise((resolve) => {
+                if (window.Stripe) return resolve();
+                const s = document.createElement('script');
+                s.src = 'https://js.stripe.com/v3/';
+                s.onload = resolve;
+                document.head.appendChild(s);
+            });
+        }
+
+        loadPaymentConfig();
+
+        // ── Collect form data without submitting to DB ────────────────────────
+        function collectBookingData() {
+            const rentalType = document.getElementById('rental-type').value;
+            let message = document.getElementById('message').value;
+            if (selectedOffer) {
+                const offerInfo = `\n\n🎁 OFERTĂ SPECIALĂ: ${selectedOffer.title}\nPreț pachet: ${selectedOffer.totalPrice} RON\nNopți: ${selectedOffer.nights}`;
+                message = message ? message + offerInfo : offerInfo;
+            }
+            const data = {
+                name: document.getElementById('full-name').value,
+                email: document.getElementById('email').value,
+                phone: document.getElementById('phone').value,
+                guests: document.getElementById('guests').value,
+                checkin: document.getElementById('checkin').value,
+                checkout: document.getElementById('checkout').value,
+                roomType: rentalType === 'entire' ? 'entire' : 'room',
+                numberOfRooms: rentalType === 'room' ? parseInt(document.getElementById('room-count').value) : 4,
+                message
+            };
+            if (selectedOffer) {
+                data.offerId = selectedOffer.id;
+                data.offerTitle = selectedOffer.title;
+                data.offerPrice = selectedOffer.totalPrice;
+            }
+            return data;
+        }
+
+        document.getElementById('booking-form').addEventListener('submit', function (e) {
+            e.preventDefault();
+
+            const token = sessionStorage.getItem('auth_token');
+            if (!token || !sessionStorage.getItem('user_info')) {
+                showAuthenticationRequired();
+                return;
+            }
+
+            const totalAmount = calculateTotalAmount();
+            const bookingData = collectBookingData();
+
+            // If payment is active, show modal first — DB save happens inside modal
+            if (paymentConfig.paymentMode !== 'none' && stripeInstance) {
+                showPaymentChoiceModal(bookingData, totalAmount, token);
+            } else {
+                // No payment configured — save directly and show success
+                saveBookingAndFinish(bookingData, totalAmount, token, 'cash');
+            }
+        });
+
+        // ── Save booking to DB then handle result ─────────────────────────────
+        async function saveBookingAndFinish(bookingData, totalAmount, token, method, paidAmount = 0) {
+            try {
+                const res = await fetch('/api/booking', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify(bookingData)
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error || 'Eroare necunoscută');
+                return data.booking?.id;
+            } catch (err) {
+                throw err;
+            }
+        }
+
+        function calculateTotalAmount() {
+            if (selectedOffer) return selectedOffer.totalPrice || 0;
+            const summaryEl = document.getElementById('booking-summary');
+            if (!summaryEl) return 0;
+            const match = summaryEl.innerText.match(/Total estimat:\s*([\d]+)/);
+            return match ? parseInt(match[1]) : 0;
+        }
+
+        // ── Payment Choice Modal ─────────────────────────────────────────────
+        function showPaymentChoiceModal(bookingData, totalAmount, token) {
+            const mode = paymentConfig.paymentMode;
+            const depositPct = paymentConfig.depositPercent || 30;
+            const amountNow = mode === 'deposit' ? Math.ceil((totalAmount * depositPct) / 100) : totalAmount;
+            const amountLater = totalAmount - amountNow;
+
+            const modal = document.createElement('div');
+            modal.id = 'payment-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-60 flex items-center justify-center z-50 p-4';
+
+            const depositInfo = mode === 'deposit'
+                ? `<p class="text-sm text-gray-500 mt-1">Restul de <strong>${amountLater} RON</strong> se plătește la sosire.</p>`
+                : '';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl shadow-2xl max-w-md w-full animate-fade-in" style="max-height:90vh;overflow-y:auto;">
+                    <!-- Header with close button -->
+                    <div class="flex items-center justify-between p-6 pb-0">
+                        <h2 class="text-xl font-bold text-gray-900">Finalizează rezervarea</h2>
+                        <button id="close-payment-modal" class="w-8 h-8 flex items-center justify-center rounded-full bg-gray-100 hover:bg-gray-200 text-gray-500 transition-colors">
+                            <i class="fas fa-times text-sm"></i>
+                        </button>
+                    </div>
+
+                    <div class="p-6">
+                        <!-- Amount summary -->
+                        <div class="bg-gray-50 rounded-xl p-4 mb-5 text-center">
+                            <p class="text-sm text-gray-500">${mode === 'deposit' ? `Avans (${depositPct}%)` : 'Total de plată'}</p>
+                            <p class="text-3xl font-bold text-primary mt-1">${amountNow} RON</p>
+                            ${depositInfo}
+                        </div>
+
+                        <!-- Choice buttons (shown first) -->
+                        <div id="payment-choice" class="space-y-3">
+                            <button id="pay-card-btn"
+                                class="w-full bg-primary hover:bg-green-700 text-white py-4 rounded-xl font-semibold flex items-center justify-center gap-3 transition-colors">
+                                <i class="fas fa-credit-card text-xl"></i>
+                                <span>Plătesc cu cardul acum</span>
+                            </button>
+
+                            <div class="flex items-center gap-3">
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                                <span class="text-xs text-gray-400">sau</span>
+                                <div class="flex-1 h-px bg-gray-200"></div>
+                            </div>
+
+                            <button id="pay-cash-btn"
+                                class="w-full border-2 border-gray-300 hover:border-gray-400 text-gray-700 py-4 rounded-xl font-semibold flex items-center justify-center gap-3 transition-colors">
+                                <i class="fas fa-money-bill-wave text-xl text-gray-500"></i>
+                                <div class="text-left">
+                                    <div>Plătesc cash la sosire</div>
+                                    <div class="text-xs font-normal text-gray-400">Rezervarea va fi aprobată de gazdă</div>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Card fields (shown after choosing card) -->
+                        <div id="card-payment-section" class="hidden">
+                            <button id="back-to-choice" class="flex items-center gap-1 text-sm text-gray-500 hover:text-gray-700 mb-4">
+                                <i class="fas fa-arrow-left text-xs"></i> Înapoi
+                            </button>
+                            <div class="space-y-3">
+                                <div>
+                                    <label class="block text-xs font-medium text-gray-600 mb-1">Număr card</label>
+                                    <div id="stripe-card-number" class="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50"></div>
+                                </div>
+                                <div class="grid grid-cols-2 gap-3">
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">Dată expirare</label>
+                                        <div id="stripe-card-expiry" class="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50"></div>
+                                    </div>
+                                    <div>
+                                        <label class="block text-xs font-medium text-gray-600 mb-1">CVC</label>
+                                        <div id="stripe-card-cvc" class="border border-gray-300 rounded-lg px-3 py-3 bg-gray-50"></div>
+                                    </div>
+                                </div>
+                                <div id="card-error" class="text-red-500 text-sm hidden"></div>
+                                <button id="confirm-card-btn"
+                                    class="w-full bg-primary hover:bg-green-700 text-white py-3 rounded-lg font-semibold flex items-center justify-center gap-2 transition-colors mt-2">
+                                    <i class="fas fa-lock"></i> Confirmă plata — ${amountNow} RON
+                                </button>
+                            </div>
+                            <p class="text-xs text-center text-gray-400 mt-3 flex items-center justify-center gap-1">
+                                <i class="fas fa-lock text-green-500"></i> Plată securizată prin Stripe
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+            injectFadeInStyle();
+
+            // Close button — cancels without saving
+            document.getElementById('close-payment-modal').addEventListener('click', () => {
+                closePaymentModal();
+            });
+
+            // Card button
+            document.getElementById('pay-card-btn').addEventListener('click', () => {
+                document.getElementById('payment-choice').classList.add('hidden');
+                document.getElementById('card-payment-section').classList.remove('hidden');
+                initStripeCardFields();
+                document.getElementById('confirm-card-btn').onclick = () =>
+                    processCardPayment(bookingData, totalAmount, amountNow, token, mode);
+            });
+
+            // Back button
+            document.getElementById('card-payment-section').addEventListener('click', (e) => {
+                if (e.target.closest('#back-to-choice')) {
+                    document.getElementById('card-payment-section').classList.add('hidden');
+                    document.getElementById('payment-choice').classList.remove('hidden');
+                }
+            });
+
+            // Cash button
+            document.getElementById('pay-cash-btn').addEventListener('click', () => {
+                handleCashPayment(bookingData, totalAmount, token);
+            });
+        }
+
+        function initStripeCardFields() {
+            if (stripeElements) return; // already mounted
+            stripeElements = stripeInstance.elements();
+
+            const style = {
+                base: { fontSize: '15px', color: '#1a1a1a', '::placeholder': { color: '#9ca3af' } }
+            };
+
+            const cardNumber = stripeElements.create('cardNumber', { style, showIcon: true });
+            cardNumber.mount('#stripe-card-number');
+
+            const cardExpiry = stripeElements.create('cardExpiry', { style });
+            cardExpiry.mount('#stripe-card-expiry');
+
+            const cardCvc = stripeElements.create('cardCvc', { style });
+            cardCvc.mount('#stripe-card-cvc');
+
+            // Store for later use
+            window._stripeCardNumber = cardNumber;
+        }
+
+        async function processCardPayment(bookingData, totalAmount, amountNow, token, mode) {
+            const confirmBtn = document.getElementById('confirm-card-btn');
+            const errorEl = document.getElementById('card-error');
+            confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se salvează rezervarea...';
+            confirmBtn.disabled = true;
+            errorEl.classList.add('hidden');
+
+            try {
+                // 1. Save booking to DB first
+                const bookingId = await saveBookingAndFinish(bookingData, totalAmount, token, 'card');
+                if (!bookingId) throw new Error('Rezervarea nu a putut fi salvată.');
+
+                confirmBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se procesează plata...';
+
+                // 2. Create PaymentIntent on backend
+                const intentRes = await fetch('/api/payment/create-intent', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                    body: JSON.stringify({ bookingId, totalAmount })
+                });
+                const intentData = await intentRes.json();
+                if (!intentData.success || !intentData.clientSecret) {
+                    throw new Error(intentData.error || 'Nu s-a putut inițializa plata.');
+                }
+
+                // 3. Confirm card payment with Stripe (no billing details = no postal code)
+                const { paymentIntent, error } = await stripeInstance.confirmCardPayment(intentData.clientSecret, {
+                    payment_method: { card: window._stripeCardNumber }
+                });
+
+                if (error) throw new Error(error.message);
+
+                if (paymentIntent.status === 'succeeded') {
+                    // 4. Mark as paid on backend
+                    const paymentStatus = mode === 'deposit' ? 'deposit_paid' : 'paid';
+                    await fetch('/api/payment/confirm', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ bookingId, paymentStatus, paidAmount: amountNow, totalAmount })
+                    });
+
+                    closePaymentModal();
+                    showBookingSuccess('card', amountNow, mode);
+                }
+            } catch (err) {
+                errorEl.textContent = err.message;
+                errorEl.classList.remove('hidden');
+                confirmBtn.innerHTML = `<i class="fas fa-lock"></i> Confirmă plata — ${amountNow} RON`;
+                confirmBtn.disabled = false;
+            }
+        }
+
+        async function handleCashPayment(bookingData, totalAmount, token) {
+            const cashBtn = document.getElementById('pay-cash-btn');
+            cashBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se înregistrează...';
+            cashBtn.disabled = true;
+
+            try {
+                // Save booking to DB
+                const bookingId = await saveBookingAndFinish(bookingData, totalAmount, token, 'cash');
+
+                // Mark as cash on backend
+                if (bookingId) {
+                    await fetch('/api/payment/cash', {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+                        body: JSON.stringify({ bookingId, totalAmount })
+                    });
+                }
+
+                closePaymentModal();
+                showBookingSuccess('cash');
+            } catch (err) {
+                cashBtn.innerHTML = '<i class="fas fa-money-bill-wave text-xl text-gray-500"></i> <div class="text-left"><div>Plătesc cash la sosire</div><div class="text-xs font-normal text-gray-400">Rezervarea va fi aprobată de gazdă</div></div>';
+                cashBtn.disabled = false;
+                showNotification('Eroare: ' + err.message, 'error');
+                closePaymentModal();
+            }
+        }
+
+        function closePaymentModal() {
+            const m = document.getElementById('payment-modal');
+            if (m) m.remove();
+            stripeElements = null;
+            window._stripeCardNumber = null;
+        }
+
+        function showBookingSuccess(method, paidAmount = 0, mode = 'full') {
+            document.getElementById('booking-form').reset();
+            document.getElementById('booking-summary').innerHTML = '<p>Completează formularul pentru a vedea rezumatul</p>';
+            selectedOffer = null;
+            const banner = document.getElementById('offer-banner');
+            if (banner) banner.remove();
+            window.history.replaceState({}, document.title, window.location.pathname);
+
+            if (method === 'card') {
+                const msg = mode === 'deposit'
+                    ? `✅ Avans de ${paidAmount} RON plătit cu succes! Restul se achită la sosire. Vei primi o confirmare pe email.`
+                    : `✅ Plată de ${paidAmount} RON confirmată! Rezervarea ta a fost înregistrată. Vei primi o confirmare pe email.`;
+                showNotification(msg, 'success');
+            } else {
+                showNotification('✅ Rezervarea a fost trimisă! Gazda te va contacta pentru confirmare. Plata se face cash la sosire.', 'success');
+            }
+        }
+
+        function injectFadeInStyle() {
+            if (document.getElementById('payment-modal-style')) return;
+            const style = document.createElement('style');
+            style.id = 'payment-modal-style';
+            style.innerHTML = `
+                @keyframes fadeIn { from { opacity:0; transform:scale(0.95); } to { opacity:1; transform:scale(1); } }
+                .animate-fade-in { animation: fadeIn 0.25s ease-out; }
+            `;
+            document.head.appendChild(style);
+        }
+
+        // Notification system
+        function showNotification(message, type = 'info') {
+            // Remove existing notification if any
+            const existing = document.getElementById('notification');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.id = 'notification';
+            notification.className = `fixed top-4 right-4 z-50 max-w-md p-4 rounded-lg shadow-lg transform translate-x-0 transition-all duration-300 ease-in-out ${type === 'success' ? 'bg-green-500 text-white' :
+                type === 'error' ? 'bg-red-500 text-white' :
+                    'bg-blue-500 text-white'
+                }`;
+
+            notification.innerHTML = `
+                <div class="flex items-center justify-between">
+                    <div class="flex items-center">
+                        <i class="fas ${type === 'success' ? 'fa-check-circle' :
+                    type === 'error' ? 'fa-exclamation-circle' :
+                        'fa-info-circle'
+                } mr-2"></i>
+                        <span>${message}</span>
+                    </div>
+                    <button onclick="this.parentElement.parentElement.remove()" class="ml-4 text-white hover:text-gray-200">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            `;
+
+            document.body.appendChild(notification);
+
+            // Auto-remove after 5 seconds
+            setTimeout(() => {
+                if (notification && notification.parentNode) {
+                    notification.remove();
+                }
+            }, 5000);
+        }
+
+        // Custom authentication required modal
+        function showAuthenticationRequired() {
+            // Remove any existing auth modal
+            const existing = document.getElementById('auth-modal');
+            if (existing) {
+                existing.remove();
+            }
+
+            // Create modal overlay
+            const modal = document.createElement('div');
+            modal.id = 'auth-modal';
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+
+            modal.innerHTML = `
+                <div class="bg-white rounded-lg p-6 max-w-md mx-4 animate-fade-in">
+                    <div class="text-center">
+                        <div class="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fas fa-lock text-red-600 text-2xl"></i>
+                        </div>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Autentificare necesară</h3>
+                        <p class="text-gray-600 mb-6">Pentru a face o rezervare trebuie să te autentifici mai întâi.</p>
+
+                        <div class="flex space-x-3">
+                            <button onclick="closeAuthModal()"
+                                class="flex-1 px-4 py-2 text-gray-700 bg-gray-200 rounded-lg hover:bg-gray-300 transition-colors">
+                                Anulează
+                            </button>
+                            <button onclick="goToLogin()"
+                                class="flex-1 px-4 py-2 bg-primary text-white rounded-lg hover:bg-green-700 transition-colors">
+                                <i class="fas fa-sign-in-alt mr-2"></i>Mergi la Login
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            document.body.appendChild(modal);
+
+            // Add fadeIn animation style if not already present
+            if (!document.getElementById('auth-modal-style')) {
+                const style = document.createElement('style');
+                style.id = 'auth-modal-style';
+                style.innerHTML = `
+                    .animate-fade-in {
+                        animation: fadeIn 0.3s ease-out;
+                    }
+                    @keyframes fadeIn {
+                        from { opacity: 0; transform: scale(0.9); }
+                        to { opacity: 1; transform: scale(1); }
+                    }
+                `;
+                document.head.appendChild(style);
+            }
+        }
+
+        // Close authentication modal
+        function closeAuthModal() {
+            const modal = document.getElementById('auth-modal');
+            if (modal) {
+                modal.remove();
+            }
+        }
+
+        // Go to login with redirect
+        function goToLogin() {
+            window.location.href = '/js/pages/login.html?redirect=/js/pages/booking.html';
+        }
+    </script>
+</body>
+
+</html>

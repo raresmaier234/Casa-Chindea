@@ -1,0 +1,2880 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    
+    <!-- Preload critical API data -->
+    <link rel="preconnect" href="https://api.casachindea.ro" crossorigin>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="robots" content="noindex, nofollow">
+    <title>Admin Dashboard - Casa Chindea</title>
+
+    <!-- API config - must load before any fetch -->
+    <script src="/js/api-config.js"></script>
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Start fetching data immediately before JS loads -->
+    <script>
+        // Early data fetching - start before DOM is ready
+        window._adminDataPromises = {};
+        const token = sessionStorage.getItem('auth_token');
+
+        if (token) {
+            const headers = { 'Authorization': `Bearer ${token}` };
+            const t = Date.now();
+            // Use mobile optimizations if available
+            const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+            const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+
+            window._adminDataPromises.bookings = fetchFn(
+                `/api/admin/booking?status=pending&_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.gallery = fetchFn(
+                `/api/photos?limit=500&_t=${t}`,
+                { cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.prices = fetchFn(
+                `/api/admin/prices?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.offers = fetchFn(
+                `/api/admin/offers?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+            window._adminDataPromises.calendarBlocks = fetchFn(
+                `/api/admin/calendar-blocks?_t=${t}`,
+                { headers, cache: 'no-store' },
+                timeout
+            );
+        }
+    </script>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="/css/forms.css">
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        /* Custom scrollbar for mobile */
+        @media (max-width: 640px) {
+            .overflow-x-auto::-webkit-scrollbar {
+                height: 4px;
+            }
+            .overflow-x-auto::-webkit-scrollbar-thumb {
+                background: #cbd5e0;
+                border-radius: 2px;
+            }
+            .overflow-x-auto::-webkit-scrollbar-track {
+                background: #f7fafc;
+            }
+        }
+
+        /* Prevent text overflow on mobile */
+        @media (max-width: 640px) {
+            h1, h2, h3 {
+                word-break: break-word;
+            }
+        }
+
+        /* Holiday type selector with icons */
+        .offer-type-select {
+            background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3e%3c/svg%3e");
+            background-position: right 0.5rem center;
+            background-repeat: no-repeat;
+            background-size: 1.5em 1.5em;
+            padding-right: 2.5rem;
+        }
+
+        #offer-type-preview {
+            display: flex;
+            align-items: center;
+            padding: 0.75rem;
+            background: #f9fafb;
+            border-radius: 0.5rem;
+            border: 1px solid #e5e7eb;
+        }
+
+        #offer-type-icon {
+            transition: transform 0.2s;
+        }
+
+        #offer-type-icon:hover {
+            transform: scale(1.05);
+        }
+
+        /* Smooth animation for new/updated offers */
+        .animate-in {
+            animation: slideIn 0.4s ease-out;
+        }
+
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        /* Skeleton loading animation - faster on mobile */
+        @keyframes shimmer {
+            0% { background-position: -200% 0; }
+            100% { background-position: 200% 0; }
+        }
+
+        .skeleton {
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 200% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 0.5rem;
+        }
+
+        /* Faster animation on mobile for better perceived performance */
+        @media (max-width: 640px) {
+            .skeleton {
+                animation: shimmer 1s infinite;
+            }
+        }
+
+        .skeleton-text {
+            height: 1rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .skeleton-title {
+            height: 1.5rem;
+            width: 60%;
+            margin-bottom: 0.75rem;
+        }
+
+        .skeleton-card {
+            padding: 1rem;
+            border: 1px solid #e5e7eb;
+            border-radius: 0.75rem;
+            margin-bottom: 1rem;
+        }
+
+        .skeleton-image {
+            width: 100%;
+            height: 150px;
+            border-radius: 0.5rem;
+        }
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <!-- Navigation -->
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-cog mr-2"></i>Admin Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/profile.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Profil</a>
+                    <!-- Auth element will be dynamically added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/profile.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Profil</a>
+                <!-- Auth element will be dynamically added by navigation.js -->
+            </div>
+        </div>
+    </nav>
+    <script src="/js/components/navigation.js"></script>
+
+    <!-- Main Content -->
+    <main class="pt-20 min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+            <!-- Header -->
+            <div class="bg-white rounded-2xl shadow-lg p-4 sm:p-6 md:p-8 mb-4 sm:mb-6 md:mb-8">
+                <div class="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                    <div>
+                        <h1 class="text-2xl sm:text-3xl font-bold text-gray-900">Dashboard Admin</h1>
+                        <p class="text-sm sm:text-base text-gray-600">Gestionează rezervările și galeria Casa Chindea</p>
+                    </div>
+                    <div class="text-left sm:text-right">
+                        <div class="text-xl sm:text-2xl font-bold text-primary" id="stats-total">0</div>
+                        <div class="text-xs sm:text-sm text-gray-500">Total rezervări</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <div class="bg-white rounded-2xl shadow-lg mb-4 sm:mb-6 md:mb-8">
+                <div class="border-b border-gray-200 overflow-x-auto">
+                    <nav class="flex space-x-4 sm:space-x-8 px-4 sm:px-6 md:px-8 min-w-max sm:min-w-0">
+                        <button id="tab-bookings"
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-primary text-primary font-medium text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-calendar-alt mr-1 sm:mr-2"></i>Rezervări
+                        </button>
+                        <button id="tab-gallery"
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-images mr-1 sm:mr-2"></i>Galerie
+                        </button>
+                        <button id="tab-calendar"
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-ban mr-1 sm:mr-2"></i>Blocări
+                        </button>
+                        <button id="tab-prices"
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-euro-sign mr-1 sm:mr-2"></i>Prețuri
+                        </button>
+                        <button id="tab-offers"
+                            class="tab-button py-3 sm:py-4 px-1 border-b-2 border-transparent text-gray-500 hover:text-gray-700 text-sm sm:text-base whitespace-nowrap">
+                            <i class="fas fa-gift mr-1 sm:mr-2"></i>Oferte
+                        </button>
+                    </nav>
+                </div>
+
+                <!-- Bookings Tab Content -->
+                <div id="content-bookings" class="tab-content p-4 sm:p-6 md:p-8">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 sm:gap-4 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Rezervări</h2>
+                        <div class="flex flex-wrap gap-2 w-full sm:w-auto">
+                            <select id="filter-status" class="flex-1 sm:flex-initial border border-gray-300 rounded-lg px-3 py-2 text-sm sm:text-base">
+                                <option value="pending">În așteptare</option>
+                                <option value="confirmed">Confirmate</option>
+                                <option value="cancelled">Anulate</option>
+                            </select>
+                            <button id="refresh-bookings"
+                                class="bg-primary hover:bg-secondary text-white px-3 sm:px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-sync-alt"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Loading State -->
+                    <div id="bookings-loading" class="text-center py-6 sm:py-8">
+                        <div class="animate-spin rounded-full h-10 w-10 sm:h-12 sm:w-12 border-b-2 border-primary mx-auto mb-3 sm:mb-4"></div>
+                        <p class="text-sm sm:text-base text-gray-600">Se încarcă rezervările...</p>
+                    </div>
+
+                    <!-- Bookings List -->
+                    <div id="bookings-list" class="hidden space-y-3 sm:space-y-4">
+                        <!-- Bookings will be dynamically inserted here -->
+                    </div>
+
+                    <!-- Empty State -->
+                    <div id="bookings-empty" class="hidden text-center py-8 sm:py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-5xl sm:text-6xl mb-3 sm:mb-4"></i>
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-2">Nu există rezervări</h3>
+                        <p class="text-sm sm:text-base text-gray-600">Rezervările vor apărea aici când vor fi create.</p>
+                    </div>
+                </div>
+
+                <!-- Gallery Tab Content -->
+                <div id="content-gallery" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Galerie</h2>
+                        <div class="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
+                            <button id="add-photo-btn"
+                                class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-plus mr-2"></i>Adaugă Poză
+                            </button>
+                            <button id="add-folder-btn"
+                                class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-folder-plus mr-2"></i>Încarcă Folder
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Photo Upload Form (Single) -->
+                    <div id="photo-upload-form" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
+                        <form id="upload-form" enctype="multipart/form-data">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Selectează Poză</label>
+                                    <input type="file" id="photo-file" accept="image/*" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Descriere
+                                        (opțional)</label>
+                                    <input type="text" id="photo-description" placeholder="Descrierea pozei..."
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                <button type="submit"
+                                    class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    <i class="fas fa-upload mr-2"></i>Încarcă
+                                </button>
+                                <button type="button" id="cancel-upload"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Folder/Multiple Upload Form -->
+                    <div id="folder-upload-form" class="hidden mb-6 sm:mb-8 bg-blue-50 p-4 sm:p-6 rounded-lg border-2 border-dashed border-blue-300">
+                        <div class="text-center mb-4">
+                            <i class="fas fa-cloud-upload-alt text-blue-500 text-4xl mb-2"></i>
+                            <h3 class="font-semibold text-gray-800">Încarcă Mai Multe Poze</h3>
+                            <p class="text-sm text-gray-600">Selectează un folder sau mai multe imagini deodată</p>
+                        </div>
+                        <form id="folder-upload-form-element" enctype="multipart/form-data">
+                            <div class="space-y-4">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        <i class="fas fa-images mr-1"></i>Selectează Imagini (poți selecta mai multe)
+                                    </label>
+                                    <input type="file" id="folder-files" accept="image/*" multiple
+                                        class="hidden">
+                                    <div id="drop-zone"
+                                        class="border-2 border-dashed border-blue-300 rounded-lg p-6 text-center cursor-pointer hover:border-blue-500 hover:bg-blue-50 transition-all">
+                                        <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                                        <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                                        <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                                        <p class="text-xs text-blue-500 mt-2">
+                                            <i class="fas fa-info-circle mr-1"></i>
+                                            Ține Ctrl/Cmd pentru selecție multiplă
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <!-- Selected files preview -->
+                                <div id="selected-files-preview" class="hidden">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Fișiere selectate: <span id="selected-files-count" class="text-blue-600 font-bold">0</span>
+                                    </label>
+                                    <div id="files-list" class="max-h-40 overflow-y-auto bg-white rounded-lg border p-2 text-sm space-y-1">
+                                        <!-- Files will be listed here -->
+                                    </div>
+                                </div>
+
+                                <!-- Upload progress -->
+                                <div id="upload-progress-container" class="hidden">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Progres încărcare: <span id="upload-progress-text">0/0</span>
+                                    </label>
+                                    <div class="w-full bg-gray-200 rounded-full h-4">
+                                        <div id="upload-progress-bar" class="bg-blue-600 h-4 rounded-full transition-all duration-300" style="width: 0%"></div>
+                                    </div>
+                                    <p id="upload-status" class="text-sm text-gray-600 mt-1"></p>
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                <button type="submit" id="upload-folder-btn"
+                                    class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    <i class="fas fa-upload mr-2"></i>Încarcă Toate
+                                </button>
+                                <button type="button" id="cancel-folder-upload"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Gallery Grid -->
+                    <div id="admin-gallery" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                        <!-- Photos will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Calendar Blocks Tab Content -->
+                <div id="content-calendar" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Blocări Calendar</h2>
+                        <button id="add-block-btn" class="w-full sm:w-auto bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                            <i class="fas fa-ban mr-2"></i>Adaugă Blocare
+                        </button>
+                    </div>
+
+                    <!-- Block Form -->
+                    <div id="block-form" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
+                        <form id="calendar-block-form">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-4">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Data Început</label>
+                                    <input type="date" id="block-start" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
+                                    <input type="date" id="block-end" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Motiv</label>
+                                    <input type="text" id="block-reason" placeholder="Motiv blocare..."
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                                </div>
+                            </div>
+                            <div class="mt-4 flex flex-col sm:flex-row gap-2">
+                                <button type="submit"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    <i class="fas fa-ban mr-2"></i>Blochează
+                                </button>
+                                <button type="button" id="cancel-block"
+                                    class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Calendar Blocks List -->
+                    <div id="calendar-blocks" class="space-y-3 sm:space-y-4">
+                        <!-- Blocks will be loaded here -->
+                    </div>
+                </div>
+
+                <!-- Prices Tab Content -->
+                <div id="content-prices" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Gestionare Prețuri</h2>
+                        <button id="save-prices-btn" class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                            <i class="fas fa-save mr-2"></i>Salvează Prețurile
+                        </button>
+                    </div>
+
+                    <!-- Prices Form -->
+                    <form id="prices-form" class="space-y-6 sm:space-y-8">
+                        <!-- Room Prices -->
+                        <div class="bg-gray-50 p-4 sm:p-6 rounded-lg">
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                                <i class="fas fa-bed mr-2 text-primary"></i>Prețuri Camere
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Preț per cameră / noapte (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-room" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 pr-12 sm:pr-16 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base"
+                                            placeholder="150">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru o singură cameră pe noapte</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț casa întreagă / noapte (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-entire" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="500">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru toată cabana (4 camere) pe noapte</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Breakfast Prices -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-utensils mr-2 text-primary"></i>Prețuri Mic Dejun
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț mic dejun / persoană (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-breakfast" min="0" step="1" required
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="35">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Prețul pentru mic dejun per persoană</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Preț mic dejun copii (RON)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="price-breakfast-child" min="0" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="20">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Preț redus pentru copii sub 12 ani (opțional)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Weekend/Holiday Surcharge -->
+                        <div class="bg-gray-50 p-6 rounded-lg">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-percentage mr-2 text-primary"></i>Suprataxe Weekend / Sărbători
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Suprataxă weekend (%)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="surcharge-weekend" min="0" max="100" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="0">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Procent suplimentar pentru weekend (Vineri-Duminică)</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                                        Suprataxă sărbători (%)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="surcharge-holiday" min="0" max="100" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-12 focus:ring-2 focus:ring-primary focus:border-transparent"
+                                            placeholder="0">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Procent suplimentar pentru sărbători legale</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Payment Settings -->
+                        <div class="bg-blue-50 p-4 sm:p-6 rounded-lg border border-blue-200">
+                            <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4">
+                                <i class="fas fa-credit-card mr-2 text-blue-600"></i>Plată Online
+                            </h3>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4 sm:gap-6">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Mod plată online
+                                    </label>
+                                    <select id="payment-mode"
+                                        class="w-full border border-gray-300 rounded-lg px-3 py-2 sm:px-4 sm:py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                                        onchange="toggleDepositField()">
+                                        <option value="none">Dezactivat (cash la sosire)</option>
+                                        <option value="full">Plată integrală cu cardul</option>
+                                        <option value="deposit">Avans cu cardul + rest la sosire</option>
+                                    </select>
+                                    <p class="text-xs text-gray-500 mt-1">Clientul va vedea opțiunea de plată card/cash la rezervare</p>
+                                </div>
+                                <div id="deposit-percent-wrap">
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">
+                                        Procent avans (%)
+                                    </label>
+                                    <div class="relative">
+                                        <input type="number" id="deposit-percent" min="1" max="99" step="1"
+                                            class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 pr-10 focus:ring-2 focus:ring-blue-500 focus:border-transparent text-sm sm:text-base"
+                                            placeholder="30">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">%</span>
+                                    </div>
+                                    <p class="text-xs text-gray-500 mt-1">Procentul plătit la rezervare (restul se achită la sosire)</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Price Summary -->
+                        <div class="bg-primary bg-opacity-10 p-6 rounded-lg border border-primary border-opacity-30">
+                            <h3 class="text-lg font-semibold text-gray-900 mb-4">
+                                <i class="fas fa-calculator mr-2 text-primary"></i>Sumar Prețuri
+                            </h3>
+                            <div id="price-summary" class="grid grid-cols-2 md:grid-cols-4 gap-4 text-center">
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-room">0</div>
+                                    <div class="text-sm text-gray-600">RON/cameră/noapte</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-entire">0</div>
+                                    <div class="text-sm text-gray-600">RON/cabană/noapte</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-breakfast">0</div>
+                                    <div class="text-sm text-gray-600">RON/mic dejun</div>
+                                </div>
+                                <div class="bg-white p-4 rounded-lg shadow-sm">
+                                    <div class="text-2xl font-bold text-primary" id="summary-weekend">0%</div>
+                                    <div class="text-sm text-gray-600">suprataxă weekend</div>
+                                </div>
+                            </div>
+                        </div>
+                    </form>
+
+                    <!-- Last Updated Info -->
+                    <div id="prices-last-updated" class="mt-4 text-sm text-gray-500 text-center hidden">
+                        Ultima actualizare: <span id="prices-updated-date">-</span>
+                    </div>
+                </div>
+
+                <!-- Offers Tab Content -->
+                <div id="content-offers" class="tab-content p-4 sm:p-6 md:p-8 hidden">
+                    <div class="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3 mb-4 sm:mb-6">
+                        <h2 class="text-lg sm:text-xl font-bold text-gray-900">Oferte Speciale</h2>
+                        <button id="add-offer-btn" class="w-full sm:w-auto bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                            <i class="fas fa-plus mr-2"></i>Adaugă Ofertă
+                        </button>
+                    </div>
+
+                    <!-- Add/Edit Offer Form -->
+                    <div id="offer-form-container" class="hidden mb-6 sm:mb-8 bg-gray-50 p-4 sm:p-6 rounded-lg">
+                        <h3 class="text-base sm:text-lg font-semibold text-gray-900 mb-3 sm:mb-4" id="offer-form-title">Adaugă Ofertă Nouă</h3>
+                        <form id="offer-form" class="space-y-3 sm:space-y-4">
+                            <input type="hidden" id="offer-id">
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-3 sm:gap-4">
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Tip Ofertă</label>
+                                    <select id="offer-type" required
+                                        class="w-full border border-gray-300 rounded-lg px-3 sm:px-4 py-2 sm:py-3 focus:ring-2 focus:ring-primary focus:border-transparent text-sm sm:text-base offer-type-select">
+                                        <option value="">Selectează tipul</option>
+                                        <option value="revelion" data-icon="🎊">Revelion</option>
+                                        <option value="craciun" data-icon="🎄">Crăciun</option>
+                                        <option value="paste" data-icon="🥚">Paște</option>
+                                        <option value="1mai" data-icon="🌺">1 Mai</option>
+                                        <option value="vara" data-icon="🏖️">Ofertă de Vară</option>
+                                        <option value="custom" data-icon="⭐">Ofertă Personalizată</option>
+                                    </select>
+                                    <!-- Preview icon -->
+                                    <div id="offer-type-preview" class="mt-2 hidden">
+                                        <img id="offer-type-icon" src="" alt="" class="w-12 h-12 rounded-lg object-cover border-2 border-primary">
+                                        <span id="offer-type-label" class="ml-2 text-sm font-medium text-gray-700"></span>
+                                    </div>
+                                </div>
+                                <div>
+                                    <label class="block text-xs sm:text-sm font-medium text-gray-700 mb-2">Titlu Ofertă</label>
+                                    <input type="text" id="offer-title" required placeholder="ex: Revelion 2026 la Casa Chindea"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Început</label>
+                                    <input type="date" id="offer-start-date" required
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Data Sfârșit</label>
+                                    <input type="date" id="offer-end-date" required
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Preț Total Pachet (RON)</label>
+                                    <div class="relative">
+                                        <input type="number" id="offer-total-price" min="0" required placeholder="2500"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Preț pentru întreaga unitate</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Preț per Cameră (RON)</label>
+                                    <div class="relative">
+                                        <input type="number" id="offer-room-price" min="0" placeholder="700"
+                                            class="w-full border border-gray-300 rounded-lg px-4 py-3 pr-16 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                        <span class="absolute right-4 top-1/2 transform -translate-y-1/2 text-gray-500">RON</span>
+                                    </div>
+                                    <p class="text-sm text-gray-500 mt-1">Opțional - pentru rezervări individuale</p>
+                                </div>
+                                <div>
+                                    <label class="block text-sm font-medium text-gray-700 mb-2">Număr Nopți</label>
+                                    <input type="number" id="offer-nights" min="1" required placeholder="3"
+                                        class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent">
+                                </div>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Detalii Ofertă</label>
+                                <textarea id="offer-details" rows="4" required
+                                    placeholder="Descrieți ce include oferta: mese festive, activități, facilități incluse..."
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            </div>
+
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Ce este inclus (unul pe linie)</label>
+                                <textarea id="offer-includes" rows="4"
+                                    placeholder="Cazare 3 nopți&#10;Masă festivă de Revelion&#10;Mic dejun inclus&#10;Foc de artificii"
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-primary focus:border-transparent"></textarea>
+                            </div>
+
+                            <!-- Image upload -->
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">
+                                    <i class="fas fa-image text-primary mr-1"></i>Imagine Ofertă
+                                </label>
+                                <div id="offer-current-image-wrap" class="hidden mb-2">
+                                    <img id="offer-current-image" src="" alt="Imagine curentă"
+                                        class="h-28 object-cover rounded-lg border border-gray-200">
+                                    <p class="text-xs text-gray-500 mt-1">Imagine curentă. Alege una nouă pentru a o înlocui.</p>
+                                </div>
+                                <input type="file" id="offer-image" accept="image/*"
+                                    class="w-full border border-gray-300 rounded-lg px-4 py-2 text-sm focus:ring-2 focus:ring-primary focus:border-transparent">
+                            </div>
+
+                            <div class="flex items-center">
+                                <input type="checkbox" id="offer-active" checked
+                                    class="w-4 h-4 text-primary border-gray-300 rounded focus:ring-primary">
+                                <label for="offer-active" class="ml-2 text-sm text-gray-700">Ofertă activă (vizibilă pe site)</label>
+                            </div>
+
+                            <div class="flex space-x-2">
+                                <button type="submit" class="bg-primary hover:bg-secondary text-white px-6 py-2 rounded-lg">
+                                    <i class="fas fa-save mr-2"></i>Salvează Oferta
+                                </button>
+                                <button type="button" id="cancel-offer" class="bg-gray-500 hover:bg-gray-600 text-white px-4 py-2 rounded-lg">
+                                    Anulează
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Offers List -->
+                    <div id="offers-list" class="space-y-4">
+                        <!-- Loading state -->
+                        <div id="offers-loading" class="text-center py-8">
+                            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                            <p class="text-gray-600">Se încarcă ofertele...</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <!-- Confirmation Modal -->
+    <div id="confirmation-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4" id="modal-title">Confirmă Acțiunea</h3>
+            <p class="text-gray-600 mb-6" id="modal-message">Ești sigur că vrei să continui?</p>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Anulează
+                </button>
+                <button onclick="confirmModalAction()" class="bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg">
+                    Confirmă
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Edit Photo Modal -->
+    <div id="edit-photo-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-edit text-blue-500 mr-2"></i>Editează Poza
+                </h3>
+                <button onclick="closeEditPhotoModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="mb-4">
+                <img id="edit-photo-preview" src="" alt="Preview" class="w-full h-48 object-cover rounded-lg mb-4">
+                <label class="block text-sm font-medium text-gray-700 mb-2">Descriere</label>
+                <textarea id="edit-photo-description" rows="3"
+                    class="w-full border border-gray-300 rounded-lg px-4 py-3 focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                    placeholder="Introduceți descrierea pozei..."></textarea>
+            </div>
+            <input type="hidden" id="edit-photo-id">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeEditPhotoModal()" class="bg-gray-300 hover:bg-gray-400 text-gray-800 px-4 py-2 rounded-lg">
+                    Anulează
+                </button>
+                <button onclick="savePhotoEdit()" class="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-save mr-2"></i>Salvează
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Errors Modal -->
+    <div id="upload-errors-modal"
+        class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden">
+        <div class="bg-white rounded-2xl p-6 max-w-lg w-full mx-4 shadow-2xl">
+            <div class="flex items-center justify-between mb-4">
+                <h3 class="text-lg font-semibold text-gray-900">
+                    <i class="fas fa-exclamation-triangle text-yellow-500 mr-2"></i>Rezultat Încărcare
+                </h3>
+                <button onclick="closeUploadErrorsModal()" class="text-gray-400 hover:text-gray-600">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div id="upload-errors-summary" class="mb-4">
+                <!-- Summary will be inserted here -->
+            </div>
+            <div id="upload-errors-list" class="max-h-60 overflow-y-auto">
+                <!-- Errors will be listed here -->
+            </div>
+            <div class="flex justify-end mt-4">
+                <button onclick="closeUploadErrorsModal()" class="bg-primary hover:bg-secondary text-white px-4 py-2 rounded-lg">
+                    <i class="fas fa-check mr-2"></i>Am înțeles
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Toast Notifications -->
+    <div id="toast-container" class="fixed top-24 right-4 z-50 flex flex-col gap-3 max-w-sm w-full pointer-events-none">
+        <!-- Toasts will appear here -->
+    </div>
+        <!-- Toasts will be dynamically added here -->
+    </div>
+
+    <script>
+        // Use mobile optimizations from common script
+        const isMobile = window.mobileOpts ? window.mobileOpts.isMobile : /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+        const isSlowConnection = window.mobileOpts ? window.mobileOpts.isSlowConnection : isMobile;
+        const cacheTTLMultiplier = window.mobileOpts ? window.mobileOpts.cacheTTLMultiplier : (isSlowConnection ? 2 : 1);
+
+        // Cache for admin data to reduce API calls
+        const adminCache = {
+            bookings: { data: null, timestamp: 0, ttl: 30000 * cacheTTLMultiplier }, // 30s / 60s on mobile
+            gallery: { data: null, timestamp: 0, ttl: 60000 * cacheTTLMultiplier }, // 1min / 2min on mobile
+            prices: { data: null, timestamp: 0, ttl: 120000 * cacheTTLMultiplier }, // 2min / 4min on mobile
+            offers: { data: null, timestamp: 0, ttl: 60000 * cacheTTLMultiplier }, // 1min / 2min on mobile
+            calendarBlocks: { data: null, timestamp: 0, ttl: 30000 * cacheTTLMultiplier } // 30s / 60s on mobile
+        };
+
+        function isCacheValid(cacheKey) {
+            const cache = adminCache[cacheKey];
+            return cache.data && (Date.now() - cache.timestamp < cache.ttl);
+        }
+
+        function setCache(cacheKey, data) {
+            adminCache[cacheKey].data = data;
+            adminCache[cacheKey].timestamp = Date.now();
+        }
+
+        function invalidateCache(cacheKey) {
+            if (cacheKey) {
+                adminCache[cacheKey].data = null;
+                adminCache[cacheKey].timestamp = 0;
+            }
+        }
+
+        // Skeleton generators - optimized for mobile (fewer items)
+        const skeletonCountMobile = window.innerWidth < 640;
+
+        function generateBookingSkeleton(count = 3) {
+            const actualCount = skeletonCountMobile ? Math.min(count, 2) : count;
+            return Array(actualCount).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex justify-between items-start">
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text" style="width: 80%"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%"></div>
+                            <div class="skeleton skeleton-text" style="width: 40%"></div>
+                        </div>
+                        <div class="skeleton" style="width: 80px; height: 32px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateGallerySkeleton(count = 6) {
+            const actualCount = skeletonCountMobile ? Math.min(count, 4) : count;
+            return `<div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+                ${Array(actualCount).fill(0).map(() => `
+                    <div class="skeleton-card">
+                        <div class="skeleton skeleton-image"></div>
+                        <div class="skeleton skeleton-text mt-2" style="width: 70%"></div>
+                    </div>
+                `).join('')}
+            </div>`;
+        }
+
+        function generateCalendarBlocksSkeleton(count = 2) {
+            const actualCount = skeletonCountMobile ? Math.min(count, 1) : count;
+            return Array(actualCount).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex justify-between items-center">
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text" style="width: 50%"></div>
+                        </div>
+                        <div class="skeleton" style="width: 40px; height: 40px;"></div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateOffersSkeleton(count = 2) {
+            const actualCount = skeletonCountMobile ? Math.min(count, 1) : count;
+            return Array(actualCount).fill(0).map(() => `
+                <div class="skeleton-card">
+                    <div class="flex gap-4">
+                        <div class="skeleton" style="width: 100px; height: 100px;"></div>
+                        <div class="flex-1">
+                            <div class="skeleton skeleton-title"></div>
+                            <div class="skeleton skeleton-text"></div>
+                            <div class="skeleton skeleton-text" style="width: 60%"></div>
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // Check admin authentication
+        document.addEventListener('DOMContentLoaded', async function () {
+            checkAdminAuth();
+            initializeTabs();
+            setupEventListeners();
+            setupOfferTypePreview();
+
+            // Show slow connection indicator if detected
+            if (isSlowConnection) {
+                const indicator = document.getElementById('slow-connection-indicator');
+                if (indicator) indicator.classList.remove('hidden');
+            }
+
+            // Use pre-fetched data if available (from head script)
+            if (window._adminDataPromises) {
+                // Load bookings immediately - use pre-fetched if ready
+                const bookingsData = await window._adminDataPromises.bookings;
+                if (bookingsData && bookingsData.bookings) {
+                    setCache('bookings', bookingsData);
+                    displayBookings(bookingsData.bookings);
+                    document.getElementById('stats-total').textContent = bookingsData.bookings?.length || 0;
+                } else {
+                    loadBookings();
+                }
+
+                // Cache other pre-fetched data
+                const [galleryData, pricesData, offersData, blocksData] = await Promise.all([
+                    window._adminDataPromises.gallery,
+                    window._adminDataPromises.prices,
+                    window._adminDataPromises.offers,
+                    window._adminDataPromises.calendarBlocks
+                ]);
+
+                if (galleryData) setCache('gallery', galleryData);
+                if (pricesData) setCache('prices', pricesData);
+                if (offersData) setCache('offers', offersData);
+                if (blocksData) setCache('calendarBlocks', blocksData);
+            } else {
+                loadBookings();
+            }
+        });
+
+        // Preload data in background
+        async function preloadAdminData() {
+            const token = sessionStorage.getItem('auth_token');
+            if (!token) return;
+
+            // Preload in parallel without blocking UI
+            Promise.allSettled([
+                fetch(`/api/admin/gallery?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('gallery', data)),
+                fetch(`/api/prices?_t=${Date.now()}`, { cache: 'no-store' })
+                    .then(r => r.json()).then(data => setCache('prices', data)),
+                fetch(`/api/admin/offers?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('offers', data)),
+                fetch(`/api/admin/calendar-blocks?_t=${Date.now()}`, {
+                    headers: { 'Authorization': `Bearer ${token}` },
+                    cache: 'no-store'
+                }).then(r => r.json()).then(data => setCache('calendarBlocks', data))
+            ]);
+        }
+
+        function showBookingsSkeleton() {
+            const container = document.getElementById('bookings-list');
+            if (container) {
+                container.innerHTML = generateBookingSkeleton(3);
+            }
+            document.getElementById('bookings-loading')?.classList.add('hidden');
+        }
+
+        // Holiday type images mapping
+        const holidayImages = {
+            'revelion': 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=200&h=200&fit=crop',
+            'craciun': 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=200&h=200&fit=crop',
+            'paste': 'https://images.unsplash.com/photo-1457301353672-324d6d14f471?w=200&h=200&fit=crop',
+            '1mai': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=200&h=200&fit=crop',
+            'vara': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=200&h=200&fit=crop',
+            'custom': 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=200&h=200&fit=crop'
+        };
+
+        const holidayLabels = {
+            'revelion': 'Revelion',
+            'craciun': 'Crăciun',
+            'paste': 'Paște',
+            '1mai': '1 Mai',
+            'vara': 'Ofertă de Vară',
+            'custom': 'Ofertă Personalizată'
+        };
+
+        function setupOfferTypePreview() {
+            const offerTypeSelect = document.getElementById('offer-type');
+            const previewDiv = document.getElementById('offer-type-preview');
+            const iconImg = document.getElementById('offer-type-icon');
+            const labelSpan = document.getElementById('offer-type-label');
+
+            if (offerTypeSelect) {
+                offerTypeSelect.addEventListener('change', function() {
+                    const selectedValue = this.value;
+
+                    if (selectedValue && holidayImages[selectedValue]) {
+                        iconImg.src = holidayImages[selectedValue];
+                        iconImg.alt = holidayLabels[selectedValue];
+                        labelSpan.textContent = holidayLabels[selectedValue];
+                        previewDiv.classList.remove('hidden');
+                    } else {
+                        previewDiv.classList.add('hidden');
+                    }
+                });
+            }
+        }
+
+        function checkAdminAuth() {
+            const token = sessionStorage.getItem('auth_token');
+            const userInfo = sessionStorage.getItem('user_info');
+
+            if (!token || !userInfo) {
+                showToast('Trebuie să fii autentificat pentru a accesa această pagină', 'error');
+                setTimeout(() => {
+                    window.location.href = '/js/pages/login.html';
+                }, 2000);
+                return false;
+            }
+
+            try {
+                const user = JSON.parse(userInfo);
+                // Check if user is admin using the admin field
+                if (!user.admin) {
+                    showToast('Acces restricționat! Doar administratorii pot accesa această pagină.', 'error');
+                    setTimeout(() => {
+                        window.location.href = '/js/pages/home.html';
+                    }, 2000);
+                    return false;
+                }
+                return true;
+            } catch (err) {
+                showToast('Sesiune invalidă. Te rog să te autentifici din nou.', 'error');
+                setTimeout(() => {
+                    window.location.href = '/js/pages/login.html';
+                }, 2000);
+                return false;
+            }
+        }
+
+        function initializeTabs() {
+            const tabButtons = document.querySelectorAll('.tab-button');
+            const tabContents = document.querySelectorAll('.tab-content');
+
+            tabButtons.forEach(button => {
+                button.addEventListener('click', () => {
+                    const tabId = button.id.replace('tab-', '');
+
+                    // Update button states
+                    tabButtons.forEach(btn => {
+                        btn.classList.remove('border-primary', 'text-primary');
+                        btn.classList.add('border-transparent', 'text-gray-500');
+                    });
+                    button.classList.remove('border-transparent', 'text-gray-500');
+                    button.classList.add('border-primary', 'text-primary');
+
+                    // Update content visibility
+                    tabContents.forEach(content => content.classList.add('hidden'));
+                    document.getElementById(`content-${tabId}`).classList.remove('hidden');
+
+                    // Load content based on tab
+                    if (tabId === 'bookings') loadBookings();
+                    else if (tabId === 'gallery') loadGallery();
+                    else if (tabId === 'calendar') loadCalendarBlocks();
+                    else if (tabId === 'prices') loadPrices();
+                    else if (tabId === 'offers') loadOffers();
+                });
+            });
+        }
+
+        function setupEventListeners() {
+            // Refresh bookings
+            document.getElementById('refresh-bookings').addEventListener('click', loadBookings);
+
+            // Filter bookings
+            document.getElementById('filter-status').addEventListener('change', loadBookings);
+
+            // Photo upload (single)
+            document.getElementById('add-photo-btn').addEventListener('click', () => {
+                document.getElementById('photo-upload-form').classList.remove('hidden');
+                document.getElementById('folder-upload-form').classList.add('hidden');
+            });
+
+            document.getElementById('cancel-upload').addEventListener('click', () => {
+                document.getElementById('photo-upload-form').classList.add('hidden');
+                document.getElementById('upload-form').reset();
+            });
+
+            document.getElementById('upload-form').addEventListener('submit', uploadPhoto);
+
+            // Folder/Multiple upload
+            document.getElementById('add-folder-btn').addEventListener('click', () => {
+                document.getElementById('folder-upload-form').classList.remove('hidden');
+                document.getElementById('photo-upload-form').classList.add('hidden');
+            });
+
+            document.getElementById('cancel-folder-upload').addEventListener('click', () => {
+                document.getElementById('folder-upload-form').classList.add('hidden');
+                document.getElementById('folder-upload-form-element').reset();
+                document.getElementById('selected-files-preview').classList.add('hidden');
+                document.getElementById('upload-progress-container').classList.add('hidden');
+                resetDropZone();
+            });
+
+            // Drop zone click to open file picker
+            const dropZone = document.getElementById('drop-zone');
+            const folderFilesInput = document.getElementById('folder-files');
+
+            dropZone.addEventListener('click', () => {
+                folderFilesInput.click();
+            });
+
+            // Drag and drop handlers
+            dropZone.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropZone.classList.add('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('dragleave', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+            });
+
+            dropZone.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropZone.classList.remove('border-blue-500', 'bg-blue-50');
+
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    // Create a new DataTransfer to set files
+                    const dt = new DataTransfer();
+                    for (let i = 0; i < files.length; i++) {
+                        if (files[i].type.startsWith('image/')) {
+                            dt.items.add(files[i]);
+                        }
+                    }
+                    folderFilesInput.files = dt.files;
+                    previewSelectedFiles({ target: folderFilesInput });
+                }
+            });
+
+            // Preview selected files
+            document.getElementById('folder-files').addEventListener('change', previewSelectedFiles);
+
+            // Handle folder upload form submit
+            document.getElementById('folder-upload-form-element').addEventListener('submit', uploadMultiplePhotos);
+
+            // Calendar blocks
+            document.getElementById('add-block-btn').addEventListener('click', () => {
+                document.getElementById('block-form').classList.remove('hidden');
+            });
+
+            document.getElementById('cancel-block').addEventListener('click', () => {
+                document.getElementById('block-form').classList.add('hidden');
+                document.getElementById('calendar-block-form').reset();
+            });
+
+            document.getElementById('calendar-block-form').addEventListener('submit', addCalendarBlock);
+
+            // Prices
+            document.getElementById('save-prices-btn').addEventListener('click', savePrices);
+
+            // Update price summary on input change
+            ['price-room', 'price-entire', 'price-breakfast', 'surcharge-weekend'].forEach(id => {
+                document.getElementById(id).addEventListener('input', updatePriceSummary);
+            });
+
+            // Offers
+            document.getElementById('add-offer-btn').addEventListener('click', () => {
+                document.getElementById('offer-form-container').classList.remove('hidden');
+                document.getElementById('offer-form-title').textContent = 'Adaugă Ofertă Nouă';
+                document.getElementById('offer-form').reset();
+                document.getElementById('offer-id').value = '';
+                const currentImgWrap = document.getElementById('offer-current-image-wrap');
+                if (currentImgWrap) currentImgWrap.classList.add('hidden');
+            });
+
+            document.getElementById('cancel-offer').addEventListener('click', () => {
+                document.getElementById('offer-form-container').classList.add('hidden');
+                document.getElementById('offer-form').reset();
+                const currentImgWrap = document.getElementById('offer-current-image-wrap');
+                if (currentImgWrap) currentImgWrap.classList.add('hidden');
+            });
+
+            document.getElementById('offer-form').addEventListener('submit', saveOffer);
+
+            // Modal events - close when clicking on backdrop
+            document.getElementById('confirmation-modal').addEventListener('click', (e) => {
+                if (e.target.id === 'confirmation-modal') closeModal();
+            });
+        }
+
+        async function loadBookings(forceRefresh = false) {
+            const loadingEl = document.getElementById('bookings-loading');
+            const listEl = document.getElementById('bookings-list');
+            const emptyEl = document.getElementById('bookings-empty');
+            const filterStatus = document.getElementById('filter-status').value;
+
+            // Check cache first - render instantly without skeleton
+            if (!forceRefresh && isCacheValid('bookings') && filterStatus === 'pending') {
+                displayBookings(adminCache.bookings.data.bookings || []);
+                document.getElementById('stats-total').textContent = adminCache.bookings.data.bookings?.length || 0;
+                return;
+            }
+
+            // Show skeleton only if no cached data
+            loadingEl.classList.add('hidden');
+            listEl.innerHTML = generateBookingSkeleton(2);
+            listEl.classList.remove('hidden');
+            emptyEl.classList.add('hidden');
+
+            // Timeout for slow connections (shorter on mobile)
+            const controller = new AbortController();
+            const timeoutMs = isSlowConnection ? 8000 : 15000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                let url = `/api/admin/booking?_t=${Date.now()}`;
+                if (filterStatus) url += `&status=${filterStatus}`;
+
+                const response = await fetch(url, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'X-Slow-Connection': isSlowConnection ? 'true' : 'false'
+                    },
+                    cache: 'no-store',
+                    signal: controller.signal
+                });
+
+                clearTimeout(timeoutId);
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success === false) {
+                        throw new Error(data.error || 'Eroare necunoscută');
+                    }
+                    if (filterStatus === 'pending') setCache('bookings', data);
+                    displayBookings(data.bookings || []);
+                    document.getElementById('stats-total').textContent = data.bookings?.length || 0;
+                } else {
+                    const errorData = await response.json().catch(() => ({ error: 'Eroare de server' }));
+                    throw new Error(errorData.error || `Eroare HTTP ${response.status}`);
+                }
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    listEl.innerHTML = `<div class="text-yellow-600 text-center py-4">
+                        <i class="fas fa-clock mr-2"></i>Conexiune lentă.
+                        <button onclick="loadBookings(true)" class="underline text-primary">Încearcă din nou</button>
+                    </div>`;
+                } else {
+                    listEl.innerHTML = `<div class="text-red-600 text-center py-4">Eroare: ${error.message}</div>`;
+                }
+                listEl.classList.remove('hidden');
+            } finally {
+                loadingEl.classList.add('hidden');
+                loadBookingsController = null;
+            }
+        }
+
+        function displayBookings(bookings) {
+            const listEl = document.getElementById('bookings-list');
+            const emptyEl = document.getElementById('bookings-empty');
+            const loadingEl = document.getElementById('bookings-loading');
+
+            // Hide loading
+            loadingEl.classList.add('hidden');
+
+            if (bookings.length === 0) {
+                listEl.classList.add('hidden');
+                emptyEl.classList.remove('hidden');
+                return;
+            }
+
+            emptyEl.classList.add('hidden');
+            listEl.classList.remove('hidden');
+
+            listEl.innerHTML = bookings.map(booking => `
+                <div class="border border-gray-300 rounded-lg bg-white shadow-sm hover:shadow-md transition-shadow duration-200">
+                    <!-- Header Section -->
+                    <div class="bg-gray-50 px-4 sm:px-6 py-3 sm:py-4 border-b border-gray-200 flex flex-col sm:flex-row justify-between items-start sm:items-center gap-3">
+                        <div class="flex items-center space-x-2 sm:space-x-4 w-full sm:w-auto">
+                            <div class="flex-1 sm:flex-initial">
+                                <h3 class="text-base sm:text-lg font-bold text-gray-900">
+                                    ${booking.name || 'Fără nume'}
+                                </h3>
+                                <p class="text-xs sm:text-sm text-gray-600">${formatDateTime(booking.created)}</p>
+                            </div>
+                        </div>
+                        <div class="flex flex-wrap items-center gap-2 w-full sm:w-auto">
+                            <span class="inline-flex items-center px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusClass(booking.status)}">
+                                <i class="${getStatusIcon(booking.status)} mr-1"></i>
+                                ${getStatusText(booking.status)}
+                            </span>
+                            ${getPaymentBadge(booking)}
+                            ${booking.status === 'pending' && booking.paymentMethod !== 'card' ? `
+                                <button onclick="updateBookingStatus('${booking.id}', 'confirmed')"
+                                    class="bg-green-600 hover:bg-green-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
+                                    Confirmă
+                                </button>
+                                <button onclick="updateBookingStatus('${booking.id}', 'cancelled')"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
+                                    Anulează
+                                </button>
+                            ` : booking.status === 'pending' ? `
+                                <button onclick="updateBookingStatus('${booking.id}', 'cancelled')"
+                                    class="bg-red-600 hover:bg-red-700 text-white px-2 sm:px-3 py-1 sm:py-1.5 rounded text-xs sm:text-sm font-medium transition-colors">
+                                    Anulează
+                                </button>
+                            ` : ''}
+                        </div>
+                    </div>
+
+                    <!-- Information Grid -->
+                    <div class="px-4 sm:px-6 py-4 sm:py-5">
+                        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6">
+                            <!-- Contact Information -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Date Contact</h4>
+                                ${booking.name ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Nume</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.name}</p>
+                                </div>
+                                ` : ''}
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Email</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 break-all">${booking.email}</p>
+                                </div>
+                                ${booking.phone ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Telefon</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.phone}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+
+                            <!-- Reservation Details -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Detalii Rezervare</h4>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Check-in</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${formatDate(booking.checkin)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Check-out</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${formatDate(booking.checkout)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr nopți</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${calculateNights(booking.checkin, booking.checkout)} ${calculateNights(booking.checkin, booking.checkout) === 1 ? 'noapte' : 'nopți'}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr persoane</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.guests} ${booking.guests === 1 ? 'persoană' : 'persoane'}</p>
+                                </div>
+                            </div>
+
+                            <!-- Room and Pricing -->
+                            <div class="space-y-2 sm:space-y-3">
+                                <h4 class="text-xs sm:text-sm font-bold text-gray-700 uppercase tracking-wide border-b pb-1 sm:pb-2">Cazare & Plată</h4>
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Tip închiriere</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 font-medium">
+                                        ${booking.roomType === 'entire' ? 'Casa Întreagă' : 'Camere individuale'}
+                                    </p>
+                                </div>
+                                ${booking.roomType !== 'entire' ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Număr camere</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.numberOfRooms || 1} ${(booking.numberOfRooms || 1) === 1 ? 'cameră' : 'camere'}</p>
+                                </div>
+                                ` : ''}
+                                ${booking.totalAmount ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Preț total</span>
+                                    <p class="text-sm text-gray-900 mt-0.5 font-bold">${booking.totalAmount} RON</p>
+                                </div>
+                                ` : ''}
+                                ${booking.paidAmount ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Plătit online</span>
+                                    <p class="text-sm text-green-700 mt-0.5 font-bold">${booking.paidAmount} RON</p>
+                                </div>
+                                ` : ''}
+                                ${booking.paymentMethod ? `
+                                <div>
+                                    <span class="text-xs font-medium text-gray-500">Metodă plată</span>
+                                    <p class="text-sm text-gray-900 mt-0.5">${booking.paymentMethod === 'card' ? '💳 Card' : '💵 Cash'}</p>
+                                </div>
+                                ` : ''}
+                            </div>
+                        </div>
+
+                        <!-- Additional Information -->
+                        <div class="mt-4 sm:mt-6 pt-4 sm:pt-6 border-t border-gray-200 space-y-2 sm:space-y-3">
+                            ${booking.message ? `
+                            <div>
+                                <span class="text-xs font-medium text-gray-500">Mesaj de la client</span>
+                                <div class="mt-2 bg-gray-50 rounded-lg p-3 sm:p-4 border border-gray-200">
+                                    <p class="text-sm text-gray-900 whitespace-pre-wrap">${booking.message}</p>
+                                </div>
+                            </div>
+                            ` : ''}
+                        </div>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function getPaymentBadge(booking) {
+            if (!booking.paymentMethod) return '';
+            if (booking.paymentMethod === 'cash') {
+                return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                    <i class="fas fa-money-bill-wave mr-1"></i>Cash
+                </span>`;
+            }
+            const statusMap = {
+                paid: ['bg-green-100 text-green-800', 'fa-check-circle', 'Plătit integral'],
+                deposit_paid: ['bg-blue-100 text-blue-800', 'fa-credit-card', 'Avans plătit'],
+                unpaid: ['bg-orange-100 text-orange-800', 'fa-clock', 'Plată în curs']
+            };
+            const [cls, icon, label] = statusMap[booking.paymentStatus] || statusMap.unpaid;
+            return `<span class="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium ${cls}">
+                <i class="fas ${icon} mr-1"></i>${label}
+            </span>`;
+        }
+
+        // Helper function to calculate nights
+        function calculateNights(checkin, checkout) {
+            const start = new Date(checkin);
+            const end = new Date(checkout);
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+            return diffDays;
+        }
+
+        // Helper function to format date and time
+        function formatDateTime(dateString) {
+            if (!dateString) return '';
+            const date = new Date(dateString);
+            const options = {
+                year: 'numeric',
+                month: 'long',
+                day: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            };
+            return date.toLocaleDateString('ro-RO', options);
+        }
+
+        async function updateBookingStatus(bookingId, newStatus) {
+            const actionText = newStatus === 'confirmed' ? 'aprobă' : 'respinge';
+
+            // Dacă se respinge, cere motivul
+            let declineReason = null;
+            if (newStatus === 'cancelled') {
+                declineReason = await showDeclineReasonModal();
+                if (declineReason === null) {
+                    // Utilizatorul a anulat
+                    return;
+                }
+            }
+
+            showConfirmationModal(
+                `Confirmă ${actionText} rezervarea`,
+                `Ești sigur că vrei să ${actionText} această rezervare?${declineReason ? `\n\nMotiv: ${declineReason}` : ''}\n\n📱 Se va trimite o notificare WhatsApp clientului.`,
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const body = { status: newStatus };
+                        if (declineReason) {
+                            body.declineReason = declineReason;
+                        }
+
+                        const response = await fetch(`/api/admin/booking/${bookingId}`, {
+                            method: 'PUT',
+                            headers: {
+                                'Content-Type': 'application/json',
+                                'Authorization': `Bearer ${token}`
+                            },
+                            body: JSON.stringify(body)
+                        });
+
+                        const data = await response.json();
+
+                        if (response.ok) {
+                            // Invalidează cache-ul și forțează refresh
+                            invalidateCache('bookings');
+                            loadBookings(true); // Force refresh the list
+
+                            // Afișează mesaj cu status WhatsApp
+                            let toastMessage = `Rezervarea a fost ${newStatus === 'confirmed' ? 'aprobată' : 'respinsă'} cu succes!`;
+                            if (data.whatsapp) {
+                                if (data.whatsapp.sent) {
+                                    toastMessage += ' 📱 Notificare WhatsApp trimisă!';
+                                } else if (data.whatsapp.error) {
+                                    toastMessage += ` ⚠️ WhatsApp: ${data.whatsapp.error}`;
+                                }
+                            }
+                            showToast(toastMessage, 'success');
+                        } else {
+                            throw new Error(data.error || 'Eroare la actualizarea rezervării');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        // Modal pentru motivul respingerii
+        function showDeclineReasonModal() {
+            return new Promise((resolve) => {
+                const modal = document.createElement('div');
+                modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50';
+                modal.innerHTML = `
+                    <div class="bg-white rounded-2xl p-6 max-w-md w-full mx-4 shadow-xl">
+                        <h3 class="text-lg font-semibold text-gray-800 mb-4">
+                            <i class="fas fa-times-circle text-red-500 mr-2"></i>
+                            Motivul respingerii
+                        </h3>
+                        <p class="text-gray-600 mb-4 text-sm">
+                            Acest motiv va fi trimis clientului prin WhatsApp.
+                        </p>
+                        <textarea id="decline-reason"
+                            class="w-full border-2 border-gray-200 rounded-xl p-3 focus:border-primary focus:ring-1 focus:ring-primary transition-all"
+                            rows="3"
+                            placeholder="Ex: Perioada solicitată nu este disponibilă."
+                        >Perioada solicitată nu este disponibilă.</textarea>
+                        <div class="flex gap-3 mt-4">
+                            <button id="cancel-decline"
+                                class="flex-1 py-2 px-4 border-2 border-gray-200 rounded-xl text-gray-600 hover:bg-gray-50 transition-all">
+                                Anulează
+                            </button>
+                            <button id="confirm-decline"
+                                class="flex-1 py-2 px-4 bg-red-500 text-white rounded-xl hover:bg-red-600 transition-all">
+                                <i class="fas fa-paper-plane mr-1"></i>
+                                Respinge
+                            </button>
+                        </div>
+                    </div>
+                `;
+                document.body.appendChild(modal);
+
+                const textarea = modal.querySelector('#decline-reason');
+                textarea.focus();
+                textarea.select();
+
+                modal.querySelector('#cancel-decline').onclick = () => {
+                    modal.remove();
+                    resolve(null);
+                };
+
+                modal.querySelector('#confirm-decline').onclick = () => {
+                    const reason = textarea.value.trim() || 'Perioada solicitată nu este disponibilă.';
+                    modal.remove();
+                    resolve(reason);
+                };
+
+                // Închide cu click pe background
+                modal.onclick = (e) => {
+                    if (e.target === modal) {
+                        modal.remove();
+                        resolve(null);
+                    }
+                };
+            });
+        }
+
+        async function loadGallery(forceRefresh = false) {
+            const galleryEl = document.getElementById('admin-gallery');
+
+            // Check cache first - render instantly without skeleton
+            if (!forceRefresh && isCacheValid('gallery')) {
+                renderGallery(adminCache.gallery.data);
+                return;
+            }
+
+            // Show skeleton only if no cached data (fewer on mobile)
+            galleryEl.innerHTML = generateGallerySkeleton(isMobile ? 4 : 6);
+
+            // Timeout for slow connections
+            const controller = new AbortController();
+            const timeoutMs = isSlowConnection ? 10000 : 20000;
+            const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+            try {
+                const cacheBuster = Date.now();
+                const response = await fetch(`/api/photos?limit=500&_=${cacheBuster}`, {
+                    cache: 'no-store',
+                    signal: controller.signal,
+                    headers: {
+                        'X-Slow-Connection': isSlowConnection ? 'true' : 'false'
+                    }
+                });
+                clearTimeout(timeoutId);
+                const data = await response.json();
+                setCache('gallery', data);
+                renderGallery(data);
+            } catch (error) {
+                clearTimeout(timeoutId);
+                if (error.name === 'AbortError') {
+                    galleryEl.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-clock text-yellow-400 text-4xl mb-4"></i>
+                            <p class="text-gray-600 mb-2">Conexiune lentă - încărcarea durează mai mult</p>
+                            <button onclick="loadGallery(true)" class="bg-primary text-white px-4 py-2 rounded-lg">
+                                <i class="fas fa-redo mr-2"></i>Încearcă din nou
+                            </button>
+                        </div>
+                    `;
+                } else {
+                    galleryEl.innerHTML = `
+                        <div class="col-span-full text-center py-12">
+                            <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
+                            <p class="text-gray-600">Eroare la încărcarea galeriei</p>
+                        </div>
+                    `;
+                }
+            }
+        }
+
+        function renderGallery(data) {
+            const galleryEl = document.getElementById('admin-gallery');
+            const photos = data.items || [];
+
+            if (photos.length === 0) {
+                galleryEl.innerHTML = `
+                    <div class="col-span-full text-center py-12">
+                        <i class="fas fa-images text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există poze în galerie</h3>
+                        <p class="text-gray-600">Adaugă prima poză folosind butonul de mai sus.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            galleryEl.innerHTML = photos.map(photo => {
+                const imgSrc = photo.thumbnailUrl || photo.imageUrl || '';
+                return `
+                <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
+                    <img data-src="${imgSrc}"
+                        src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
+                        alt="Gallery photo"
+                        class="lazy w-full h-64 object-cover"
+                        loading="lazy">
+                    <div class="p-4">
+                        <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
+                    </div>
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                        <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-x-2">
+                            <button onclick="editPhoto('${photo.id}')"
+                                class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-edit mr-1"></i>Editează
+                            </button>
+                            <button onclick="deletePhoto('${photo.id}')"
+                                class="bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors">
+                                <i class="fas fa-trash mr-1"></i>Șterge
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `}).join('');
+
+            // Lazy loading implementation
+            const lazyImages = galleryEl.querySelectorAll('img.lazy');
+            const imageObserver = new IntersectionObserver((entries, observer) => {
+                entries.forEach(entry => {
+                    if (entry.isIntersecting) {
+                        const img = entry.target;
+                        img.src = img.dataset.src;
+                        img.classList.remove('lazy');
+                        observer.unobserve(img);
+                    }
+                });
+            }, { rootMargin: '50px' });
+
+            lazyImages.forEach(img => imageObserver.observe(img));
+        }
+
+        async function uploadPhoto(e) {
+            e.preventDefault();
+
+            const formData = new FormData();
+            const fileInput = document.getElementById('photo-file');
+            const description = document.getElementById('photo-description').value;
+
+            if (!fileInput.files[0]) {
+                showToast('Selectează o poză pentru încărcare', 'error');
+                return;
+            }
+
+            formData.append('photo', fileInput.files[0]);
+            if (description) formData.append('description', description);
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/photos', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                if (response.ok) {
+                    document.getElementById('photo-upload-form').classList.add('hidden');
+                    document.getElementById('upload-form').reset();
+                    invalidateCache('gallery');
+                    loadGallery(true);
+                    showToast('Poza a fost încărcată cu succes!', 'success');
+                } else {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || 'Eroare la încărcarea pozei');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        // Preview selected files for folder upload
+        function previewSelectedFiles(e) {
+            const files = e.target.files;
+            const previewContainer = document.getElementById('selected-files-preview');
+            const filesList = document.getElementById('files-list');
+            const countSpan = document.getElementById('selected-files-count');
+            const dropZone = document.getElementById('drop-zone');
+
+            if (files.length === 0) {
+                previewContainer.classList.add('hidden');
+                // Reset drop zone
+                dropZone.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                    <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                    <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                    <p class="text-xs text-blue-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ține Ctrl/Cmd pentru selecție multiplă
+                    </p>
+                `;
+                return;
+            }
+
+            // Filter only image files
+            const imageFiles = Array.from(files).filter(file => file.type.startsWith('image/'));
+
+            // Update drop zone to show selected count
+            dropZone.innerHTML = `
+                <i class="fas fa-check-circle text-green-500 text-3xl mb-2"></i>
+                <p class="text-green-600 font-medium">${imageFiles.length} imagini selectate</p>
+                <p class="text-xs text-gray-400 mt-1">Click pentru a schimba selecția</p>
+            `;
+
+            countSpan.textContent = imageFiles.length;
+            filesList.innerHTML = imageFiles.slice(0, 20).map((file) => `
+                <div class="flex items-center gap-2 text-gray-600 py-1 border-b border-gray-100 last:border-0">
+                    <i class="fas fa-image text-blue-500"></i>
+                    <span class="truncate flex-1">${file.name}</span>
+                    <span class="text-xs text-gray-400">${(file.size / 1024).toFixed(0)} KB</span>
+                </div>
+            `).join('');
+
+            if (imageFiles.length > 20) {
+                filesList.innerHTML += `
+                    <div class="text-center text-gray-500 py-2 text-sm">
+                        ... și încă ${imageFiles.length - 20} fișiere
+                    </div>
+                `;
+            }
+
+            previewContainer.classList.remove('hidden');
+        }
+
+        // Upload multiple photos from folder
+        async function uploadMultiplePhotos(e) {
+            e.preventDefault();
+
+            const fileInput = document.getElementById('folder-files');
+            const files = Array.from(fileInput.files).filter(file => file.type.startsWith('image/'));
+
+            if (files.length === 0) {
+                showToast('Selectează cel puțin o imagine pentru încărcare', 'error');
+                return;
+            }
+
+            const progressContainer = document.getElementById('upload-progress-container');
+            const progressBar = document.getElementById('upload-progress-bar');
+            const progressText = document.getElementById('upload-progress-text');
+            const statusText = document.getElementById('upload-status');
+            const uploadBtn = document.getElementById('upload-folder-btn');
+
+            // Show progress
+            progressContainer.classList.remove('hidden');
+            uploadBtn.disabled = true;
+            uploadBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se încarcă...';
+
+            let uploaded = 0;
+            let failed = 0;
+            const total = files.length;
+            const token = sessionStorage.getItem('auth_token');
+            const failedFiles = []; // Track failed files for modal
+
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                statusText.textContent = `Se încarcă: ${file.name}`;
+
+                try {
+                    const formData = new FormData();
+                    formData.append('photo', file);
+                    formData.append('description', ''); // No description for batch upload
+
+                    const response = await fetch('/api/admin/photos', {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${token}`
+                        },
+                        body: formData
+                    });
+
+                    if (response.ok) {
+                        uploaded++;
+                    } else {
+                        failed++;
+                        const errorData = await response.json().catch(() => ({}));
+                        failedFiles.push({
+                            name: file.name,
+                            error: errorData.error || 'Eroare necunoscută'
+                        });
+                    }
+                } catch (error) {
+                    failed++;
+                    failedFiles.push({
+                        name: file.name,
+                        error: error.message || 'Eroare de conexiune'
+                    });
+                }
+
+                // Update progress
+                const progress = Math.round(((i + 1) / total) * 100);
+                progressBar.style.width = `${progress}%`;
+                progressText.textContent = `${i + 1}/${total}`;
+            }
+
+            // Reset UI
+            uploadBtn.disabled = false;
+            uploadBtn.innerHTML = '<i class="fas fa-upload mr-2"></i>Încarcă Toate';
+            statusText.textContent = '';
+
+            // Show result
+            if (failed === 0) {
+                showToast(`Toate ${uploaded} pozele au fost încărcate cu succes!`, 'success');
+            } else {
+                // Show errors modal
+                showUploadErrorsModal(uploaded, failed, total, failedFiles);
+            }
+
+            // Reset form and hide
+            document.getElementById('folder-upload-form').classList.add('hidden');
+            document.getElementById('folder-upload-form-element').reset();
+            document.getElementById('selected-files-preview').classList.add('hidden');
+            progressContainer.classList.add('hidden');
+            progressBar.style.width = '0%';
+            resetDropZone();
+
+            // Reload gallery
+            invalidateCache('gallery');
+            loadGallery(true);
+        }
+
+        function resetDropZone() {
+            const dropZone = document.getElementById('drop-zone');
+            if (dropZone) {
+                dropZone.innerHTML = `
+                    <i class="fas fa-cloud-upload-alt text-blue-400 text-3xl mb-2"></i>
+                    <p class="text-gray-600 font-medium">Click pentru a selecta imagini</p>
+                    <p class="text-xs text-gray-400 mt-1">sau trage și plasează fișierele aici</p>
+                    <p class="text-xs text-blue-500 mt-2">
+                        <i class="fas fa-info-circle mr-1"></i>
+                        Ține Ctrl/Cmd pentru selecție multiplă
+                    </p>
+                `;
+            }
+        }
+
+        function showUploadErrorsModal(uploaded, failed, total, failedFiles) {
+            const modal = document.getElementById('upload-errors-modal');
+            const summary = document.getElementById('upload-errors-summary');
+            const list = document.getElementById('upload-errors-list');
+
+            // Build summary
+            const successRate = Math.round((uploaded / total) * 100);
+            summary.innerHTML = `
+                <div class="grid grid-cols-3 gap-4 text-center mb-4">
+                    <div class="bg-green-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-green-600">${uploaded}</div>
+                        <div class="text-xs text-green-700">Încărcate</div>
+                    </div>
+                    <div class="bg-red-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-red-600">${failed}</div>
+                        <div class="text-xs text-red-700">Eșuate</div>
+                    </div>
+                    <div class="bg-blue-50 rounded-lg p-3">
+                        <div class="text-2xl font-bold text-blue-600">${successRate}%</div>
+                        <div class="text-xs text-blue-700">Succes</div>
+                    </div>
+                </div>
+            `;
+
+            // Build errors list
+            if (failedFiles.length > 0) {
+                list.innerHTML = `
+                    <div class="text-sm font-medium text-gray-700 mb-2">Fișiere care nu s-au încărcat:</div>
+                    <div class="space-y-2">
+                        ${failedFiles.map(f => `
+                            <div class="flex items-start gap-2 p-2 bg-red-50 rounded-lg text-sm">
+                                <i class="fas fa-times-circle text-red-500 mt-0.5"></i>
+                                <div class="flex-1">
+                                    <div class="font-medium text-gray-800">${f.name}</div>
+                                    <div class="text-red-600 text-xs">${f.error}</div>
+                                </div>
+                            </div>
+                        `).join('')}
+                    </div>
+                `;
+            } else {
+                list.innerHTML = '';
+            }
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeUploadErrorsModal() {
+            document.getElementById('upload-errors-modal').classList.add('hidden');
+        }
+
+        async function editPhoto(photoId) {
+            // Get current photo data first
+            try {
+                // Request all photos with a high limit to ensure we get everything
+                const response = await fetch('/api/photos?limit=500');
+                const data = await response.json();
+                const photos = data.items || [];
+                const photo = photos.find(p => p.id === photoId);
+
+                if (!photo) {
+                    showToast('Poza nu a fost găsită', 'error');
+                    return;
+                }
+
+                // Open edit modal with photo data
+                openEditPhotoModal(photo);
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        function openEditPhotoModal(photo) {
+            const modal = document.getElementById('edit-photo-modal');
+            const preview = document.getElementById('edit-photo-preview');
+            const description = document.getElementById('edit-photo-description');
+            const photoId = document.getElementById('edit-photo-id');
+
+            preview.src = photo.thumbnailUrl || photo.imageUrl || '';
+            description.value = photo.description || '';
+            photoId.value = photo.id;
+
+            modal.classList.remove('hidden');
+        }
+
+        function closeEditPhotoModal() {
+            document.getElementById('edit-photo-modal').classList.add('hidden');
+        }
+
+        async function savePhotoEdit() {
+            const photoId = document.getElementById('edit-photo-id').value;
+            const newDescription = document.getElementById('edit-photo-description').value;
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const editResponse = await fetch(`/api/admin/photos/${photoId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({ description: newDescription })
+                });
+
+                if (editResponse.ok) {
+                    closeEditPhotoModal();
+                    invalidateCache('gallery');
+                    loadGallery(true);
+                    showToast('Descrierea pozei a fost actualizată cu succes!', 'success');
+                } else {
+                    const errorData = await editResponse.json();
+                    throw new Error(errorData.error || 'Eroare la actualizarea pozei');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function deletePhoto(photoId) {
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această poză?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/photos/${photoId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`
+                            }
+                        });
+
+                        if (response.ok) {
+                            invalidateCache('gallery');
+                            loadGallery(true);
+                            showToast('Poza a fost ștearsă cu succes!', 'success');
+                        } else {
+                            const errorData = await response.json();
+                            throw new Error(errorData.error || 'Eroare la ștergerea pozei');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        async function loadCalendarBlocks(forceRefresh = false) {
+            const blocksEl = document.getElementById('calendar-blocks');
+
+            // Check cache first - render instantly
+            if (!forceRefresh && isCacheValid('calendarBlocks')) {
+                renderCalendarBlocks(adminCache.calendarBlocks.data);
+                return;
+            }
+
+            // Show skeleton only if no cached data
+            blocksEl.innerHTML = generateCalendarBlocksSkeleton(2);
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch(`/api/admin/calendar-blocks?_t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache, no-store, must-revalidate'
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    if (data.success === false) {
+                        throw new Error(data.error || 'Eroare la încărcarea blocărilor de calendar');
+                    }
+                    setCache('calendarBlocks', data);
+                    renderCalendarBlocks(data);
+                } else {
+                    throw new Error('Eroare la încărcarea blocărilor');
+                }
+            } catch (error) {
+                blocksEl.innerHTML = `
+                    <div class="text-red-600 text-center py-8">
+                        <i class="fas fa-exclamation-triangle text-4xl mb-4"></i>
+                        <p>Eroare la încărcarea blocărilor: ${error.message}</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderCalendarBlocks(data) {
+            const blocksEl = document.getElementById('calendar-blocks');
+            const blocks = data.blocks || [];
+
+            if (blocks.length === 0) {
+                blocksEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-calendar-times text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există blocări de calendar</h3>
+                        <p class="text-gray-600">Adaugă o blocare pentru a preveni rezervările în anumite perioade.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            blocksEl.innerHTML = blocks.map(block => {
+                const startDate = new Date(block.startDate);
+                const endDate = new Date(block.endDate);
+                const isActive = endDate >= new Date();
+
+                return `
+                    <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6" data-block-id="${block.id}">
+                        <div class="flex justify-between items-start">
+                            <div class="flex-1">
+                                <div class="flex items-center mb-2">
+                                    <h4 class="font-semibold ${isActive ? 'text-red-800' : 'text-gray-600'}">
+                                        ${formatDate(block.startDate)} - ${formatDate(block.endDate)}
+                                    </h4>
+                                    ${isActive ?
+                        '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-800">Activă</span>' :
+                        '<span class="ml-2 inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-600">Expirată</span>'
+                    }
+                                </div>
+                                <p class="${isActive ? 'text-red-600' : 'text-gray-500'}">${block.reason || 'Fără motiv specificat'}</p>
+                                <p class="text-xs ${isActive ? 'text-red-500' : 'text-gray-400'} mt-2">
+                                    Creată: ${formatDate(block.created)}
+                                </p>
+                            </div>
+                            <button onclick="deleteCalendarBlock('${block.id}')"
+                                class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
+                                <i class="fas fa-trash"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        async function addCalendarBlock(e) {
+            e.preventDefault();
+
+            const startDate = document.getElementById('block-start').value;
+            const endDate = document.getElementById('block-end').value;
+            const reason = document.getElementById('block-reason').value;
+
+            // Validation
+            if (!startDate || !endDate) {
+                showToast('Ambele date sunt obligatorii', 'error');
+                return;
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+
+            if (start < today) {
+                showToast('Data de început nu poate fi în trecut', 'error');
+                return;
+            }
+
+            if (start >= end) {
+                showToast('Data de sfârșit trebuie să fie după data de început', 'error');
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/calendar-blocks', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                        startDate,
+                        endDate,
+                        reason: reason || 'Blocare administrativă'
+                    })
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    document.getElementById('block-form').classList.add('hidden');
+                    document.getElementById('calendar-block-form').reset();
+                    invalidateCache('calendarBlocks');
+                    loadCalendarBlocks(true);
+
+                    // Show success message
+                    showToast('Blocarea a fost adăugată cu succes!', 'success');
+                } else {
+                    throw new Error(data.error || 'Eroare la adăugarea blocării');
+                }
+            } catch (error) {
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function deleteCalendarBlock(blockId) {
+            if (!blockId || blockId === 'undefined') {
+                showToast('ID-ul blocării este invalid', 'error');
+                return;
+            }
+
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această blocare?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+
+                        if (!token) {
+                            showToast('Sesiune expirată. Te rugăm să te autentifici din nou.', 'error');
+                            return;
+                        }
+
+                        const response = await fetch(`/api/admin/calendar-blocks/${blockId}`, {
+                            method: 'DELETE',
+                            headers: {
+                                'Authorization': `Bearer ${token}`,
+                                'Content-Type': 'application/json'
+                            },
+                            cache: 'no-store'
+                        });
+
+                        let responseData;
+                        try {
+                            responseData = await response.json();
+                        } catch (e) {
+                            responseData = { error: 'Răspuns invalid de la server' };
+                        }
+
+                        if (response.ok && responseData.success !== false) {
+                            // Remove item from DOM immediately for better UX
+                            const blockElement = document.querySelector(`[data-block-id="${blockId}"]`);
+                            if (blockElement) {
+                                blockElement.remove();
+                            }
+                            showToast('Blocarea a fost ștearsă cu succes!', 'success');
+                            // Force reload to sync with server
+                            invalidateCache('calendarBlocks');
+                            setTimeout(async () => {
+                                await loadCalendarBlocks(true);
+                            }, 100);
+                        } else {
+                            showToast(responseData.error || 'Eroare la ștergerea blocării', 'error');
+                        }
+                    } catch (error) {
+                        showToast(`Eroare de rețea: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+
+        // Store modal callback globally to ensure it's called correctly
+        let _modalConfirmCallback = null;
+
+        function showConfirmationModal(title, message, onConfirm) {
+            document.getElementById('modal-title').textContent = title;
+            document.getElementById('modal-message').textContent = message;
+            document.getElementById('confirmation-modal').classList.remove('hidden');
+
+            // Store callback reference
+            _modalConfirmCallback = onConfirm;
+        }
+
+        function closeModal() {
+            document.getElementById('confirmation-modal').classList.add('hidden');
+            _modalConfirmCallback = null;
+        }
+
+        async function confirmModalAction() {
+            if (_modalConfirmCallback) {
+                const callback = _modalConfirmCallback;
+                _modalConfirmCallback = null;
+                document.getElementById('confirmation-modal').classList.add('hidden');
+                try {
+                    await callback();
+                } catch (error) {
+                    console.error('Error in modal callback:', error);
+                }
+            }
+        }
+
+        // Toast notification system
+        function showToast(message, type = 'success') {
+            const toastContainer = document.getElementById('toast-container');
+            const toastId = 'toast-' + Date.now();
+
+            const toast = document.createElement('div');
+            toast.id = toastId;
+
+            // Define colors based on type
+            let bgColor, borderColor, iconClass, textColor;
+            switch(type) {
+                case 'success':
+                    bgColor = 'bg-green-50';
+                    borderColor = 'border-green-500';
+                    iconClass = 'fas fa-check-circle text-green-500';
+                    textColor = 'text-green-800';
+                    break;
+                case 'error':
+                    bgColor = 'bg-red-50';
+                    borderColor = 'border-red-500';
+                    iconClass = 'fas fa-exclamation-circle text-red-500';
+                    textColor = 'text-red-800';
+                    break;
+                case 'warning':
+                    bgColor = 'bg-yellow-50';
+                    borderColor = 'border-yellow-500';
+                    iconClass = 'fas fa-exclamation-triangle text-yellow-500';
+                    textColor = 'text-yellow-800';
+                    break;
+                default:
+                    bgColor = 'bg-blue-50';
+                    borderColor = 'border-blue-500';
+                    iconClass = 'fas fa-info-circle text-blue-500';
+                    textColor = 'text-blue-800';
+            }
+
+            toast.className = `pointer-events-auto transform transition-all duration-300 ease-out translate-y-2 opacity-0 flex items-center gap-3 px-4 py-3 rounded-lg shadow-lg border-l-4 ${bgColor} ${borderColor}`;
+
+            toast.innerHTML = `
+                <i class="${iconClass} text-lg"></i>
+                <p class="flex-1 text-sm font-medium ${textColor}">${message}</p>
+                <button onclick="removeToast('${toastId}')" class="text-gray-400 hover:text-gray-600 transition-colors">
+                    <i class="fas fa-times text-sm"></i>
+                </button>
+            `;
+
+            toastContainer.appendChild(toast);
+
+            // Animate in
+            requestAnimationFrame(() => {
+                toast.classList.remove('translate-y-2', 'opacity-0');
+                toast.classList.add('translate-y-0', 'opacity-100');
+            });
+
+            // Auto remove after 4 seconds
+            setTimeout(() => {
+                removeToast(toastId);
+            }, 4000);
+        }
+
+        function removeToast(toastId) {
+            const toast = document.getElementById(toastId);
+            if (toast) {
+                toast.classList.add('translate-y-2', 'opacity-0');
+                toast.classList.remove('translate-y-0', 'opacity-100');
+                setTimeout(() => {
+                    toast.remove();
+                }, 300);
+            }
+        }
+
+        // Utility functions
+        function getStatusClass(status) {
+            switch (status) {
+                case 'confirmed': return 'bg-green-100 text-green-800';
+                case 'pending': return 'bg-yellow-100 text-yellow-800';
+                case 'cancelled': return 'bg-red-100 text-red-800';
+                default: return 'bg-blue-100 text-blue-800';
+            }
+        }
+
+        function getStatusIcon(status) {
+            switch (status) {
+                case 'confirmed': return 'fas fa-check-circle';
+                case 'pending': return 'fas fa-clock';
+                case 'cancelled': return 'fas fa-times-circle';
+                default: return 'fas fa-info-circle';
+            }
+        }
+
+        function getStatusText(status) {
+            switch (status) {
+                case 'confirmed': return 'Confirmată';
+                case 'pending': return 'În așteptare';
+                case 'cancelled': return 'Anulată';
+                default: return 'Nouă';
+            }
+        }
+
+        function formatDate(dateStr) {
+            if (!dateStr) return '';
+            const date = new Date(dateStr);
+            return date.toLocaleDateString('ro-RO');
+        }
+
+        // Function to refresh token with updated permissions
+        async function refreshAdminToken() {
+            const token = sessionStorage.getItem('auth_token');
+
+            try {
+                const response = await fetch('/api/auth/refresh-token', {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    }
+                });
+
+                const data = await response.json();
+
+                if (response.ok) {
+                    // Actualizează token-ul și informațiile utilizatorului
+                    sessionStorage.setItem('auth_token', data.token);
+                    sessionStorage.setItem('user_info', JSON.stringify(data.user));
+
+                    showToast('Token actualizat cu permisiuni admin!', 'success');
+
+                    // Reîncarcă pagina pentru a aplica noile permisiuni
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 1000);
+                } else {
+                    showToast(`Error refreshing token: ${data.error}`, 'error');
+                }
+            } catch (err) {
+                console.error('Error refreshing token:', err);
+                showToast(`Network error: ${err.message}`, 'error');
+            }
+        }
+
+        // ===== PRICES MANAGEMENT =====
+
+        async function loadPrices(forceRefresh = false) {
+            // Check cache first
+            if (!forceRefresh && isCacheValid('prices')) {
+                applyPricesData(adminCache.prices.data);
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch(`/api/admin/prices?_t=${Date.now()}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`
+                    },
+                    cache: 'no-store'
+                });
+
+                if (response.ok) {
+                    const data = await response.json();
+                    setCache('prices', data);
+                    applyPricesData(data);
+                }
+            } catch (error) {
+                showToast('Eroare la încărcarea prețurilor', 'error');
+            }
+        }
+
+        function applyPricesData(data) {
+            if (data.success && data.prices) {
+                document.getElementById('price-room').value = data.prices.priceRoom || '';
+                document.getElementById('price-entire').value = data.prices.priceEntire || '';
+                document.getElementById('price-breakfast').value = data.prices.priceBreakfast || '';
+                document.getElementById('price-breakfast-child').value = data.prices.priceBreakfastChild || '';
+                document.getElementById('surcharge-weekend').value = data.prices.surchargeWeekend || '';
+                document.getElementById('surcharge-holiday').value = data.prices.surchargeHoliday || '';
+
+                // Payment settings
+                const paymentModeEl = document.getElementById('payment-mode');
+                if (paymentModeEl) paymentModeEl.value = data.prices.paymentMode || 'none';
+                const depositPercentEl = document.getElementById('deposit-percent');
+                if (depositPercentEl) depositPercentEl.value = data.prices.depositPercent || 30;
+                toggleDepositField();
+
+                updatePriceSummary();
+
+                if (data.prices.updated) {
+                    document.getElementById('prices-last-updated').classList.remove('hidden');
+                    document.getElementById('prices-updated-date').textContent =
+                        new Date(data.prices.updated).toLocaleString('ro-RO');
+                }
+            }
+        }
+
+        function toggleDepositField() {
+            const mode = document.getElementById('payment-mode')?.value || 'none';
+            const wrap = document.getElementById('deposit-percent-wrap');
+            const info = document.getElementById('stripe-keys-info');
+            if (!wrap) return;
+            wrap.style.display = mode === 'deposit' ? '' : 'none';
+            if (info) info.classList.toggle('hidden', mode === 'none');
+        }
+
+        function updatePriceSummary() {
+            const priceRoom = document.getElementById('price-room').value || 0;
+            const priceEntire = document.getElementById('price-entire').value || 0;
+            const priceBreakfast = document.getElementById('price-breakfast').value || 0;
+            const surchargeWeekend = document.getElementById('surcharge-weekend').value || 0;
+
+            document.getElementById('summary-room').textContent = priceRoom;
+            document.getElementById('summary-entire').textContent = priceEntire;
+            document.getElementById('summary-breakfast').textContent = priceBreakfast;
+            document.getElementById('summary-weekend').textContent = surchargeWeekend + '%';
+        }
+
+        async function savePrices() {
+            const pricesData = {
+                priceRoom: parseInt(document.getElementById('price-room').value) || 0,
+                priceEntire: parseInt(document.getElementById('price-entire').value) || 0,
+                priceBreakfast: parseInt(document.getElementById('price-breakfast').value) || 0,
+                priceBreakfastChild: parseInt(document.getElementById('price-breakfast-child').value) || 0,
+                surchargeWeekend: parseInt(document.getElementById('surcharge-weekend').value) || 0,
+                surchargeHoliday: parseInt(document.getElementById('surcharge-holiday').value) || 0,
+                paymentMode: document.getElementById('payment-mode')?.value || 'none',
+                depositPercent: parseInt(document.getElementById('deposit-percent')?.value) || 30
+            };
+
+            // Validate required fields
+            if (pricesData.priceRoom <= 0 || pricesData.priceEntire <= 0) {
+                showToast('Te rugăm să completezi prețurile pentru cameră și cabană', 'warning');
+                return;
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch('/api/admin/prices', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: JSON.stringify(pricesData)
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    invalidateCache('prices');
+                    showToast('Prețurile au fost salvate cu succes!', 'success');
+
+                    // Update last updated date
+                    document.getElementById('prices-last-updated').classList.remove('hidden');
+                    document.getElementById('prices-updated-date').textContent =
+                        new Date().toLocaleString('ro-RO');
+                } else {
+                    throw new Error(data.error || 'Eroare la salvarea prețurilor');
+                }
+            } catch (error) {
+                console.error('Error saving prices:', error);
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        // ===== OFFERS MANAGEMENT =====
+
+        // Use holidayLabels defined at top of file
+        const offerTypeLabels = holidayLabels;
+
+        async function loadOffers(forceRefresh = false) {
+            const listEl = document.getElementById('offers-list');
+            const loadingEl = document.getElementById('offers-loading');
+            if (loadingEl) loadingEl.classList.add('hidden');
+
+            // Check cache first - render instantly
+            if (!forceRefresh && isCacheValid('offers')) {
+                renderOffers(adminCache.offers.data);
+                return;
+            }
+
+            // Show skeleton only if no cached data
+            listEl.innerHTML = generateOffersSkeleton(2);
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const cacheBuster = Date.now();
+                const response = await fetch(`/api/admin/offers?_=${cacheBuster}`, {
+                    headers: {
+                        'Authorization': `Bearer ${token}`,
+                        'Cache-Control': 'no-cache'
+                    },
+                    cache: 'no-store'
+                });
+
+                const data = await response.json();
+                setCache('offers', data);
+                renderOffers(data);
+            } catch (error) {
+                listEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-exclamation-triangle text-red-400 text-4xl mb-4"></i>
+                        <p class="text-gray-600">Eroare la încărcarea ofertelor</p>
+                    </div>
+                `;
+            }
+        }
+
+        function renderOffers(data) {
+            const listEl = document.getElementById('offers-list');
+
+            if (data.success && data.offers && data.offers.length > 0) {
+                const timestamp = Date.now();
+                listEl.innerHTML = data.offers.map(offer => {
+                    const isActive = offer.active;
+                    const isPast = new Date(offer.endDate) < new Date();
+                    const baseImage = holidayImages[offer.type] || holidayImages['custom'];
+                    const offerImage = baseImage + '&t=' + timestamp;
+                    const offerLabel = offerTypeLabels[offer.type] || offer.type;
+
+                    return `
+                        <div class="border ${isActive && !isPast ? 'border-green-500' : 'border-gray-200'} bg-white rounded-lg p-4 sm:p-6 shadow-sm">
+                            <div class="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-3 mb-4">
+                                <div class="flex items-start gap-3 sm:gap-4">
+                                    <img src="${offerImage}" alt="${offerLabel}" class="w-12 h-12 sm:w-16 sm:h-16 rounded-lg object-cover border-2 ${isActive && !isPast ? 'border-green-500' : 'border-gray-300'} shadow-sm flex-shrink-0">
+                                    <div class="min-w-0 flex-1">
+                                        <div class="flex flex-wrap items-center gap-2 mb-1 sm:mb-2">
+                                            <h3 class="text-base sm:text-xl font-bold text-gray-900 break-words">${offer.title}</h3>
+                                            ${isActive && !isPast ? '<span class="bg-green-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Activă</span>' : ''}
+                                            ${isPast ? '<span class="bg-gray-500 text-white text-xs px-2 py-0.5 sm:py-1 rounded-full whitespace-nowrap">Expirată</span>' : ''}
+                                        </div>
+                                        <p class="text-gray-600 text-xs sm:text-sm">${offerLabel}</p>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2 sm:space-x-2 w-full sm:w-auto">
+                                    <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                        <i class="fas fa-edit mr-1"></i>Editează
+                                    </button>
+                                    <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                        <i class="fas fa-trash mr-1"></i>Șterge
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="grid grid-cols-2 sm:grid-cols-2 md:grid-cols-4 gap-2 sm:gap-4 mb-4">
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Perioada</span>
+                                    <p class="font-semibold text-xs sm:text-base">${formatDate(offer.startDate)} - ${formatDate(offer.endDate)}</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Număr nopți</span>
+                                    <p class="font-semibold text-xs sm:text-base">${offer.nights} nopți</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Preț total</span>
+                                    <p class="font-semibold text-primary text-xs sm:text-base">${offer.totalPrice} RON</p>
+                                </div>
+                                <div>
+                                    <span class="text-xs sm:text-sm text-gray-500">Preț/cameră</span>
+                                    <p class="font-semibold text-xs sm:text-base">${offer.roomPrice || '-'} RON</p>
+                                </div>
+                            </div>
+                            <div class="border-t pt-3 sm:pt-4">
+                                <p class="text-gray-700 text-sm sm:text-base">${offer.details}</p>
+                                ${offer.includes ? `
+                                    <div class="mt-2 sm:mt-3">
+                                        <span class="text-xs sm:text-sm font-medium text-gray-700">Include:</span>
+                                        <ul class="list-disc list-inside text-gray-600 mt-1 text-xs sm:text-sm">
+                                            ${offer.includes.split('\n').filter(i => i.trim()).map(item => `<li>${item}</li>`).join('')}
+                                        </ul>
+                                    </div>
+                                ` : ''}
+                            </div>
+                        </div>
+                    `;
+                }).join('');
+            } else {
+                listEl.innerHTML = `
+                    <div class="text-center py-12">
+                        <i class="fas fa-gift text-gray-400 text-6xl mb-4"></i>
+                        <h3 class="text-lg font-semibold text-gray-900 mb-2">Nu există oferte speciale</h3>
+                        <p class="text-gray-600">Adaugă prima ofertă folosind butonul de mai sus.</p>
+                    </div>
+                `;
+            }
+        }
+
+        async function saveOffer(e) {
+            e.preventDefault();
+
+            const offerId = document.getElementById('offer-id').value;
+
+            // Use FormData to support image upload
+            const formData = new FormData();
+            formData.append('type', document.getElementById('offer-type').value);
+            formData.append('title', document.getElementById('offer-title').value);
+            formData.append('startDate', document.getElementById('offer-start-date').value);
+            formData.append('endDate', document.getElementById('offer-end-date').value);
+            formData.append('totalPrice', parseInt(document.getElementById('offer-total-price').value) || 0);
+            formData.append('roomPrice', parseInt(document.getElementById('offer-room-price').value) || 0);
+            formData.append('nights', parseInt(document.getElementById('offer-nights').value) || 1);
+            formData.append('details', document.getElementById('offer-details').value);
+            formData.append('includes', document.getElementById('offer-includes').value);
+            formData.append('active', document.getElementById('offer-active').checked ? 'true' : 'false');
+
+            const imageFile = document.getElementById('offer-image').files[0];
+            if (imageFile) {
+                formData.append('image', imageFile);
+            }
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const url = offerId ? `/api/admin/offers/${offerId}` : '/api/admin/offers';
+                const method = offerId ? 'PUT' : 'POST';
+
+                const response = await fetch(url, {
+                    method: method,
+                    headers: {
+                        // No Content-Type header - let browser set it with boundary for FormData
+                        'Authorization': `Bearer ${token}`
+                    },
+                    body: formData
+                });
+
+                const data = await response.json();
+
+                if (response.ok && data.success) {
+                    showToast(offerId ? 'Oferta a fost actualizată!' : 'Oferta a fost adăugată!', 'success');
+
+                    // Hide and reset form
+                    document.getElementById('offer-form-container').classList.add('hidden');
+                    document.getElementById('offer-form').reset();
+                    document.getElementById('offer-id').value = '';
+
+                    // Hide preview images
+                    const previewDiv = document.getElementById('offer-type-preview');
+                    if (previewDiv) previewDiv.classList.add('hidden');
+                    const currentImgWrap = document.getElementById('offer-current-image-wrap');
+                    if (currentImgWrap) currentImgWrap.classList.add('hidden');
+
+                    // Force immediate refresh to show updated images
+                    invalidateCache('offers');
+                    await loadOffers(true);
+
+                    // Scroll to offers list smoothly after refresh
+                    setTimeout(() => {
+                        const offersList = document.getElementById('offers-list');
+                        if (offersList) {
+                            offersList.scrollIntoView({ behavior: 'smooth', block: 'start' });
+                        }
+                    }, 100);
+                } else {
+                    throw new Error(data.error || 'Eroare la salvarea ofertei');
+                }
+            } catch (error) {
+                console.error('Error saving offer:', error);
+                showToast(`Eroare: ${error.message}`, 'error');
+            }
+        }
+
+        async function editOffer(offerId) {
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const response = await fetch(`/api/admin/offers/${offerId}`, {
+                    headers: { 'Authorization': `Bearer ${token}` }
+                });
+
+                const data = await response.json();
+
+                if (data.success && data.offer) {
+                    const offer = data.offer;
+                    document.getElementById('offer-id').value = offer.id;
+                    document.getElementById('offer-type').value = offer.type;
+                    document.getElementById('offer-title').value = offer.title;
+                    document.getElementById('offer-start-date').value = offer.startDate?.split('T')[0] || '';
+                    document.getElementById('offer-end-date').value = offer.endDate?.split('T')[0] || '';
+                    document.getElementById('offer-total-price').value = offer.totalPrice;
+                    document.getElementById('offer-room-price').value = offer.roomPrice || '';
+                    document.getElementById('offer-nights').value = offer.nights;
+                    document.getElementById('offer-details').value = offer.details;
+                    document.getElementById('offer-includes').value = offer.includes || '';
+                    document.getElementById('offer-active').checked = offer.active;
+
+                    // Show current image if available
+                    const currentImgWrap = document.getElementById('offer-current-image-wrap');
+                    const currentImg = document.getElementById('offer-current-image');
+                    if (offer.imageUrl && currentImgWrap && currentImg) {
+                        currentImg.src = offer.imageUrl;
+                        currentImgWrap.classList.remove('hidden');
+                    } else if (currentImgWrap) {
+                        currentImgWrap.classList.add('hidden');
+                    }
+                    // Clear file input so previous selection doesn't linger
+                    document.getElementById('offer-image').value = '';
+
+                    // Trigger image preview update
+                    const offerTypeSelect = document.getElementById('offer-type');
+                    if (offerTypeSelect) {
+                        offerTypeSelect.dispatchEvent(new Event('change'));
+                    }
+
+                    document.getElementById('offer-form-title').textContent = 'Editează Oferta';
+                    document.getElementById('offer-form-container').classList.remove('hidden');
+                }
+            } catch (error) {
+                console.error('Error loading offer:', error);
+                showToast('Eroare la încărcarea ofertei', 'error');
+            }
+        }
+
+        async function deleteOffer(offerId) {
+            showConfirmationModal(
+                'Confirmă ștergerea',
+                'Ești sigur că vrei să ștergi această ofertă?',
+                async () => {
+                    try {
+                        const token = sessionStorage.getItem('auth_token');
+                        const response = await fetch(`/api/admin/offers/${offerId}`, {
+                            method: 'DELETE',
+                            headers: { 'Authorization': `Bearer ${token}` }
+                        });
+
+                        if (response.ok) {
+                            showToast('Oferta a fost ștearsă!', 'success');
+                            invalidateCache('offers');
+                            loadOffers(true);
+                        } else {
+                            const data = await response.json();
+                            throw new Error(data.error || 'Eroare la ștergerea ofertei');
+                        }
+                    } catch (error) {
+                        console.error('Error deleting offer:', error);
+                        showToast(`Eroare: ${error.message}`, 'error');
+                    }
+                }
+            );
+        }
+    </script>
+</body>
+
+</html>

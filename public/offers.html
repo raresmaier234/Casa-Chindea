@@ -1,0 +1,948 @@
+<!DOCTYPE html>
+<html lang="ro">
+
+<head>
+
+    <!-- Resource Hints for faster loading -->
+    <link rel="preconnect" href="https://cdn.tailwindcss.com" crossorigin>
+    <link rel="preconnect" href="https://cdnjs.cloudflare.com" crossorigin>
+    <link rel="dns-prefetch" href="https://unpkg.com">
+    <link rel="preconnect" href="https://api.casachindea.ro" crossorigin>
+
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Oferte Cazare Casa Chindea — Camere și Prețuri în Hășmaș</title>
+    <meta name="description" content="Vezi ofertele și prețurile la Casa Chindea, Hășmaș. Camere duble cu baie proprie, mic dejun, foișor. De la 150 lei/noapte, aproape de Lacul Roșu.">
+    <meta name="robots" content="index, follow">
+    <link rel="canonical" href="https://www.casachindea.ro/js/pages/offers.html">
+    <meta property="og:title" content="Oferte Cazare — Casa Chindea Hășmaș">
+    <meta property="og:description" content="Camere confortabile cu baie proprie în Hășmaș. Vezi prețurile și ofertele speciale.">
+    <meta property="og:url" content="https://www.casachindea.ro/js/pages/offers.html">
+    <meta property="og:type" content="website">
+    <meta property="og:locale" content="ro_RO">
+
+    <!-- API config - must load before any fetch -->
+    <script src="/js/api-config.js"></script>
+    <!-- Mobile optimizations - load first -->
+    <script src="/js/components/mobile-optimizations.js"></script>
+
+    <!-- Early data fetch for instant render with timeout -->
+    <script>
+        const timeout = window.mobileOpts ? window.mobileOpts.earlyFetchTimeout : 5000;
+        const fetchFn = window.fetchJsonWithTimeout || ((url, opts) => fetch(url, opts).then(r => r.json()).catch(() => null));
+
+        window._offersPromise = fetchFn('/api/offers', {}, timeout);
+        window._photosPromise = fetchFn('/api/photos?limit=500', {}, timeout);
+    </script>
+
+    <!-- Critical CSS - prevent flash of default content -->
+    <!-- Shared critical CSS (preloaded) to prevent flash and enable smooth opacity transitions -->
+    <link rel="preload" href="/css/cms-skeleton.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="/css/cms-skeleton.css" rel="stylesheet">
+    </noscript>
+
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font Awesome - deferred for faster FCP -->
+    <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style"
+        onload="this.onload=null;this.rel='stylesheet'">
+    <noscript>
+        <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    </noscript>
+
+    <!-- Performance loader -->
+    <script src="/js/components/performance-loader.js"></script>
+
+    <!-- CMS Loader - load early for instant content -->
+    <script src="/js/components/cms-loader.js"></script>
+
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#059669',
+                        secondary: '#10b981',
+                        accent: '#34d399'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+
+<body class="bg-gray-50">
+    <nav class="bg-white shadow-lg fixed w-full top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between h-16">
+                <div class="flex items-center">
+                    <div class="flex-shrink-0 animate-bounce-gentle">
+                        <h1 class="text-2xl font-bold text-primary">
+                            <i class="fas fa-home mr-2"></i>Casa Chindea
+                        </h1>
+                    </div>
+                </div>
+                <div class="hidden md:flex items-center space-x-8" id="desktop-nav">
+                    <a href="/js/pages/home.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Acasă</a>
+                    <a href="/js/pages/about.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Despre</a>
+                    <a href="/js/pages/offers.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Oferte</a>
+                    <a href="/js/pages/gallery.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Galerie</a>
+                    <a href="/js/pages/booking.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Rezervări</a>
+                    <a href="/js/pages/contact.html"
+                        class="nav-link text-gray-700 hover:text-primary transition-colors duration-200">Contact</a>
+                    <!-- Auth element will be dynamically added by navigation.js -->
+                </div>
+                <div class="md:hidden flex items-center">
+                    <button id="mobile-menu-btn" class="text-gray-700 hover:text-primary">
+                        <i class="fas fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- Mobile menu -->
+        <div id="mobile-menu" class="md:hidden hidden bg-white border-t">
+            <div class="px-2 pt-2 pb-3 space-y-1" id="mobile-nav">
+                <a href="/js/pages/home.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Acasă</a>
+                <a href="/js/pages/about.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Despre</a>
+                <a href="/js/pages/offers.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Oferte</a>
+                <a href="/js/pages/gallery.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Galerie</a>
+                <a href="/js/pages/booking.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Rezervări</a>
+                <a href="/js/pages/contact.html"
+                    class="nav-link block px-3 py-2 text-gray-700 hover:text-primary">Contact</a>
+                <!-- Auth element will be dynamically added by navigation.js -->
+            </div>
+        </div>
+    </nav>
+
+    <!-- Include navigation component -->
+    <script src="/js/components/navigation.js"></script>
+    <script src="/js/components/visual-editor.js"></script>
+
+    <style>
+        .room-counter {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 1.5rem;
+            margin: 1.5rem 0;
+        }
+
+        .room-counter button {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.3rem;
+            font-weight: bold;
+            transition: all 0.3s ease;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        .room-counter button:hover:not(:disabled) {
+            transform: scale(1.1);
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .room-counter button:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .room-counter .count {
+            font-size: 2.5rem;
+            font-weight: bold;
+            min-width: 60px;
+            text-align: center;
+        }
+
+        .photo-carousel {
+            position: relative;
+            height: 400px;
+            overflow: hidden;
+        }
+
+        .photo-carousel img {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            opacity: 0;
+            transition: opacity 1s ease-in-out;
+        }
+
+        .photo-carousel img.active {
+            opacity: 1;
+        }
+
+        .carousel-dots {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            display: flex;
+            gap: 10px;
+            z-index: 10;
+        }
+
+        .carousel-dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+            background: rgba(255, 255, 255, 0.6);
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 2px solid rgba(255, 255, 255, 0.8);
+        }
+
+        .carousel-dot.active {
+            background: white;
+            transform: scale(1.3);
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+        }
+
+        .carousel-dot:hover {
+            background: rgba(255, 255, 255, 0.9);
+            transform: scale(1.15);
+        }
+
+        /* Smooth animations */
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(30px);
+            }
+
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .group {
+            animation: slideUp 0.6s ease-out;
+        }
+
+        .group:nth-child(2) {
+            animation-delay: 0.1s;
+        }
+
+        /* Mobile responsive styles */
+        @media (max-width: 640px) {
+            .tab-btn {
+                font-size: 14px !important;
+                padding: 10px 12px !important;
+            }
+
+            .tab-btn i {
+                margin-right: 6px !important;
+            }
+
+            #offers-badge {
+                margin-left: 6px !important;
+                padding: 2px 6px !important;
+                font-size: 10px !important;
+            }
+
+            .group {
+                margin: 0 -8px;
+            }
+
+            .room-counter {
+                gap: 1rem;
+            }
+
+            .room-counter .count {
+                font-size: 2rem;
+            }
+
+            .room-counter button {
+                width: 40px;
+                height: 40px;
+                font-size: 1.1rem;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .tab-btn {
+                font-size: 12px !important;
+                padding: 8px 10px !important;
+            }
+        }
+    </style>
+
+    <script>
+        let roomPhotos = [];
+        let cottagePhotos = [];
+
+        const offerTypeIcons = {
+            'revelion': '🎉',
+            'craciun': '🎄',
+            'paste': '🐣',
+            '1mai': '🌸',
+            'vara': '☀️',
+            'custom': '🎁'
+        };
+
+        const offerTypeLabels = {
+            'revelion': 'Revelion',
+            'craciun': 'Crăciun',
+            'paste': 'Paște',
+            '1mai': '1 Mai',
+            'vara': 'Vară',
+            'custom': 'Ofertă Specială'
+        };
+
+        // Holiday images for special offers
+        const holidayImages = {
+            'revelion': 'https://images.unsplash.com/photo-1467810563316-b5476525c0f9?w=400&h=300&fit=crop',
+            'craciun': 'https://images.unsplash.com/photo-1512389142860-9c449e58a543?w=400&h=300&fit=crop',
+            'paste': 'https://images.unsplash.com/photo-1457301353672-324d6d14f471?w=400&h=300&fit=crop',
+            '1mai': 'https://images.unsplash.com/photo-1490750967868-88aa4486c946?w=400&h=300&fit=crop',
+            'vara': 'https://images.unsplash.com/photo-1473496169904-658ba7c44d8a?w=400&h=300&fit=crop',
+            'custom': 'https://images.unsplash.com/photo-1464207687429-7505649dae38?w=400&h=300&fit=crop'
+        };
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadRoomPhotos();
+            loadSpecialOffers();
+        });
+
+        function switchTab(tabName) {
+            // Update tab buttons
+            const tabOffers = document.getElementById('tab-offers');
+            const tabCazare = document.getElementById('tab-cazare');
+
+            const activeClass = 'tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gradient-to-r from-primary to-secondary text-white shadow';
+            const inactiveClass = 'tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200';
+
+            if (tabName === 'offers') {
+                tabOffers.className = activeClass;
+                tabCazare.className = inactiveClass;
+            } else {
+                tabCazare.className = activeClass;
+                tabOffers.className = inactiveClass;
+            }
+
+            // Update content visibility
+            document.getElementById('content-offers').classList.toggle('hidden', tabName !== 'offers');
+            document.getElementById('content-cazare').classList.toggle('hidden', tabName !== 'cazare');
+        }
+
+        // Show skeleton while loading
+        function showOffersSkeleton() {
+            const gridEl = document.getElementById('offers-grid');
+            if (gridEl) {
+                gridEl.innerHTML = Array(3).fill(0).map(() => '<div class="skeleton-offer"></div>').join('');
+            }
+        }
+
+        async function loadSpecialOffers() {
+            const loadingEl = document.getElementById('offers-loading');
+            const gridEl = document.getElementById('offers-grid');
+            const noOffersEl = document.getElementById('no-offers');
+            const sectionEl = document.getElementById('special-offers-section');
+
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._offersPromise) {
+                    if (window._offersPromise instanceof Promise) {
+                        data = await window._offersPromise;
+                    } else {
+                        data = window._offersPromise;
+                    }
+                    // Don't clear it, allows re-use
+                }
+
+                // Fallback to fresh fetch
+                if (!data || !data.success) {
+                    const response = await fetch('/api/offers');
+                    data = await response.json();
+                }
+
+                loadingEl?.classList.add('hidden');
+
+                // Debug log
+                if (data && data.success && data.offers && data.offers.length > 0) {
+                    gridEl.innerHTML = data.offers.map((offer, index) => {
+                        const image = offer.imageUrl || holidayImages[offer.type] || holidayImages['custom'];
+                        const label = offerTypeLabels[offer.type] || 'Ofertă Specială';
+                        const startDate = new Date(offer.startDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+                        const endDate = new Date(offer.endDate).toLocaleDateString('ro-RO', { day: 'numeric', month: 'long', year: 'numeric' });
+
+                        return `
+                            <div class="bg-white rounded-2xl shadow-xl overflow-hidden border-2 border-primary/20 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 relative">
+                                <!-- Ribbon -->
+                                <div class="absolute top-4 right-4 bg-red-500 text-white text-xs font-bold px-3 py-1 rounded-full shadow-lg z-10">
+                                    <i class="fas fa-fire mr-1"></i>OFERTĂ
+                                </div>
+
+                                <!-- Header with holiday image -->
+                                <div class="relative overflow-hidden h-48">
+                                    ${window.isVisualEditor || document.body.classList.contains('visual-editor-active') ? '' : '<div class="offer-img-skeleton absolute inset-0 skeleton-image"></div>'}
+                                    <img src="${image}"
+                                         alt="${label}"
+                                         id="offer-img-${offer.id}"
+                                         data-offer-id="${offer.id}"
+                                         class="w-full h-48 object-cover absolute inset-0 opacity-0 transition-opacity duration-300"
+                                         onload="this.classList.add('opacity-100'); var sk=this.previousElementSibling; if(sk && sk.classList.contains('offer-img-skeleton')) sk.style.display='none';"
+                                         onerror="this.style.display='none';">
+                                    <div class="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent flex items-end justify-center p-4">
+                                        <span class="text-white text-lg font-bold uppercase tracking-wider drop-shadow-lg">${label}</span>
+                                    </div>
+                                </div>
+
+                                <div class="p-6">
+                                    <h3 class="text-2xl font-bold text-gray-900 mb-3 text-center">${offer.title}</h3>
+
+                                    <!-- Dates -->
+                                    <div class="bg-gray-50 rounded-lg p-4 mb-4">
+                                        <div class="flex flex-col sm:flex-row sm:items-center justify-center text-gray-700 mb-2 gap-1 sm:gap-0">
+                                            <div class="flex items-center justify-center">
+                                                <i class="fas fa-calendar-alt text-primary mr-2"></i>
+                                                <span class="font-medium text-sm sm:text-base">${startDate}</span>
+                                            </div>
+                                            <span class="hidden sm:inline mx-2">→</span>
+                                            <div class="flex items-center justify-center sm:justify-start">
+                                                <span class="font-medium text-sm sm:text-base">${endDate}</span>
+                                            </div>
+                                        </div>
+                                        <div class="text-center text-gray-600">
+                                            <i class="fas fa-moon text-primary mr-1"></i>
+                                            ${offer.nights} ${offer.nights === 1 ? 'noapte' : 'nopți'}
+                                        </div>
+                                    </div>
+
+                                    <!-- Prices -->
+                                    <div class="grid grid-cols-${offer.roomPrice ? '2' : '1'} gap-3 mb-4">
+                                        <div class="bg-primary/10 rounded-lg p-3 text-center">
+                                            <div class="text-xl sm:text-2xl font-bold text-primary">${offer.totalPrice}</div>
+                                            <div class="text-xs text-gray-600">RON / casă întreagă</div>
+                                        </div>
+                                        ${offer.roomPrice ? `
+                                            <div class="bg-secondary/10 rounded-lg p-3 text-center">
+                                                <div class="text-xl sm:text-2xl font-bold text-secondary">${offer.roomPrice}</div>
+                                                <div class="text-xs text-gray-600">RON / cameră</div>
+                                            </div>
+                                        ` : ''}
+                                    </div>
+
+                                    <!-- Details -->
+                                    <p class="text-gray-600 mb-4 text-sm">${offer.details}</p>
+
+                                    <!-- Includes -->
+                                    ${offer.includes ? `
+                                        <div class="border-t pt-4">
+                                            <h4 class="font-semibold text-gray-900 mb-2 text-sm">
+                                                <i class="fas fa-check-circle text-primary mr-1"></i>Include:
+                                            </h4>
+                                            <ul class="text-sm text-gray-600 space-y-1">
+                                                ${offer.includes.split('\n').filter(i => i.trim()).map(item =>
+                            `<li class="flex items-start">
+                                                        <i class="fas fa-check text-primary mr-2 mt-1 text-xs"></i>
+                                                        <span>${item}</span>
+                                                    </li>`
+                        ).join('')}
+                                            </ul>
+                                        </div>
+                                    ` : ''}
+
+                                    <!-- CTA Button -->
+                                    <a href="/js/pages/booking.html?offer=${offer.id}&type=${offer.type}&start=${offer.startDate}&end=${offer.endDate}&nights=${offer.nights}&price=${offer.totalPrice}&roomPrice=${offer.roomPrice || 0}&title=${encodeURIComponent(offer.title)}"
+                                       class="block w-full mt-6 bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-3 sm:py-4 px-4 sm:px-6 rounded-xl text-center transition-all duration-300 hover:scale-105 shadow-lg text-sm sm:text-base">
+                                        <i class="fas fa-calendar-check mr-2"></i>Rezervă Această Ofertă
+                                    </a>
+                                </div>
+                            </div>
+                        `;
+                    }).join('');
+
+                    gridEl.classList.remove('hidden');
+
+                    // Show badge with offer count
+                    const badge = document.getElementById('offers-badge');
+                    badge.textContent = data.offers.length;
+                    badge.classList.remove('hidden');
+
+                    // Reload CMS content to apply saved images to dynamically generated offers
+                    if (typeof loadCMSContent === 'function') {
+                        setTimeout(() => loadCMSContent('offers'), 100);
+                    }
+                } else {
+                    // No offers - show the no-offers message
+                    noOffersEl.classList.remove('hidden');
+                }
+            } catch (error) {
+                showNotification('Nu s-au putut încărca ofertele.', 'error');
+                loadingEl.classList.add('hidden');
+                // Show no offers message on error
+                noOffersEl.classList.remove('hidden');
+            }
+        }
+
+        async function loadRoomPhotos() {
+            try {
+                // Use pre-fetched data if available
+                let data;
+                if (window._photosPromise) {
+                    if (window._photosPromise instanceof Promise) {
+                        data = await window._photosPromise;
+                    } else {
+                        data = window._photosPromise;
+                    }
+                }
+
+                if (!data) {
+                    const response = await fetch('/api/photos?limit=500');
+                    data = await response.json();
+                }
+                const allPhotos = data.items || [];
+
+                // Filter photos by description or use all if no specific ones found
+                cottagePhotos = allPhotos.filter(photo => {
+                    const desc = (photo.description || '').toLowerCase();
+                    return desc.includes('cabana') || desc.includes('casa') || desc.includes('exterior');
+                });
+
+                roomPhotos = allPhotos.filter(photo => {
+                    const desc = (photo.description || '').toLowerCase();
+                    return desc.includes('camera') || desc.includes('dormitor') || desc.includes('room');
+                });
+
+                // If no specific photos found, use all photos for both carousels
+                if (cottagePhotos.length === 0 && allPhotos.length > 0) {
+                    cottagePhotos = allPhotos.slice(0, Math.ceil(allPhotos.length / 2));
+                }
+
+                if (roomPhotos.length === 0 && allPhotos.length > 0) {
+                    roomPhotos = allPhotos.slice(Math.floor(allPhotos.length / 2));
+                }
+
+                // Don't use placeholder images - keep skeleton if no photos
+                // Carousels will show skeleton state
+
+                initializeCarousels();
+            } catch (error) {
+                showNotification('Nu s-au putut încărca pozele.', 'warning');
+                // Don't use placeholders - keep skeleton visible
+                initializeCarousels();
+            }
+        }
+
+        function initializeCarousels() {
+            if (roomPhotos.length > 0) {
+                initCarousel('room-carousel', roomPhotos);
+            }
+            if (cottagePhotos.length > 0) {
+                initCarousel('cottage-carousel', cottagePhotos);
+            }
+        }
+
+        function initCarousel(carouselId, photos) {
+            const carousel = document.getElementById(carouselId);
+            if (!carousel) return;
+
+            // If no photos, show skeleton placeholder doar dacă nu e editor vizual
+            if ((!photos || photos.length === 0) && !isVisualEditorActive()) {
+                carousel.innerHTML = `<div class="skeleton-image w-full h-full absolute inset-0"></div>`;
+                return;
+            }
+
+            let currentIndex = 0;
+            const imagesHtml = photos.map((photo, idx) => {
+                // Handle different URL formats - imageUrl (constructed) or build from PocketBase fields
+                const imgUrl = photo.imageUrl || photo.url ||
+                    (photo.collectionId && photo.id && photo.image ?
+                        `${window.API_BASE || ''}/api/files/${photo.collectionId}/${photo.id}/${photo.image}` :
+                        photo.image);
+
+
+                return `<img src="${imgUrl}" alt="Casa Chindea" class="${idx === 0 ? 'active' : ''}"
+                      data-photo-id="${photo.id || ''}"
+                      loading="lazy" style="object-fit: cover;">`;
+            }).join('');
+
+            const dotsHtml = photos.length > 1 ? `<div class="carousel-dots">${photos.map((_, idx) =>
+                `<div class="carousel-dot ${idx === 0 ? 'active' : ''}" data-index="${idx}"></div>`
+            ).join('')}</div>` : '';
+
+            carousel.innerHTML = `${imagesHtml}${dotsHtml}`;
+
+            // Auto-rotate only if multiple photos
+            if (photos.length > 1) {
+                setInterval(() => {
+                    currentIndex = (currentIndex + 1) % photos.length;
+                    updateCarousel(carousel, currentIndex);
+                }, 5000);
+
+                // Dot click handlers
+                carousel.querySelectorAll('.carousel-dot').forEach(dot => {
+                    dot.addEventListener('click', (e) => {
+                        currentIndex = parseInt(e.target.dataset.index);
+                        updateCarousel(carousel, currentIndex);
+                    });
+                });
+            }
+        }
+
+        function updateCarousel(carousel, index) {
+            carousel.querySelectorAll('img').forEach((img, idx) => {
+                img.classList.toggle('active', idx === index);
+            });
+            carousel.querySelectorAll('.carousel-dot').forEach((dot, idx) => {
+                dot.classList.toggle('active', idx === index);
+            });
+        }
+
+        let roomCount = 1;
+
+        function updateRoomCount(change) {
+            const newCount = roomCount + change;
+            if (newCount >= 1 && newCount <= 4) {
+                roomCount = newCount;
+                document.getElementById('room-count').textContent = roomCount;
+
+                // Update button states
+                document.getElementById('decrease-rooms').disabled = roomCount === 1;
+                document.getElementById('increase-rooms').disabled = roomCount === 4;
+            }
+        }
+
+        function reserveRooms() {
+            window.location.href = `/js/pages/booking.html?type=room&rooms=${roomCount}`;
+        }
+
+        function reserveCottage() {
+            window.location.href = '/js/pages/booking.html?type=entire';
+        }
+
+        function isVisualEditorActive() {
+            return !!(window.isVisualEditor || document.body.classList.contains('visual-editor-active') || window.editMode === true);
+        }
+
+        // Observer global pentru ascundere skeleton-uri
+        (function () {
+            function hideAllSkeletonsIfEditor() {
+                if (isVisualEditorActive()) {
+                    document.querySelectorAll('.skeleton-image, .offer-img-skeleton, .skeleton-offer').forEach(el => el.style.display = 'none');
+                }
+            }
+            hideAllSkeletonsIfEditor();
+            const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
+    </script>
+
+    <section class="pt-20 pb-12 bg-gradient-to-b from-gray-50 to-white min-h-screen">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+
+            <!-- Tab Navigation - Responsive -->
+            <div class="flex justify-center mb-6 md:mb-8">
+                <div class="bg-white rounded-xl shadow-md p-1 sm:p-1.5 inline-flex gap-1 w-full sm:w-auto">
+                    <button id="tab-cazare" onclick="switchTab('cazare')"
+                        class="tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gradient-to-r from-primary to-secondary text-white shadow">
+                        <i class="fas fa-bed mr-1.5 sm:mr-2"></i>Cazare
+                    </button>
+                    <button id="tab-offers" onclick="switchTab('offers')"
+                        class="tab-btn flex-1 sm:flex-none px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg font-semibold text-sm sm:text-base transition-all duration-300 bg-gray-100 text-gray-600 hover:bg-gray-200">
+                        <i class="fas fa-gift mr-1.5 sm:mr-2"></i><span class="hidden xs:inline">Oferte </span>Speciale
+                        <span id="offers-badge"
+                            class="hidden ml-1 sm:ml-2 bg-red-500 text-white text-xs px-1.5 sm:px-2 py-0.5 rounded-full animate-pulse">0</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- Tab Content: Special Offers -->
+            <div id="content-offers" class="tab-content hidden">
+                <div id="special-offers-section">
+                    <div class="flex items-center justify-between mb-6">
+                        <div>
+                            <div class="flex items-center gap-3">
+                                <span
+                                    class="bg-gradient-to-r from-primary to-secondary text-white px-3 py-1 rounded-full text-xs font-semibold">
+                                    <i class="fas fa-star mr-1"></i>LIMITATE
+                                </span>
+                                <h2 id="cms-offers-packages-title" class="text-2xl font-bold text-gray-900">Pachete
+                                    sărbători</h2>
+                            </div>
+                            <p id="cms-offers-packages-subtitle" class="text-gray-600 text-sm mt-1">Oferte exclusive
+                                pentru Revelion, Crăciun, Paște</p>
+                        </div>
+                    </div>
+
+                    <!-- Offers Loading -->
+                    <div id="offers-loading" class="text-center py-8">
+                        <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary mx-auto mb-4"></div>
+                        <p class="text-gray-600">Se încarcă ofertele...</p>
+                    </div>
+
+                    <!-- Offers Grid -->
+                    <div id="offers-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8 hidden">
+                        <!-- Offers will be loaded here -->
+                    </div>
+
+                    <!-- No Offers Message -->
+                    <div id="no-offers"
+                        class="hidden text-center py-12 bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl border-2 border-dashed border-gray-300">
+                        <div class="text-5xl mb-4">🎁</div>
+                        <h3 class="text-xl font-bold text-gray-700 mb-2">Nu avem oferte speciale active</h3>
+                        <p class="text-gray-500 mb-6 text-sm max-w-md mx-auto">Revino în curând pentru pachete de
+                            sărbători!</p>
+                        <button onclick="switchTab('cazare')"
+                            class="inline-flex items-center bg-primary hover:bg-secondary text-white px-6 py-3 rounded-lg font-semibold transition-all duration-300 hover:scale-105 shadow">
+                            <i class="fas fa-bed mr-2"></i>Vezi Cazarea
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab Content: Classic Accommodation -->
+            <div id="content-cazare" class="tab-content">
+                <div class="flex items-center justify-between mb-6">
+                    <div>
+                        <h2 id="cms-offers-options-title" class="text-2xl font-bold text-gray-900">Opțiuni de cazare
+                        </h2>
+                        <p id="cms-offers-options-subtitle" class="text-gray-600 text-sm mt-1">Închiriază camere
+                            individuale sau întreaga cabană</p>
+                    </div>
+                </div>
+
+                <!-- Main Cards - Full Focus -->
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 max-w-6xl mx-auto">
+                    <!-- Rent Rooms Option -->
+                    <div
+                        class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-primary transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                        <div class="photo-carousel h-96" id="room-carousel">
+                            <div class="skeleton-image w-full h-full absolute inset-0"></div>
+                        </div>
+                        <div class="p-8">
+                            <div class="text-center mb-6">
+                                <div
+                                    class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-primary to-secondary rounded-2xl mb-4 shadow-lg">
+                                    <i class="fas fa-door-open text-white text-4xl"></i>
+                                </div>
+                                <h3 id="cms-offers-rooms-title" class="text-3xl font-bold text-gray-900 mb-3">Închiriază
+                                    camere</h3>
+                                <p id="cms-offers-rooms-subtitle" class="text-lg text-gray-600">Pentru cupluri sau
+                                    grupuri mici</p>
+                            </div>
+
+                            <div class="space-y-3 mb-8">
+                                <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                    <i class="fas fa-check-circle text-primary mr-3 text-xl"></i>
+                                    <span class="font-medium">Maximum 4 camere disponibile</span>
+                                </div>
+                                <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                    <i class="fas fa-users text-primary mr-3 text-xl"></i>
+                                    <span class="font-medium">2 persoane per cameră</span>
+                                </div>
+                                <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                    <i class="fas fa-bed text-primary mr-3 text-xl"></i>
+                                    <span class="font-medium">Camere confortabile cu toate facilitățile</span>
+                                </div>
+                                <div class="flex items-center text-gray-700 bg-gray-50 rounded-lg p-3">
+                                    <i class="fas fa-bath text-primary mr-3 text-xl"></i>
+                                    <span class="font-medium">Baie privată în fiecare cameră</span>
+                                </div>
+                            </div>
+
+                            <div class="bg-gradient-to-r from-primary/10 to-secondary/10 rounded-2xl p-6 mb-6">
+                                <h4 class="text-center font-bold text-gray-900 mb-4 text-xl">Câte camere dorești?</h4>
+                                <div class="room-counter">
+                                    <button id="decrease-rooms" onclick="updateRoomCount(-1)"
+                                        class="bg-gray-200 text-gray-700 hover:bg-gray-300 hover:scale-110" disabled>
+                                        <i class="fas fa-minus"></i>
+                                    </button>
+                                    <div class="count text-primary" id="room-count">1</div>
+                                    <button id="increase-rooms" onclick="updateRoomCount(1)"
+                                        class="bg-primary text-white hover:bg-secondary hover:scale-110">
+                                        <i class="fas fa-plus"></i>
+                                    </button>
+                                </div>
+                                <p class="text-center text-sm text-gray-500 mt-3">Alege între 1-4 camere</p>
+                            </div>
+
+                            <button onclick="reserveRooms()"
+                                class="w-full bg-gradient-to-r from-primary to-secondary hover:from-secondary hover:to-primary text-white font-bold py-5 px-6 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl">
+                                <i class="fas fa-calendar-check mr-2"></i>
+                                Rezervă Acum
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Rent Entire Cottage Option -->
+                    <div
+                        class="group bg-white rounded-3xl shadow-xl overflow-hidden border-2 border-gray-100 hover:border-accent transition-all duration-300 hover:shadow-2xl hover:-translate-y-2">
+                        <div class="photo-carousel h-96" id="cottage-carousel">
+                            <div class="skeleton-image w-full h-full absolute inset-0"></div>
+                        </div>
+                        <div class="p-8">
+                            <div class="text-center mb-6">
+                                <div
+                                    class="inline-flex items-center justify-center w-20 h-20 bg-gradient-to-br from-accent to-secondary rounded-2xl mb-4 shadow-lg">
+                                    <i class="fas fa-home text-white text-4xl"></i>
+                                </div>
+                                <h3 id="cms-offers-cottage-title" class="text-3xl font-bold text-gray-900 mb-3">Casa
+                                    intreaga</h3>
+                                <p id="cms-offers-cottage-subtitle" class="text-lg text-gray-600">Pentru grupuri mari
+                                    sau evenimente</p>
+                            </div>
+
+                            <div class="space-y-3 mb-8">
+                                <div
+                                    class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                    <i class="fas fa-check-circle text-accent mr-3 text-xl"></i>
+                                    <span class="font-medium">Toate cele 4 camere incluse</span>
+                                </div>
+                                <div
+                                    class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                    <i class="fas fa-users text-accent mr-3 text-xl"></i>
+                                    <span class="font-medium">Până la 8-10 persoane</span>
+                                </div>
+                                <div
+                                    class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                    <i class="fas fa-utensils text-accent mr-3 text-xl"></i>
+                                    <span class="font-medium">Bucătărie completă echipată</span>
+                                </div>
+                                <div
+                                    class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                    <i class="fas fa-couch text-accent mr-3 text-xl"></i>
+                                    <span class="font-medium">Living spațios & terasă</span>
+                                </div>
+                                <div
+                                    class="flex items-center text-gray-700 bg-gradient-to-r from-accent/5 to-secondary/5 rounded-lg p-3">
+                                    <i class="fas fa-crown text-accent mr-3 text-xl"></i>
+                                    <span class="font-medium">Intimitate completă</span>
+                                </div>
+                            </div>
+
+                            <div
+                                class="bg-gradient-to-r from-accent/20 to-secondary/20 rounded-2xl p-6 mb-6 text-center border-2 border-accent/30">
+                                <div class="text-sm font-semibold text-gray-600 mb-2">✨ Perfect pentru</div>
+                                <div class="font-bold text-xl text-gray-900">Familii • Evenimente • Grupuri</div>
+                            </div>
+
+                            <button onclick="reserveCottage()"
+                                class="w-full bg-gradient-to-r from-accent to-secondary hover:from-secondary hover:to-accent text-white font-bold py-5 px-6 rounded-2xl text-xl transition-all duration-300 transform hover:scale-105 shadow-lg hover:shadow-2xl">
+                                <i class="fas fa-calendar-check mr-2"></i>
+                                Rezervă Acum
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Amenities Section -->
+                <div class="mt-16 pt-12 border-t border-gray-200">
+                    <h3 id="cms-offers-amenities-title" class="text-2xl font-bold text-center text-gray-800 mb-8">
+                        Incluse în Toate Opțiunile</h3>
+                    <div class="grid grid-cols-2 md:grid-cols-4 gap-6 max-w-4xl mx-auto">
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-wifi text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Wi-Fi Gratuit</h4>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-tv text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">TV LED</h4>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-bath text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Băi Private</h4>
+                        </div>
+                        <div class="text-center p-4 bg-white rounded-xl shadow-sm hover:shadow-md transition-shadow">
+                            <div
+                                class="bg-gradient-to-br from-primary to-secondary text-white w-16 h-16 rounded-2xl flex items-center justify-center mx-auto mb-3">
+                                <i class="fas fa-car text-2xl"></i>
+                            </div>
+                            <h4 class="font-semibold text-gray-800">Parcare</h4>
+                        </div>
+                    </div>
+                </div>
+            </div> <!-- End content-cazare -->
+
+        </div>
+    </section>
+    <footer class="bg-gray-800 text-white py-12 mt-20">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                <div>
+                    <h3 class="text-xl font-bold mb-4">Casa Chindea</h3>
+                    <p class="text-gray-300">Refugiul perfect în inima naturii, la poalele Hășmașului Mare.</p>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Contact</h4>
+                    <div class="space-y-2 text-gray-300">
+                        <p><i class="fas fa-map-marker-alt mr-2"></i>Hășmaș, județul Harghita</p>
+                        <p><i class="fas fa-phone mr-2"></i>+40 743 930 521</p>
+                        <p><i class="fas fa-envelope mr-2"></i>contact@casachindea.ro</p>
+                    </div>
+                </div>
+                <div>
+                    <h4 class="text-lg font-semibold mb-4">Urmărește-ne</h4>
+                    <div class="flex space-x-4">
+                        <a href="https://www.facebook.com/casa.chindea?locale=ro_RO"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-facebook-f text-xl"></i>
+                        </a>
+                        <a href="https://www.instagram.com/casachindea2019?igsh=bW1oMmdhcDcwbXhi"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-instagram text-xl"></i>
+                        </a>
+                        <a href="https://www.tiktok.com/@casachindea?_t=ZN-8xQ5XCOZp2I&_r=1"
+                            class="text-gray-300 hover:text-accent transition-colors">
+                            <i class="fab fa-tiktok text-xl"></i>
+                        </a>
+                    </div>
+                </div>
+            </div>
+            <div class="border-t border-gray-700 mt-8 pt-8 text-center text-gray-300">
+                <p>&copy; 2024 Casa Chindea. Toate drepturile rezervate.</p>
+                <div class="mt-4 space-x-4 text-sm">
+                    <a href="/js/pages/terms.html" class="text-gray-400 hover:text-accent transition-colors">Termeni și
+                        Condiții</a>
+                    <span class="text-gray-600">|</span>
+                    <a href="/js/pages/privacy.html" class="text-gray-400 hover:text-accent transition-colors">Politica
+                        de Confidențialitate</a>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Hide all skeletons if visual editor becomes active after page load -->
+    <script>
+        (function () {
+            function hideAllSkeletonsIfEditor() {
+                if (window.isVisualEditor || document.body.classList.contains('visual-editor-active')) {
+                    document.querySelectorAll('.skeleton-image, .offer-img-skeleton, .skeleton-offer').forEach(el => el.style.display = 'none');
+                }
+            }
+            hideAllSkeletonsIfEditor();
+            const observer = new MutationObserver(hideAllSkeletonsIfEditor);
+            observer.observe(document.body, { attributes: true, attributeFilter: ['class'] });
+        })();
+    </script>
+</body>
+
+</html>
+
