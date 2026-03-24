@@ -1,42 +1,14 @@
 {
     "version": 2,
     "outputDirectory": "public",
+    "cleanUrls": true,
+    "trailingSlash": false,
     "routes": [
         { "src": "/home", "status": 301, "headers": { "Location": "/" } },
         { "src": "/home\\.html", "status": 301, "headers": { "Location": "/" } },
-        { "src": "/about\\.html", "status": 301, "headers": { "Location": "/about" } },
-        { "src": "/offers\\.html", "status": 301, "headers": { "Location": "/offers" } },
-        { "src": "/gallery\\.html", "status": 301, "headers": { "Location": "/gallery" } },
-        { "src": "/booking\\.html", "status": 301, "headers": { "Location": "/booking" } },
-        { "src": "/contact\\.html", "status": 301, "headers": { "Location": "/contact" } },
-        { "src": "/login\\.html", "status": 301, "headers": { "Location": "/login" } },
-        { "src": "/register\\.html", "status": 301, "headers": { "Location": "/register" } },
-        { "src": "/profile\\.html", "status": 301, "headers": { "Location": "/profile" } },
-        { "src": "/admin\\.html", "status": 301, "headers": { "Location": "/admin" } },
-        { "src": "/privacy\\.html", "status": 301, "headers": { "Location": "/privacy" } },
-        { "src": "/terms\\.html", "status": 301, "headers": { "Location": "/terms" } },
-        { "src": "/verify-email\\.html", "status": 301, "headers": { "Location": "/verify-email" } },
-        { "src": "/reset-password\\.html", "status": 301, "headers": { "Location": "/reset-password" } },
-
         { "src": "/api/(.*)", "dest": "https://api.casachindea.ro/api/$1" },
-
-        { "handle": "filesystem" },
-
-        { "src": "/", "dest": "/home.html", "check": true },
-        { "src": "/about", "dest": "/about.html", "check": true },
-        { "src": "/offers", "dest": "/offers.html", "check": true },
-        { "src": "/gallery", "dest": "/gallery.html", "check": true },
-        { "src": "/booking", "dest": "/booking.html", "check": true },
-        { "src": "/contact", "dest": "/contact.html", "check": true },
-        { "src": "/login", "dest": "/login.html", "check": true },
-        { "src": "/register", "dest": "/register.html", "check": true },
-        { "src": "/profile", "dest": "/profile.html", "check": true },
-        { "src": "/admin", "dest": "/admin.html", "check": true },
-        { "src": "/privacy", "dest": "/privacy.html", "check": true },
-        { "src": "/terms", "dest": "/terms.html", "check": true },
-        { "src": "/verify-email", "dest": "/verify-email.html", "check": true },
-        { "src": "/reset-password", "dest": "/reset-password.html", "check": true },
-
+        { "handle": "miss" },
+        { "src": "/", "dest": "/home.html" },
         { "src": "/(.*)", "dest": "/404.html", "status": 404 }
     ]
 }
