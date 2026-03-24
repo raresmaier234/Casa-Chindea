@@ -14,14 +14,25 @@ const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 // Authenticate PocketBase as admin
 async function authPb() {
-    if (pb.authStore.isValid) return;
+    // Check if authenticated as admin/superuser (not just any valid token)
+    if (pb.authStore.isValid && pb.authStore.record) {
+        const r = pb.authStore.record;
+        const isSuperuser = r.collectionName === '_superusers' || r.collectionId === '_superusers';
+        if (isSuperuser || r.admin === true) return;
+        pb.authStore.clear();
+    }
+
     try {
         const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
         const password = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
         try {
-            await pb.admins.authWithPassword(email, password);
+            await pb.collection('_superusers').authWithPassword(email, password);
         } catch {
-            await pb.collection('users').authWithPassword(email, password);
+            try {
+                await pb.admins.authWithPassword(email, password);
+            } catch {
+                await pb.collection('users').authWithPassword(email, password);
+            }
         }
     } catch (err) {
         console.error('❌ PB auth failed in payment-server:', err.message);

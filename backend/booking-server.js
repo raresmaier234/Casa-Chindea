@@ -12,18 +12,31 @@ const router = express.Router();
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 const ensurePbAdminAuth = async () => {
-    if (pb.authStore.isValid) return;
+    // Check if authenticated as admin/superuser (not just any valid token)
+    if (pb.authStore.isValid && pb.authStore.record) {
+        const r = pb.authStore.record;
+        const isSuperuser = r.collectionName === '_superusers' || r.collectionId === '_superusers';
+        if (isSuperuser || r.admin === true) return;
+        // Regular user token — clear and re-auth as admin
+        pb.authStore.clear();
+    }
 
     try {
         if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
-            // Try authenticating as a user (superuser)
-            await pb.collection('users').authWithPassword(
-                process.env.POCKETBASE_ADMIN_EMAIL,
-                process.env.POCKETBASE_ADMIN_PASSWORD
-            );
+            try {
+                await pb.collection('_superusers').authWithPassword(
+                    process.env.POCKETBASE_ADMIN_EMAIL,
+                    process.env.POCKETBASE_ADMIN_PASSWORD
+                );
+            } catch (e) {
+                await pb.collection('users').authWithPassword(
+                    process.env.POCKETBASE_ADMIN_EMAIL,
+                    process.env.POCKETBASE_ADMIN_PASSWORD
+                );
+            }
         }
     } catch (err) {
-        // If auth fails, log it but continue - collection rules might allow public access
+        console.error('❌ PB admin auth failed in booking-server:', err.message);
     }
 };
 

@@ -999,7 +999,8 @@ app.post('/api/user/change-password', authenticateToken, async (req, res) => {
 
         // Verify current password by attempting to authenticate
         try {
-            await pb.collection('users').authWithPassword(req.user.email, currentPassword);
+            const verifyPb = new PocketBase(process.env.POCKET_BASE_URL);
+            await verifyPb.collection('users').authWithPassword(req.user.email, currentPassword);
         } catch (authErr) {
             return res.status(401).json({
                 success: false,

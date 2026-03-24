@@ -36,6 +36,15 @@ function getPublicPbUrl() {
 
 // Authenticate PocketBase as admin/superuser for server-side operations
 async function authPocketBaseAdmin() {
+    // Check if already authenticated as admin/superuser
+    if (pb.authStore.isValid && pb.authStore.record) {
+        const r = pb.authStore.record;
+        const isSuperuser = r.collectionName === '_superusers' || r.collectionId === '_superusers';
+        if (isSuperuser || r.admin === true) return;
+        // Regular user token — clear and re-auth as admin
+        pb.authStore.clear();
+    }
+
     const email = process.env.PB_ADMIN_EMAIL || process.env.POCKETBASE_ADMIN_EMAIL;
     const password = process.env.PB_ADMIN_PASSWORD || process.env.POCKETBASE_ADMIN_PASSWORD;
 
