@@ -296,7 +296,7 @@ class CasaChindeaNav {
         });
 
         setTimeout(() => {
-            window.location.href = '/home';
+            window.location.href = '/';
         }, 1000);
     }
 
