@@ -22,21 +22,7 @@
     ],
     "rewrites": [
         { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
-        { "source": "/", "destination": "/home.html" },
-        { "source": "/about", "destination": "/about.html" },
-        { "source": "/offers", "destination": "/offers.html" },
-        { "source": "/gallery", "destination": "/gallery.html" },
-        { "source": "/booking", "destination": "/booking.html" },
-        { "source": "/contact", "destination": "/contact.html" },
-        { "source": "/login", "destination": "/login.html" },
-        { "source": "/register", "destination": "/register.html" },
-        { "source": "/profile", "destination": "/profile.html" },
-        { "source": "/admin", "destination": "/admin.html" },
-        { "source": "/privacy", "destination": "/privacy.html" },
-        { "source": "/terms", "destination": "/terms.html" },
-        { "source": "/verify-email", "destination": "/verify-email.html" },
-        { "source": "/reset-password", "destination": "/reset-password.html" },
-        { "source": "/:path*", "destination": "/404.html" }
+        { "source": "/", "destination": "/home.html" }
     ],
     "headers": [
         {
