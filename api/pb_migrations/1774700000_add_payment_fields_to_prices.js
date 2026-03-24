@@ -4,33 +4,29 @@ migrate((app) => {
 
   // Add paymentMode field (select: none, full, deposit)
   collection.fields.addAt(collection.fields.length, new Field({
+    "hidden": false,
     "system": false,
     "id": "paymentmode_field",
     "name": "paymentMode",
     "type": "select",
     "required": false,
     "presentable": false,
-    "unique": false,
-    "options": {
-      "values": ["none", "full", "deposit"],
-      "maxSelect": 1
-    }
+    "values": ["none", "full", "deposit"],
+    "maxSelect": 1
   }))
 
   // Add depositPercent field
   collection.fields.addAt(collection.fields.length, new Field({
+    "hidden": false,
     "system": false,
     "id": "depositpercent_field",
     "name": "depositPercent",
     "type": "number",
     "required": false,
     "presentable": false,
-    "unique": false,
-    "options": {
-      "min": 0,
-      "max": 100,
-      "noDecimal": true
-    }
+    "min": 0,
+    "max": 100,
+    "onlyInt": true
   }))
 
   return app.save(collection)
