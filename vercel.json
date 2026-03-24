@@ -4,28 +4,26 @@
     "outputDirectory": "public",
     "trailingSlash": false,
     "framework": null,
-    "rewrites": [
-        { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
-        { "source": "/", "destination": "/home.html" },
-        { "source": "/about", "destination": "/about.html" },
-        { "source": "/admin", "destination": "/admin.html" },
-        { "source": "/booking", "destination": "/booking.html" },
-        { "source": "/contact", "destination": "/contact.html" },
-        { "source": "/gallery", "destination": "/gallery.html" },
-        { "source": "/login", "destination": "/login.html" },
-        { "source": "/offers", "destination": "/offers.html" },
-        { "source": "/privacy", "destination": "/privacy.html" },
-        { "source": "/profile", "destination": "/profile.html" },
-        { "source": "/register", "destination": "/register.html" },
-        { "source": "/reset-password", "destination": "/reset-password.html" },
-        { "source": "/terms", "destination": "/terms.html" },
-        { "source": "/verify-email", "destination": "/verify-email.html" },
-        { "source": "/404", "destination": "/404.html" },
-        { "source": "/:path*", "destination": "/home.html" }
-    ],
-    "redirects": [
-        { "source": "/home", "destination": "/", "permanent": true },
-        { "source": "/home.html", "destination": "/", "permanent": true }
-
+    "routes": [
+        { "src": "/home", "headers": { "Location": "/" }, "status": 301 },
+        { "src": "/home.html", "headers": { "Location": "/" }, "status": 301 },
+        { "src": "/api/(.*)", "dest": "https://api.casachindea.ro/api/$1" },
+        { "src": "^/$", "dest": "/home.html" },
+        { "src": "^/about$", "dest": "/about.html" },
+        { "src": "^/admin$", "dest": "/admin.html" },
+        { "src": "^/booking$", "dest": "/booking.html" },
+        { "src": "^/contact$", "dest": "/contact.html" },
+        { "src": "^/gallery$", "dest": "/gallery.html" },
+        { "src": "^/login$", "dest": "/login.html" },
+        { "src": "^/offers$", "dest": "/offers.html" },
+        { "src": "^/privacy$", "dest": "/privacy.html" },
+        { "src": "^/profile$", "dest": "/profile.html" },
+        { "src": "^/register$", "dest": "/register.html" },
+        { "src": "^/reset-password$", "dest": "/reset-password.html" },
+        { "src": "^/terms$", "dest": "/terms.html" },
+        { "src": "^/verify-email$", "dest": "/verify-email.html" },
+        { "src": "^/404$", "dest": "/404.html" },
+        { "handle": "filesystem" },
+        { "src": "/(.*)", "dest": "/home.html" }
     ]
 }
