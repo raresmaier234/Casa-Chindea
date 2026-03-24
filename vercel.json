@@ -1,42 +1,60 @@
 {
     "version": 2,
     "outputDirectory": "public",
-    "routes": [
-        { "src": "/home", "status": 301, "headers": { "Location": "/" } },
-        { "src": "/home.html", "status": 301, "headers": { "Location": "/" } },
-        { "src": "/about.html", "status": 301, "headers": { "Location": "/about" } },
-        { "src": "/offers.html", "status": 301, "headers": { "Location": "/offers" } },
-        { "src": "/gallery.html", "status": 301, "headers": { "Location": "/gallery" } },
-        { "src": "/booking.html", "status": 301, "headers": { "Location": "/booking" } },
-        { "src": "/contact.html", "status": 301, "headers": { "Location": "/contact" } },
-        { "src": "/login.html", "status": 301, "headers": { "Location": "/login" } },
-        { "src": "/register.html", "status": 301, "headers": { "Location": "/register" } },
-        { "src": "/profile.html", "status": 301, "headers": { "Location": "/profile" } },
-        { "src": "/admin.html", "status": 301, "headers": { "Location": "/admin" } },
-        { "src": "/privacy.html", "status": 301, "headers": { "Location": "/privacy" } },
-        { "src": "/terms.html", "status": 301, "headers": { "Location": "/terms" } },
-        { "src": "/verify-email.html", "status": 301, "headers": { "Location": "/verify-email" } },
-        { "src": "/reset-password.html", "status": 301, "headers": { "Location": "/reset-password" } },
-
-        { "src": "/api/(.*)", "dest": "https://api.casachindea.ro/api/$1" },
-
-        { "src": "/", "dest": "/home.html" },
-        { "src": "/about", "dest": "/about.html" },
-        { "src": "/offers", "dest": "/offers.html" },
-        { "src": "/gallery", "dest": "/gallery.html" },
-        { "src": "/booking", "dest": "/booking.html" },
-        { "src": "/contact", "dest": "/contact.html" },
-        { "src": "/login", "dest": "/login.html" },
-        { "src": "/register", "dest": "/register.html" },
-        { "src": "/profile", "dest": "/profile.html" },
-        { "src": "/admin", "dest": "/admin.html" },
-        { "src": "/privacy", "dest": "/privacy.html" },
-        { "src": "/terms", "dest": "/terms.html" },
-        { "src": "/verify-email", "dest": "/verify-email.html" },
-        { "src": "/reset-password", "dest": "/reset-password.html" },
-
-        { "handle": "filesystem" },
-
-        { "src": "/(.*)", "status": 301, "headers": { "Location": "/" } }
+    "cleanUrls": true,
+    "trailingSlash": false,
+    "redirects": [
+        { "source": "/home", "destination": "/", "permanent": true },
+        { "source": "/home.html", "destination": "/", "permanent": true },
+        { "source": "/about.html", "destination": "/about", "permanent": true },
+        { "source": "/offers.html", "destination": "/offers", "permanent": true },
+        { "source": "/gallery.html", "destination": "/gallery", "permanent": true },
+        { "source": "/booking.html", "destination": "/booking", "permanent": true },
+        { "source": "/contact.html", "destination": "/contact", "permanent": true },
+        { "source": "/login.html", "destination": "/login", "permanent": true },
+        { "source": "/register.html", "destination": "/register", "permanent": true },
+        { "source": "/profile.html", "destination": "/profile", "permanent": true },
+        { "source": "/admin.html", "destination": "/admin", "permanent": true },
+        { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
+        { "source": "/terms.html", "destination": "/terms", "permanent": true },
+        { "source": "/verify-email.html", "destination": "/verify-email", "permanent": true },
+        { "source": "/reset-password.html", "destination": "/reset-password", "permanent": true }
+    ],
+    "rewrites": [
+        { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
+        { "source": "/", "destination": "/home.html" },
+        { "source": "/about", "destination": "/about.html" },
+        { "source": "/offers", "destination": "/offers.html" },
+        { "source": "/gallery", "destination": "/gallery.html" },
+        { "source": "/booking", "destination": "/booking.html" },
+        { "source": "/contact", "destination": "/contact.html" },
+        { "source": "/login", "destination": "/login.html" },
+        { "source": "/register", "destination": "/register.html" },
+        { "source": "/profile", "destination": "/profile.html" },
+        { "source": "/admin", "destination": "/admin.html" },
+        { "source": "/privacy", "destination": "/privacy.html" },
+        { "source": "/terms", "destination": "/terms.html" },
+        { "source": "/verify-email", "destination": "/verify-email.html" },
+        { "source": "/reset-password", "destination": "/reset-password.html" },
+        { "source": "/:path*", "destination": "/404.html" }
+    ],
+    "headers": [
+        {
+            "source": "/(.*)",
+            "headers": [
+                { "key": "Strict-Transport-Security", "value": "max-age=31536000; includeSubDomains; preload" },
+                { "key": "X-Content-Type-Options", "value": "nosniff" },
+                { "key": "X-Frame-Options", "value": "SAMEORIGIN" },
+                { "key": "Referrer-Policy", "value": "strict-origin-when-cross-origin" }
+            ]
+        },
+        {
+            "source": "/js/(.*)",
+            "headers": [{ "key": "Cache-Control", "value": "public, max-age=86400, immutable" }]
+        },
+        {
+            "source": "/(.*).webp",
+            "headers": [{ "key": "Cache-Control", "value": "public, max-age=31536000, immutable" }]
+        }
     ]
 }
