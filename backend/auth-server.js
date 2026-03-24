@@ -40,13 +40,21 @@ function publicFileUrl(record, filename) {
 // Helper function to ensure PocketBase is authenticated as admin
 async function ensurePocketBaseAuth() {
     try {
-        // Check if already authenticated
-        if (pb.authStore.isValid) {
-            return true;
+        // Check if already authenticated AS ADMIN (not just any valid token)
+        if (pb.authStore.isValid && pb.authStore.record) {
+            const record = pb.authStore.record;
+            // Check if it's a superuser/admin, not a regular user
+            const isSuperuser = record.collectionName === '_superusers' || record.collectionId === '_superusers';
+            const isAdminUser = record.admin === true;
+            if (isSuperuser || isAdminUser) {
+                return true;
+            }
+            // It's a regular user token — clear it and re-auth as admin
+            console.log('⚠️ Auth store has regular user token, re-authenticating as admin...');
+            pb.authStore.clear();
         }
 
         // Authenticate as admin using email/password
-        // You need to have POCKETBASE_ADMIN_EMAIL and POCKETBASE_ADMIN_PASSWORD in .env
         if (process.env.POCKETBASE_ADMIN_EMAIL && process.env.POCKETBASE_ADMIN_PASSWORD) {
             // PocketBase 0.23+ uses _superusers collection instead of pb.admins
             try {
@@ -132,7 +140,10 @@ app.post('/api/auth/login', async (req, res) => {
     }
 
     try {
-        const authData = await pb.collection('users').authWithPassword(email, password);
+        // Use a separate PocketBase instance for user login
+        // so it doesn't overwrite the admin auth store
+        const loginPb = new PocketBase(process.env.POCKET_BASE_URL);
+        const authData = await loginPb.collection('users').authWithPassword(email, password);
 
         if (authData.token && authData.record) {
             // Creează un JWT token personalizat pentru aplicația noastră
