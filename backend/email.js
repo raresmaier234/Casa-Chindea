@@ -1,11 +1,11 @@
 // backend/email.js — Shared email utility for booking notifications
-// Fallback chain: MailerSend HTTP API → Gmail SMTP
+// Fallback chain: MailerSend → Resend → Gmail SMTP
 import nodemailer from 'nodemailer';
 
 // ─── Core send function ────────────────────────────────────────────────────
 
 /**
- * Send an email. Tries MailerSend first, falls back to Gmail SMTP.
+ * Send an email. Tries providers in order until one succeeds.
  * @param {{ to: string, subject: string, html: string, from?: string, replyTo?: string }} opts
  */
 async function sendEmail({ to, subject, html, from, replyTo }) {
@@ -49,7 +49,40 @@ async function sendEmail({ to, subject, html, from, replyTo }) {
         }
     }
 
-    // 2. Gmail SMTP fallback
+    // 2. Resend HTTP API (3000 emails/month free, no recipient limit)
+    const resendKey = process.env.RESEND_API_KEY;
+    if (resendKey) {
+        try {
+            const fromEmail = from || process.env.RESEND_FROM || `${fromName} <onboarding@resend.dev>`;
+            console.log(`📧 Trying Resend: to=${to}`);
+            const body = { from: fromEmail, to: [to], subject, html };
+            if (replyTo) body.reply_to = [replyTo];
+
+            const resp = await fetch('https://api.resend.com/emails', {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${resendKey}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(body)
+            });
+
+            if (resp.ok) {
+                const data = await resp.json();
+                console.log('✅ Email sent via Resend');
+                return { provider: 'resend', id: data.id };
+            }
+
+            const errBody = await resp.text().catch(() => '');
+            console.warn(`⚠️ Resend failed (${resp.status}), trying next provider...`);
+            errors.push(`Resend ${resp.status}: ${errBody}`);
+        } catch (err) {
+            console.warn('⚠️ Resend error, trying next provider:', err.message);
+            errors.push(`Resend: ${err.message}`);
+        }
+    }
+
+    // 3. Gmail SMTP fallback
     if (process.env.SMTP_USER && process.env.SMTP_PASS) {
         try {
             console.log(`📧 Trying Gmail SMTP: to=${to}`);
@@ -84,7 +117,7 @@ async function sendEmail({ to, subject, html, from, replyTo }) {
         throw new Error('Email send failed: ' + errors.join(' | '));
     }
 
-    console.warn('⚠️ No email provider configured (set MAILERSEND_API_KEY or SMTP_USER+SMTP_PASS)');
+    console.warn('⚠️ No email provider configured (set MAILERSEND_API_KEY, RESEND_API_KEY, or SMTP_USER+SMTP_PASS)');
     return null;
 }
 
