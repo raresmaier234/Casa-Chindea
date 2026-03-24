@@ -13,6 +13,5 @@
     "rewrites": [
         { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
         { "source": "/", "destination": "/home.html" }
-
     ]
 }
