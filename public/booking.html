@@ -821,7 +821,7 @@
             return data;
         }
 
-        document.getElementById('booking-form').addEventListener('submit', function (e) {
+        document.getElementById('booking-form').addEventListener('submit', async function (e) {
             e.preventDefault();
 
             const token = sessionStorage.getItem('auth_token');
@@ -838,7 +838,20 @@
                 showPaymentChoiceModal(bookingData, totalAmount, token);
             } else {
                 // No payment configured — save directly and show success
-                saveBookingAndFinish(bookingData, totalAmount, token, 'cash');
+                const submitBtn = e.target.querySelector('button[type="submit"]');
+                const originalText = submitBtn.innerHTML;
+                submitBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se trimite rezervarea...';
+                submitBtn.disabled = true;
+
+                try {
+                    await saveBookingAndFinish(bookingData, totalAmount, token, 'cash');
+                    showBookingSuccess('cash');
+                } catch (err) {
+                    showNotification('Eroare la trimiterea rezervării: ' + err.message, 'error');
+                } finally {
+                    submitBtn.innerHTML = originalText;
+                    submitBtn.disabled = false;
+                }
             }
         });
 
