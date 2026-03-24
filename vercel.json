@@ -8,11 +8,20 @@
     "trailingSlash": false,
     "redirects": [
         { "source": "/home", "destination": "/", "permanent": true },
-        {
-            "source": "/((?!$|about$|offers$|gallery$|booking$|contact$|login$|register$|profile$|admin$|privacy$|terms$|verify-email$|reset-password$|js/.*|css/.*|api/.*|sitemap\\.xml$|robots\\.txt$|favicon\\.ico$|favicon\\.svg$|vite\\.svg$|googlef1ee2b5187cf8079\\.html$|.*\\.html$).*)",
-            "destination": "/",
-            "permanent": true
-        }
+        { "source": "/home.html", "destination": "/", "permanent": true },
+        { "source": "/about.html", "destination": "/about", "permanent": true },
+        { "source": "/offers.html", "destination": "/offers", "permanent": true },
+        { "source": "/gallery.html", "destination": "/gallery", "permanent": true },
+        { "source": "/booking.html", "destination": "/booking", "permanent": true },
+        { "source": "/contact.html", "destination": "/contact", "permanent": true },
+        { "source": "/login.html", "destination": "/login", "permanent": true },
+        { "source": "/register.html", "destination": "/register", "permanent": true },
+        { "source": "/profile.html", "destination": "/profile", "permanent": true },
+        { "source": "/admin.html", "destination": "/admin", "permanent": true },
+        { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
+        { "source": "/terms.html", "destination": "/terms", "permanent": true },
+        { "source": "/verify-email.html", "destination": "/verify-email", "permanent": true },
+        { "source": "/reset-password.html", "destination": "/reset-password", "permanent": true }
     ],
     "rewrites": [
         { "source": "/", "destination": "/home.html" },
