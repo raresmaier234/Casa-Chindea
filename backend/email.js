@@ -129,7 +129,7 @@ export async function sendBookingEmailToOwner(bookingData) {
       <td style="background-color:#f9fafb;border-left:4px solid #059669;padding:12px 16px;border-radius:4px;font-size:14px;color:#111827;white-space:pre-wrap;">${message}</td>
     </tr></table>` : ''}
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:16px 0;">
-    <p style="font-size:13px;color:#6b7280;margin:0;">Gestionează rezervarea din <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/admin.html" style="color:#059669;text-decoration:none;font-weight:600;">Panoul de Administrare</a></p>
+    <p style="font-size:13px;color:#6b7280;margin:0;">Gestionează rezervarea din <a href="${process.env.FRONTEND_URL || 'https://www.casachindea.ro'}/admin" style="color:#059669;text-decoration:none;font-weight:600;">Panoul de Administrare</a></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
     <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
@@ -235,7 +235,7 @@ export async function sendBookingDeclinedEmail(booking, reason) {
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 12px;">Te invităm să încerci alte date!</p>
     <table role="presentation" width="100%" cellpadding="0" cellspacing="0">
       <tr><td align="center" style="padding:8px 0 20px;">
-        <a href="${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/booking.html"
+        <a href="${process.env.FRONTEND_URL || 'https://www.casachindea.ro'}/booking"
            style="display:inline-block;background-color:#059669;color:#ffffff;padding:14px 32px;text-decoration:none;border-radius:8px;font-size:14px;font-weight:600;">
           Fă o nouă rezervare
         </a>
@@ -260,9 +260,10 @@ export async function sendBookingDeclinedEmail(booking, reason) {
 // ─── Verification code email (used by auth-server) ──────────────────────────
 
 export async function sendVerificationEmail(email, name, code) {
-    const verifyUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/verify-email.html?email=${encodeURIComponent(email)}&code=${code}`;
+    const verifyUrl = `${process.env.FRONTEND_URL || 'https://www.casachindea.ro'}/verify-email?email=${encodeURIComponent(email)}&code=${code}`;
 
-    const result = await sendEmail({
+    try {
+        const result = await sendEmail({
         to: email,
         subject: '🏡 Casa Chindea | Confirmă-ți contul',
         html: `<!DOCTYPE html>
@@ -304,11 +305,16 @@ export async function sendVerificationEmail(email, name, code) {
 </body></html>`
     });
 
-    if (result) {
-        console.log('✅ Verification email sent to:', email, 'via', result.provider);
-        return true;
+        if (result) {
+            console.log('✅ Verification email sent to:', email, 'via', result.provider);
+            return true;
+        }
+        console.warn('⚠️ No email provider configured — verification email not sent to:', email);
+        return false;
+    } catch (err) {
+        console.error('❌ Failed to send verification email to:', email, '— Error:', err.message);
+        return false;
     }
-    return false;
 }
 
 // ─── Contact form email (used by contact-server) ────────────────────────────
@@ -358,7 +364,7 @@ export async function sendContactEmail({ name, email, subject, message }) {
 // ─── Password reset email (used by auth-server) ─────────────────────────────
 
 export async function sendPasswordResetEmail(email, code) {
-    const resetUrl = `${process.env.FRONTEND_URL || 'http://localhost:8080'}/js/pages/reset-password.html?email=${encodeURIComponent(email)}&code=${code}`;
+    const resetUrl = `${process.env.FRONTEND_URL || 'https://www.casachindea.ro'}/reset-password?email=${encodeURIComponent(email)}&code=${code}`;
 
     const result = await sendEmail({
         to: email,
