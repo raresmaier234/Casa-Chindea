@@ -12,5 +12,6 @@
         { "handle": "filesystem" },
         { "src": "^/$", "dest": "/home.html" },
         { "src": "/(.*)", "headers": { "Location": "/" }, "status": 302 }
+
     ]
 }
