@@ -1,38 +1,14 @@
 {
     "version": 2,
     "outputDirectory": "public",
+    "cleanUrls": true,
+    "trailingSlash": false,
     "redirects": [
         { "source": "/home", "destination": "/", "permanent": true },
-        { "source": "/home.html", "destination": "/", "permanent": true },
-        { "source": "/about.html", "destination": "/about", "permanent": true },
-        { "source": "/offers.html", "destination": "/offers", "permanent": true },
-        { "source": "/gallery.html", "destination": "/gallery", "permanent": true },
-        { "source": "/booking.html", "destination": "/booking", "permanent": true },
-        { "source": "/contact.html", "destination": "/contact", "permanent": true },
-        { "source": "/login.html", "destination": "/login", "permanent": true },
-        { "source": "/register.html", "destination": "/register", "permanent": true },
-        { "source": "/profile.html", "destination": "/profile", "permanent": true },
-        { "source": "/admin.html", "destination": "/admin", "permanent": true },
-        { "source": "/privacy.html", "destination": "/privacy", "permanent": true },
-        { "source": "/terms.html", "destination": "/terms", "permanent": true },
-        { "source": "/verify-email.html", "destination": "/verify-email", "permanent": true },
-        { "source": "/reset-password.html", "destination": "/reset-password", "permanent": true }
+        { "source": "/home.html", "destination": "/", "permanent": true }
     ],
     "rewrites": [
         { "source": "/api/:path*", "destination": "https://api.casachindea.ro/api/:path*" },
-        { "source": "/", "destination": "/home.html" },
-        { "source": "/about", "destination": "/about.html" },
-        { "source": "/offers", "destination": "/offers.html" },
-        { "source": "/gallery", "destination": "/gallery.html" },
-        { "source": "/booking", "destination": "/booking.html" },
-        { "source": "/contact", "destination": "/contact.html" },
-        { "source": "/login", "destination": "/login.html" },
-        { "source": "/register", "destination": "/register.html" },
-        { "source": "/profile", "destination": "/profile.html" },
-        { "source": "/admin", "destination": "/admin.html" },
-        { "source": "/privacy", "destination": "/privacy.html" },
-        { "source": "/terms", "destination": "/terms.html" },
-        { "source": "/verify-email", "destination": "/verify-email.html" },
-        { "source": "/reset-password", "destination": "/reset-password.html" }
+        { "source": "/", "destination": "/home.html" }
     ]
 }
