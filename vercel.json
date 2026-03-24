@@ -8,6 +8,7 @@
     "trailingSlash": false,
     "redirects": [
         { "source": "/home", "destination": "/", "permanent": true },
+        { "source": "/js/pages/:page.html/", "destination": "/:page", "permanent": true },
         { "source": "/js/pages/home.html", "destination": "/", "permanent": true },
         { "source": "/js/pages/about.html", "destination": "/about", "permanent": true },
         { "source": "/js/pages/offers.html", "destination": "/offers", "permanent": true },
