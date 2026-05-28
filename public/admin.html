@@ -1784,13 +1784,19 @@
                 saveBtn.style.display = '';
                 handles.forEach(h => h.classList.remove('hidden'));
                 overlays.forEach(o => o.style.display = 'none');
-                galleryEl.classList.add('reorder-active');
+
+                // SortableJS does not work with CSS grid — switch to flex-wrap
+                galleryEl.classList.remove('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+                galleryEl.style.cssText = 'display:flex;flex-wrap:wrap;gap:1rem;';
+                galleryEl.querySelectorAll('[data-id]').forEach(card => {
+                    card.style.cssText = 'width:calc(33.333% - 0.75rem);cursor:grab;box-shadow:0 0 0 3px #eab308;';
+                });
 
                 _sortableInstance = new Sortable(galleryEl, {
-                    animation: 150,
-                    handle: '.drag-handle',
-                    ghostClass: 'opacity-40',
-                    chosenClass: 'ring-2 ring-yellow-400',
+                    animation: 200,
+                    ghostClass: 'opacity-30',
+                    chosenClass: 'scale-105',
+                    dragClass: 'shadow-2xl',
                 });
             } else {
                 reorderBtn.innerHTML = '<i class="fas fa-sort mr-2"></i>Reordonează';
@@ -1799,7 +1805,13 @@
                 saveBtn.style.display = 'none';
                 handles.forEach(h => h.classList.add('hidden'));
                 overlays.forEach(o => o.style.display = '');
-                galleryEl.classList.remove('reorder-active');
+
+                // Restore grid layout
+                galleryEl.style.cssText = '';
+                galleryEl.classList.add('grid', 'grid-cols-1', 'sm:grid-cols-2', 'lg:grid-cols-3');
+                galleryEl.querySelectorAll('[data-id]').forEach(card => {
+                    card.style.cssText = '';
+                });
 
                 if (_sortableInstance) { _sortableInstance.destroy(); _sortableInstance = null; }
             }
@@ -2253,7 +2265,7 @@
                 const isActive = endDate >= new Date();
 
                 return `
-                    <div class="border ${isActive ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'} rounded-lg p-6" data-block-id="${block.id}">
+                    <div class="border ${isActive ? 'border-red-500' : 'border-gray-200'} bg-white rounded-lg p-6" data-block-id="${block.id}">
                         <div class="flex justify-between items-start">
                             <div class="flex-1">
                                 <div class="flex items-center mb-2">
@@ -2270,8 +2282,7 @@
                                     Creată: ${formatDate(block.created)}
                                 </p>
                             </div>
-                            <button onclick="deleteCalendarBlock('${block.id}')"
-                                class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
+                            <button onclick="deleteCalendarBlock('${block.id}')" class="${isActive ? 'text-red-600 hover:text-red-800' : 'text-gray-400 hover:text-gray-600'} transition-colors p-2">
                                 <i class="fas fa-trash"></i>
                             </button>
                         </div>
@@ -2759,10 +2770,10 @@
                                     </div>
                                 </div>
                                 <div class="flex gap-2 sm:space-x-2 w-full sm:w-auto">
-                                    <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                    <button onclick="editOffer('${offer.id}')" class="flex-1 sm:flex-none bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
                                         <i class="fas fa-edit mr-1"></i>Editează
                                     </button>
-                                    <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 sm:py-1 rounded text-xs sm:text-sm">
+                                    <button onclick="deleteOffer('${offer.id}')" class="flex-1 sm:flex-none bg-red-600 hover:bg-red-700 text-white px-3 py-2 rounded-lg transition-colors">
                                         <i class="fas fa-trash mr-1"></i>Șterge
                                     </button>
                                 </div>
@@ -2964,3 +2975,4 @@
 </body>
 
 </html>
+
