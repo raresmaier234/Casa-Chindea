@@ -420,7 +420,7 @@ function selectElement(id) {
 // Show edit form for selected element
 function showEditForm(elemData) {
     const container = document.getElementById('edit-form-container');
-    const currentPage = window.location.pathname.split('/').pop().replace('.html', '');
+    const currentPage = window.location.pathname.split('/').pop()?.replace('.html', '');
     const key = elemData.id.replace('cms-', '');
 
     let currentValue = '';

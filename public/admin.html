@@ -2012,10 +2012,15 @@
         async function editPhoto(photoId) {
             // Get current photo data first
             try {
-                // Request all photos with a high limit to ensure we get everything
-                const response = await fetch('/api/photos?limit=500');
-                const data = await response.json();
-                const photos = data.items || [];
+                let photos = [];
+                if (isCacheValid('gallery')) {
+                    photos = adminCache.gallery.data.items || [];
+                } else {
+                    // Request all photos with a high limit to ensure we get everything
+                    const response = await fetch('/api/photos?limit=500');
+                    const data = await response.json();
+                    photos = data.items || [];
+                }
                 const photo = photos.find(p => p.id === photoId);
 
                 if (!photo) {
