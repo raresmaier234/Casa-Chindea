@@ -181,7 +181,7 @@ export async function sendBookingEmailToOwner(bookingData) {
     <p style="font-size:13px;color:#6b7280;margin:0;">Gestionează rezervarea din <a href="${process.env.FRONTEND_URL || 'https://www.casachindea.ro'}/admin" style="color:#059669;text-decoration:none;font-weight:600;">Panoul de Administrare</a></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -234,12 +234,12 @@ export async function sendBookingConfirmedEmail(booking, totalPrice) {
       </td></tr>
     </table>
     <hr style="border:none;border-top:1px solid #e5e7eb;margin:20px 0;">
-    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 8px;">📍 <strong>Adresă:</strong> Hășmaș, județul Harghita, România</p>
+    <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 8px;">📍 <strong>Adresă:</strong> Str. Bicăjel, 607061 Lacu Roșu, România</p>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0 0 16px;">📞 <strong>Contact:</strong> <a href="tel:${contactPhone}" style="color:#059669;text-decoration:none;">${contactPhone}</a></p>
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -294,7 +294,7 @@ export async function sendBookingDeclinedEmail(booking, reason) {
     <p style="color:#374151;font-size:14px;line-height:1.6;margin:0;">Cu drag,<br><strong>Echipa Casa Chindea</strong></p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -347,7 +347,7 @@ export async function sendVerificationEmail(email, name, code) {
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
     <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
-    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
+    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -398,7 +398,7 @@ export async function sendContactEmail({ name, email, subject, message }) {
     <p style="margin-top:20px;font-size:13px;color:#9ca3af;">Răspunde direct la acest email pentru a contacta persoana.</p>
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
-    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Hășmaș, județul Harghita, România</p>
+    <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea • Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
@@ -449,7 +449,7 @@ export async function sendPasswordResetEmail(email, code) {
   </td></tr>
   <tr><td style="background-color:#f3f4f6;padding:16px 30px;text-align:center;">
     <p style="margin:0;font-size:12px;color:#9ca3af;">© 2026 Casa Chindea. Toate drepturile rezervate.</p>
-    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Hășmaș, județul Harghita, România</p>
+    <p style="margin:4px 0 0;font-size:12px;color:#9ca3af;">Str. Bicăjel, 607061 Lacu Roșu, România</p>
   </td></tr>
 </table>
 </td></tr></table>
