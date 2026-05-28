@@ -119,18 +119,40 @@
 
 <!-- Include navigation component -->
 <script src="/js/components/navigation.js"></script>
+<script src="/js/components/visual-editor.js"></script>
+
+<script>
+    // Load CMS content for contact page
+    document.addEventListener('DOMContentLoaded', async () => {
+        try {
+            const data = window._cmsPromise instanceof Promise
+                ? await window._cmsPromise
+                : await window._cmsPromise;
+            if (!data || !data.items) return;
+            data.items.forEach(item => {
+                const el = document.getElementById('cms-' + item.key);
+                if (el && item.content) {
+                    el.textContent = item.content;
+                    el.classList.add('cms-loaded');
+                }
+            });
+        } catch (e) {
+            console.warn('CMS load failed:', e);
+        }
+    });
+</script>
 
 <section class="py-20 bg-white">
     <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div class="text-center mb-16">
-            <h1 id="contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
-            <p id="contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice
+            <h1 id="cms-contact-hero-title" class="text-5xl font-bold text-gray-900 mb-6">Contact</h1>
+            <p id="cms-contact-hero-subtitle" class="text-xl text-gray-600">Suntem aici să te ajutăm cu orice
                 întrebare</p>
         </div>
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
             <!-- Contact Info -->
             <div>
-                <h2 id="contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de contact
+                <h2 id="cms-contact-info-title" class="text-3xl font-bold text-gray-900 mb-8">Informații de contact
                 </h2>
                 <div class="space-y-6">
                     <div class="flex items-start">
@@ -140,7 +162,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Adresa</h3>
-                            <p id="contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România
+                            <p id="cms-contact-address" class="text-gray-600">Hășmaș, județul Harghita<br>România
                             </p>
                         </div>
                     </div>
@@ -151,7 +173,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Telefon</h3>
-                            <p id="contact-phone" class="text-gray-600">+40 743 930 521</p>
+                            <p id="cms-contact-phone" class="text-gray-600">+40 743 930 521</p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -161,7 +183,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Email</h3>
-                            <p id="contact-email" class="text-gray-600">contact@casachindea.ro</p>
+                            <p id="cms-contact-email" class="text-gray-600">contact@casachindea.ro</p>
                         </div>
                     </div>
                     <div class="flex items-start">
@@ -171,7 +193,7 @@
                         </div>
                         <div>
                             <h3 class="text-lg font-semibold text-gray-900">Program</h3>
-                            <p id="contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00
+                            <p id="cms-contact-program" class="text-gray-600">Check-in: 15:00<br>Check-out: 11:00
                             </p>
                         </div>
                     </div>
@@ -197,7 +219,7 @@
             </div>
             <!-- Contact Form -->
             <div>
-                <h2 id="contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un mesaj
+                <h2 id="cms-contact-form-title" class="text-3xl font-bold text-gray-900 mb-8">Trimite-ne un mesaj
                 </h2>
                 <form id="contact-form" class="space-y-6" onsubmit="event.preventDefault(); sendMail();">
                     <div>
@@ -231,7 +253,7 @@
         </div>
         <!-- Map -->
         <div class="mt-20">
-            <h2 id="contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe
+            <h2 id="cms-contact-map-title" class="text-3xl font-bold text-center text-gray-900 mb-8">Locația pe
                 hartă</h2>
             <div class="h-96 bg-gray-300 rounded-lg overflow-hidden">
                 <iframe src="https://www.google.com/maps?q=46.7820948,25.8335092&z=15&output=embed" width="100%"

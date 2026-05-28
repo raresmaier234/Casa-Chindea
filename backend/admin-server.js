@@ -569,6 +569,25 @@ router.delete('/photos/:id', authenticateToken, requireAdmin, async (req, res) =
     }
 });
 
+// Reordonează pozele din galerie
+router.put('/photos/reorder', authenticateToken, requireAdmin, async (req, res) => {
+    try {
+        const { order } = req.body; // array of { id, order }
+        if (!Array.isArray(order) || order.length === 0) {
+            return res.status(400).json({ success: false, error: 'Lista de ordine este obligatorie.' });
+        }
+
+        await Promise.all(order.map(({ id, order: ord }) =>
+            pb.collection('photos').update(id, { order: ord }, { $autoCancel: false })
+        ));
+
+        res.json({ success: true, message: 'Ordinea pozelor a fost salvată.' });
+    } catch (err) {
+        console.error('Error reordering photos:', err);
+        res.status(500).json({ success: false, error: 'Eroare la salvarea ordinii.' });
+    }
+});
+
 // Actualizează descrierea unei poze
 router.put('/photos/:id', authenticateToken, requireAdmin, async (req, res) => {
     try {

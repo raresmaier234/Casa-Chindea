@@ -69,6 +69,7 @@
     <!-- Font Awesome - deferred for faster FCP -->
     <link rel="preload" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" as="style" onload="this.onload=null;this.rel='stylesheet'">
     <noscript><link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet"></noscript>
+    <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 
     <!-- Performance loader -->
     <script src="/js/components/performance-loader.js"></script>
@@ -327,6 +328,14 @@
                             <button id="add-folder-btn"
                                 class="w-full sm:w-auto bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
                                 <i class="fas fa-folder-plus mr-2"></i>Încarcă Folder
+                            </button>
+                            <button id="reorder-btn" onclick="toggleReorderMode()"
+                                class="w-full sm:w-auto bg-yellow-500 hover:bg-yellow-600 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-sort mr-2"></i>Reordonează
+                            </button>
+                            <button id="save-order-btn" onclick="savePhotoOrder()" style="display:none"
+                                class="w-full sm:w-auto bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm sm:text-base">
+                                <i class="fas fa-save mr-2"></i>Salvează Ordinea
                             </button>
                         </div>
                     </div>
@@ -1714,7 +1723,10 @@
             galleryEl.innerHTML = photos.map(photo => {
                 const imgSrc = photo.thumbnailUrl || photo.imageUrl || '';
                 return `
-                <div class="relative group bg-white rounded-lg shadow-md overflow-hidden">
+                <div class="relative group bg-white rounded-lg shadow-md overflow-hidden" data-id="${photo.id}">
+                    <div class="drag-handle hidden absolute top-2 left-2 z-10 bg-black/60 text-white px-2 py-1 rounded cursor-grab active:cursor-grabbing text-xs select-none">
+                        <i class="fas fa-grip-vertical mr-1"></i>Mută
+                    </div>
                     <img data-src="${imgSrc}"
                         src="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 400 300'%3E%3Crect fill='%23e5e7eb' width='400' height='300'/%3E%3C/svg%3E"
                         alt="Gallery photo"
@@ -1723,7 +1735,7 @@
                     <div class="p-4">
                         <p class="text-sm text-gray-600 min-h-[20px]">${photo.description || 'Fără descriere'}</p>
                     </div>
-                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center">
+                    <div class="absolute inset-0 bg-black bg-opacity-0 group-hover:bg-opacity-50 transition-all duration-300 flex items-center justify-center reorder-hide">
                         <div class="opacity-0 group-hover:opacity-100 transition-opacity duration-300 space-x-2">
                             <button onclick="editPhoto('${photo.id}')"
                                 class="bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg transition-colors">
@@ -1752,6 +1764,74 @@
             }, { rootMargin: '50px' });
 
             lazyImages.forEach(img => imageObserver.observe(img));
+        }
+
+        let _sortableInstance = null;
+        let _reorderMode = false;
+
+        function toggleReorderMode() {
+            _reorderMode = !_reorderMode;
+            const galleryEl = document.getElementById('admin-gallery');
+            const reorderBtn = document.getElementById('reorder-btn');
+            const saveBtn = document.getElementById('save-order-btn');
+            const handles = galleryEl.querySelectorAll('.drag-handle');
+            const overlays = galleryEl.querySelectorAll('.reorder-hide');
+
+            if (_reorderMode) {
+                reorderBtn.innerHTML = '<i class="fas fa-times mr-2"></i>Anulează';
+                reorderBtn.classList.replace('bg-yellow-500', 'bg-gray-500');
+                reorderBtn.classList.replace('hover:bg-yellow-600', 'hover:bg-gray-600');
+                saveBtn.style.display = '';
+                handles.forEach(h => h.classList.remove('hidden'));
+                overlays.forEach(o => o.style.display = 'none');
+                galleryEl.classList.add('reorder-active');
+
+                _sortableInstance = new Sortable(galleryEl, {
+                    animation: 150,
+                    handle: '.drag-handle',
+                    ghostClass: 'opacity-40',
+                    chosenClass: 'ring-2 ring-yellow-400',
+                });
+            } else {
+                reorderBtn.innerHTML = '<i class="fas fa-sort mr-2"></i>Reordonează';
+                reorderBtn.classList.replace('bg-gray-500', 'bg-yellow-500');
+                reorderBtn.classList.replace('hover:bg-gray-600', 'hover:bg-yellow-600');
+                saveBtn.style.display = 'none';
+                handles.forEach(h => h.classList.add('hidden'));
+                overlays.forEach(o => o.style.display = '');
+                galleryEl.classList.remove('reorder-active');
+
+                if (_sortableInstance) { _sortableInstance.destroy(); _sortableInstance = null; }
+            }
+        }
+
+        async function savePhotoOrder() {
+            const galleryEl = document.getElementById('admin-gallery');
+            const cards = [...galleryEl.querySelectorAll('[data-id]')];
+            const order = cards.map((card, idx) => ({ id: card.dataset.id, order: idx + 1 }));
+
+            const saveBtn = document.getElementById('save-order-btn');
+            saveBtn.disabled = true;
+            saveBtn.innerHTML = '<i class="fas fa-spinner fa-spin mr-2"></i>Se salvează...';
+
+            try {
+                const token = sessionStorage.getItem('auth_token');
+                const res = await fetch('/api/admin/photos/reorder', {
+                    method: 'PUT',
+                    headers: { 'Authorization': `Bearer ${token}`, 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ order })
+                });
+                const data = await res.json();
+                if (!data.success) throw new Error(data.error);
+                invalidateCache('gallery');
+                showToast('✅ Ordinea a fost salvată!', 'success');
+                toggleReorderMode();
+            } catch (err) {
+                showToast(`Eroare: ${err.message}`, 'error');
+            } finally {
+                saveBtn.disabled = false;
+                saveBtn.innerHTML = '<i class="fas fa-save mr-2"></i>Salvează Ordinea';
+            }
         }
 
         async function uploadPhoto(e) {

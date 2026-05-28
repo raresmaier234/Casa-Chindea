@@ -72,7 +72,7 @@ app.get('/api/photos', async (req, res) => {
 
         const photos = await pb.collection('photos').getList(1, limit, {
             perPage: limit,
-            sort: '-created'
+            sort: 'order,-created'
         });
 
         const items = photos.items.map(photo => ({
