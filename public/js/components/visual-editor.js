@@ -420,7 +420,8 @@ function selectElement(id) {
 // Show edit form for selected element
 function showEditForm(elemData) {
     const container = document.getElementById('edit-form-container');
-    const currentPage = window.location.pathname.split('/').pop()?.replace('.html', '');
+    const rawPage = window.location.pathname.split('/').filter(Boolean).pop()?.replace('.html', '') || 'home';
+    const currentPage = rawPage === '' ? 'home' : rawPage;
     const key = elemData.id.replace('cms-', '');
 
     let currentValue = '';
@@ -484,7 +485,9 @@ function showEditForm(elemData) {
                     class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 py-2 rounded-lg text-sm">
                     <i class="fas fa-times mr-1"></i>Anulează
                 </button>
-                <button onclick="saveEdit('${currentPage}', '${key}', '${elemData.type}', '${elemData.id}')" 
+                <button id="save-edit-btn"
+                    data-page="${currentPage}" data-key="${key}" data-type="${elemData.type}" data-elem-id="${elemData.id}"
+                    onclick="saveEdit(this.dataset.page, this.dataset.key, this.dataset.type, this.dataset.elemId)"
                     class="flex-1 bg-primary hover:bg-secondary text-white py-2 rounded-lg text-sm">
                     <i class="fas fa-save mr-1"></i>Salvează
                 </button>
@@ -681,7 +684,7 @@ async function saveEdit(page, key, type, elemId) {
     formData.append('key', key);
     formData.append('type', type);
     formData.append('order', 0);
-    formData.append('active', true);
+    formData.append('active', 'true');
 
     if (type === 'image' || type === 'background') {
         // Check if file was uploaded
