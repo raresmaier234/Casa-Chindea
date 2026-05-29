@@ -206,6 +206,8 @@
                             <option value="2">2 camere</option>
                             <option value="3">3 camere</option>
                             <option value="4">4 camere</option>
+                            <option value="5">5 camere</option>
+                            <option value="6">6 camere</option>
                         </select>
                         <p class="mt-2 text-sm text-gray-500">Fiecare cameră poate găzdui 2 persoane</p>
                     </div>
@@ -699,7 +701,7 @@
                         <p><strong>Check-out:</strong> ${formatDateDMY(checkout)}</p>
                         <p><strong>Număr nopți:</strong> ${selectedOffer.nights}</p>
                         <p><strong>Număr persoane:</strong> ${guests}</p>
-                        <p><strong>Tip închiriere:</strong> Casa întreagă (4 camere)</p>
+                        <p><strong>Tip închiriere:</strong> Casa întreagă (6 camere)</p>
                         <p class="text-xl font-bold text-primary mt-3 pt-3 border-t border-primary/30">
                             <strong>Total pachet:</strong> ${selectedOffer.totalPrice} RON
                         </p>
@@ -721,7 +723,7 @@
                     rentalDescription = `${numRooms} ${numRooms === 1 ? 'cameră' : 'camere'}`;
                 } else if (rentalType === 'entire') {
                     pricePerNight = prices.priceEntire; // Preț din admin pentru cabana întreagă
-                    rentalDescription = 'Casa intreaga (4 camere)';
+                    rentalDescription = 'Casa intreaga (6 camere)';
                 }
 
                 // Calculează suprataxă weekend dacă este cazul
@@ -810,7 +812,7 @@
                 checkin: document.getElementById('checkin').value,
                 checkout: document.getElementById('checkout').value,
                 roomType: rentalType === 'entire' ? 'entire' : 'room',
-                numberOfRooms: rentalType === 'room' ? parseInt(document.getElementById('room-count').value) : 4,
+                numberOfRooms: rentalType === 'room' ? parseInt(document.getElementById('room-count').value) : 6,
                 message
             };
             if (selectedOffer) {

@@ -12,7 +12,7 @@ const router = express.Router();
 const pb = new PocketBase(process.env.POCKET_BASE_URL);
 
 const ensurePbAdminAuth = async () => {
-    // Check if authenticated as admin/superuser (not just any valid token)
+     // Check if authenticated as admin/superuser (not just any valid token)
     if (pb.authStore.isValid && pb.authStore.record) {
         const r = pb.authStore.record;
         const isSuperuser = r.collectionName === '_superusers' || r.collectionId === '_superusers';
@@ -133,7 +133,7 @@ router.post(`/`, authenticateToken, async (req, res) => {
             checkout,
             roomType,
             status: 'pending',
-            numberOfRooms: numberOfRooms || (roomType === 'entire' ? 4 : 1),
+            numberOfRooms: numberOfRooms || (roomType === 'entire' ? 6 : 1),
             message
         };
 
