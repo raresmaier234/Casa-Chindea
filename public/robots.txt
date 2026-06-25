@@ -4,10 +4,11 @@ Allow: /
 Sitemap: https://www.casachindea.ro/sitemap.xml
 
 # Block internal/admin pages
-Disallow: /js/pages/admin.html
-Disallow: /js/pages/login.html
-Disallow: /js/pages/register.html
-Disallow: /js/pages/verify-email.html
-Disallow: /js/pages/reset-password.html
-Disallow: /js/pages/profile.html
+Disallow: /admin
+Disallow: /login
+Disallow: /register
+Disallow: /verify-email
+Disallow: /reset-password
+Disallow: /profile
+Disallow: /api/
 
