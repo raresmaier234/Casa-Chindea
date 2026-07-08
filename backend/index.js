@@ -292,6 +292,38 @@ app.get('/api/files/*', async (req, res) => {
 });
 
 
+// ── WhatsApp Webhook ──────────────────────────────────────────────────────
+// Meta will call GET to verify the webhook URL on setup
+app.get('/api/webhook/whatsapp', (req, res) => {
+    const mode      = req.query['hub.mode'];
+    const token     = req.query['hub.verify_token'];
+    const challenge = req.query['hub.challenge'];
+
+    if (mode === 'subscribe' && token === process.env.WHATSAPP_WEBHOOK_VERIFY_TOKEN) {
+        return res.status(200).send(challenge);
+    }
+    return res.sendStatus(403);
+});
+
+// Meta sends incoming messages and delivery status updates via POST
+app.post('/api/webhook/whatsapp', (req, res) => {
+    // Must return 200 immediately — Meta retries indefinitely otherwise
+    res.sendStatus(200);
+
+    const body = req.body;
+    if (!body || body.object !== 'whatsapp_business_account') return;
+
+    for (const entry of (body.entry || [])) {
+        for (const change of (entry.changes || [])) {
+            for (const status of (change.value?.statuses || [])) {
+                if (status.status === 'failed') {
+                    const err = status.errors?.[0];
+                }
+            }
+        }
+    }
+});
+
 app.use(authRouter);
 app.use('/api/booking', bookingRouter);
 app.use('/api/payment', paymentRouter);
