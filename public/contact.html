@@ -61,7 +61,20 @@
         }
     </script>
 
-    <!-- reCAPTCHA v3 — loaded dynamically if key is valid -->
+    <script>
+        // reCAPTCHA v3 dynamic loader
+        window.recaptchaSiteKey = '6LcVoJMsAAAAAO5hIxWZG9M9uxdIn9MUuZqDUvIQ';
+
+        (function () {
+            if (!window.recaptchaSiteKey) return;
+            const s = document.createElement('script');
+            s.src = `https://www.google.com/recaptcha/api.js?render=${encodeURIComponent(window.recaptchaSiteKey)}`;
+            s.async = true;
+            s.defer = true;
+            document.head.appendChild(s);
+        })();
+    </script>
+
 </head>
 
 <body class="bg-gray-50">
@@ -312,7 +325,7 @@
     // reCAPTCHA is optional — form is protected by backend rate limiter
     // To enable: create a reCAPTCHA v3 key at https://www.google.com/recaptcha/admin
     // and set RECAPTCHA_SITE_KEY in .env (must be v3, NOT v2)
-    const recaptchaSiteKey = '6LcVoJMsAAAAAO5hIxWZG9M9uxdIn9MUuZqDUvIQ'; // Leave empty to skip reCAPTCHA
+    const recaptchaSiteKey = window.recaptchaSiteKey || '';
 
     // Spam prevention: max 3 messages per 5 minutes
     const SPAM_WINDOW_MS = 5 * 60 * 1000;
