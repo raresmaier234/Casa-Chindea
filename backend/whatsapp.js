@@ -221,7 +221,7 @@ export async function sendWhatsAppBookingConfirmed(toPhone, bookingData) {
         to: toPhone,
         type: 'template',
         template: {
-            name: 'client_booking_confirmation',
+            name: 'client_confirmed_booking',
             language: { code: 'ro' },
             components: [
                 {
