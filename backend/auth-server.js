@@ -655,6 +655,8 @@ app.get('/api/config', (req, res) => {
 // User profile endpoints
 app.get('/api/user/profile', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         // Obține informațiile utilizatorului din PocketBase
         const user = await pb.collection('users').getOne(req.user.userId);
 
@@ -688,6 +690,8 @@ app.get('/api/user/profile', authenticateToken, async (req, res) => {
 
 app.put('/api/user/profile', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         const { name, phone } = req.body;
 
         console.log('📝 Updating profile for user:', req.user.userId);
@@ -729,6 +733,8 @@ app.put('/api/user/profile', authenticateToken, async (req, res) => {
 // User bookings endpoint
 app.get('/api/user/booking', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         // Caută rezervările utilizatorului curent în PocketBase
         // Remove sort to avoid issues with system fields
         const bookings = await pb.collection('booking').getFullList(500, {
@@ -778,6 +784,8 @@ app.get('/api/user/booking', authenticateToken, async (req, res) => {
 // Avatar upload endpoint
 app.post('/api/user/avatar', authenticateToken, upload.single('avatar'), async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         if (!req.file) {
             return res.status(400).json({
                 success: false,
@@ -1024,6 +1032,7 @@ app.post('/api/user/change-password', authenticateToken, async (req, res) => {
         }
 
         // Update password in PocketBase
+        await ensurePocketBaseAuth();
         await pb.collection('users').update(req.user.userId, {
             password: newPassword,
             passwordConfirm: newPassword
@@ -1045,6 +1054,8 @@ app.post('/api/user/change-password', authenticateToken, async (req, res) => {
 // Endpoint temporar pentru a seta utilizatorul ca admin (doar pentru debug)
 app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         const { userId } = req.user;
 
         // Actualizează utilizatorul să fie admin
@@ -1073,6 +1084,8 @@ app.post('/api/auth/make-admin', authenticateToken, async (req, res) => {
 // Endpoint pentru verificarea statusului de admin
 app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         const { userId } = req.user;
         // Obține utilizatorul din PocketBase
         const user = await pb.collection('users').getOne(userId);
@@ -1099,6 +1112,8 @@ app.get('/api/auth/admin-status', authenticateToken, async (req, res) => {
 // Endpoint pentru regenerarea token-ului cu permisiunile actualizate
 app.post('/api/auth/refresh-token', authenticateToken, async (req, res) => {
     try {
+        await ensurePocketBaseAuth();
+
         const { userId } = req.user;
 
         // Obține utilizatorul actualizat din PocketBase
